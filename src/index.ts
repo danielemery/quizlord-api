@@ -1,13 +1,7 @@
 import { ApolloServer, gql } from "apollo-server";
 import { GraphQLScalarType, Kind } from "graphql";
-
-interface Quiz {
-  type: QuizType;
-  date: Date;
-  imageLink: string;
-}
-
-type QuizType = "SHARK" | "BRAINWAVES";
+import { Quiz, QuizType } from "./models";
+import { persistence } from "./persistence";
 
 const typeDefs = gql`
   scalar Date
@@ -17,7 +11,11 @@ const typeDefs = gql`
     BRAINWAVES
   }
 
-  # https://relay.dev/graphql/connections.htm#sec-undefined.PageInfo
+  enum QuizState {
+    PENDING_UPLOAD
+    READY
+  }
+
   type PageInfo {
     hasPreviousPage: Boolean
     hasNextPage: Boolean
@@ -26,8 +24,9 @@ const typeDefs = gql`
   }
 
   type Quiz {
-    type: QuizType
-    date: Date
+    type: QuizType!
+    state: QuizState!
+    date: Date!
     imageLink: String
   }
 
@@ -37,35 +36,36 @@ const typeDefs = gql`
   }
 
   type QuizConnection {
-    edges: [QuizEdge]
-    pageInfo: PageInfo
+    edges: [QuizEdge]!
+    pageInfo: PageInfo!
+  }
+
+  type CreateQuizResult {
+    quiz: Quiz!
+    uploadLink: String!
   }
 
   type Query {
     quizzes(first: Int, after: String): QuizConnection
   }
-`;
 
-const sampleQuizzes: Quiz[] = [
-  {
-    type: "SHARK",
-    date: new Date("2022-06-13"),
-    imageLink: "",
-  },
-];
+  type Mutation {
+    createQuiz(type: QuizType!, date: Date!): CreateQuizResult
+  }
+`;
 
 const dateScalar = new GraphQLScalarType({
   name: "Date",
   description: "Date custom scalar type",
   serialize(value) {
-    return (value as Date).getTime(); // Convert outgoing Date to integer for JSON
+    return (value as Date).toISOString();
   },
   parseValue(value) {
-    return new Date(value as number); // Convert incoming integer to Date
+    return new Date(value as string); // Convert incoming ISO string to Date
   },
   parseLiteral(ast) {
-    if (ast.kind === Kind.INT) {
-      return new Date(parseInt(ast.value, 10)); // Convert hard-coded AST string to integer and then to Date
+    if (ast.kind === Kind.STRING) {
+      return new Date(ast.value);
     }
     return null; // Invalid hard-coded value (not an integer)
   },
@@ -74,10 +74,10 @@ const dateScalar = new GraphQLScalarType({
 const resolvers = {
   Date: dateScalar,
   Query: {
-    quizzes: (first: number, after: string) => {
-      console.log(first, after);
+    quizzes: async (first: number, after: string) => {
+      const data = await persistence.getQuizzes();
       const result = {
-        edges: sampleQuizzes.map((quiz) => ({
+        edges: data.map((quiz) => ({
           node: quiz,
           cursor: "asdfsadfg",
         })),
@@ -87,8 +87,26 @@ const resolvers = {
           startCursor: "sdfhjkhsdf",
         },
       };
-      console.log(result);
       return result;
+    },
+  },
+  Mutation: {
+    createQuiz: async (
+      _: any,
+      { type, date }: { type: QuizType; date: Date }
+    ): Promise<{ quiz: Quiz; uploadLink: string }> => {
+      // Create quiz
+      const created = await persistence.createQuiz({
+        date,
+        type,
+        state: "PENDING_UPLOAD",
+        imageLink: undefined,
+      });
+      // Generate file upload url
+      return {
+        quiz: created,
+        uploadLink: "this_will_be_an_s3_upload_link",
+      };
     },
   },
 };
