@@ -2,6 +2,8 @@ import { ApolloServer, gql } from "apollo-server";
 import { GraphQLScalarType, Kind } from "graphql";
 import { Quiz, QuizType } from "./models";
 import { persistence } from "./persistence";
+import { v4 as uuidv4 } from "uuid";
+import { generateSignedUploadUrl } from "./s3";
 
 const typeDefs = gql`
   scalar Date
@@ -50,7 +52,11 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    createQuiz(type: QuizType!, date: Date!): CreateQuizResult
+    createQuiz(
+      type: QuizType!
+      date: Date!
+      fileName: String!
+    ): CreateQuizResult
   }
 `;
 
@@ -93,7 +99,7 @@ const resolvers = {
   Mutation: {
     createQuiz: async (
       _: any,
-      { type, date }: { type: QuizType; date: Date }
+      { type, date, fileName }: { type: QuizType; date: Date; fileName: string }
     ): Promise<{ quiz: Quiz; uploadLink: string }> => {
       // Create quiz
       const created = await persistence.createQuiz({
@@ -103,9 +109,16 @@ const resolvers = {
         imageLink: undefined,
       });
       // Generate file upload url
+      const fileId = uuidv4();
+      const { uploadLink, fileKey } = await generateSignedUploadUrl(
+        fileId,
+        fileName
+      );
+      // Associate the key with redis
+      // TODO
       return {
         quiz: created,
-        uploadLink: "this_will_be_an_s3_upload_link",
+        uploadLink,
       };
     },
   },
