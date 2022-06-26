@@ -20,6 +20,7 @@
   "homepage": "https://github.com/danielemery/quizlord-api#readme",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.118.0",
+    "@aws-sdk/client-sqs": "^3.118.0",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "apollo-server": "^3.8.2",
     "graphql": "^16.5.0",

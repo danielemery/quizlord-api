@@ -4,6 +4,7 @@ import { Quiz, QuizType } from "./models";
 import { persistence } from "./persistence";
 import { v4 as uuidv4 } from "uuid";
 import { generateSignedUploadUrl } from "./s3";
+import { subscribeToFileUploads } from "./sqs";
 
 const typeDefs = gql`
   scalar Date
@@ -130,6 +131,7 @@ const server = new ApolloServer({
   csrfPrevention: true,
 });
 
+subscribeToFileUploads();
 server.listen().then(({ url }) => {
   console.log(`🚀  Server ready at ${url}`);
 });
