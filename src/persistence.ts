@@ -1,13 +1,13 @@
 import knex, { Knex } from "knex";
 import { types } from "pg";
-import { Quiz, QuizState, QuizType } from "./models";
+import { QuizState, QuizType } from "./models";
 
-interface QuizPersistence {
+export interface QuizPersistence {
   id: string;
   type: QuizType;
   state: QuizState;
   date: Date;
-  imageLink?: string;
+  imageKey: string;
 }
 
 export interface PersistenceResult<T> {
@@ -44,7 +44,7 @@ class Persistence {
   }: {
     afterId?: string;
     limit: number;
-  }): Promise<PersistenceResult<Quiz>> {
+  }): Promise<PersistenceResult<QuizPersistence>> {
     const queryBuilder = this.#knexInstance<QuizPersistence>("quiz")
       .select()
       .limit(limit)
@@ -72,7 +72,7 @@ class Persistence {
     }
   }
 
-  async createQuiz(quiz: Quiz): Promise<Quiz> {
+  async createQuiz(quiz: QuizPersistence): Promise<QuizPersistence> {
     await this.#knexInstance("quiz").insert<QuizPersistence>(quiz);
     return quiz;
   }

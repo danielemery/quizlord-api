@@ -1,9 +1,9 @@
 import { ApolloServer, gql } from "apollo-server";
 import { GraphQLScalarType, Kind } from "graphql";
 import { Quiz, QuizType } from "./models";
-import { persistence } from "./persistence";
+import { persistence, QuizPersistence } from "./persistence";
 import { v4 as uuidv4 } from "uuid";
-import { generateSignedUploadUrl } from "./s3";
+import { createKey, generateSignedUploadUrl, keyToUrl } from "./s3";
 import { subscribeToFileUploads } from "./sqs";
 
 const typeDefs = gql`
@@ -86,6 +86,14 @@ function base64Decode(source: string) {
   return Buffer.from(source, "base64").toString("ascii");
 }
 
+function quizPersistenceToQuiz(quiz: QuizPersistence): Quiz {
+  const { imageKey, ...quizWithoutImageKey } = quiz;
+  return {
+    ...quizWithoutImageKey,
+    imageLink: keyToUrl(imageKey),
+  };
+}
+
 const resolvers = {
   Date: dateScalar,
   Query: {
@@ -99,7 +107,7 @@ const resolvers = {
         limit: first,
       });
       const edges = data.map((quiz) => ({
-        node: quiz,
+        node: quizPersistenceToQuiz(quiz),
         cursor: base64Encode(quiz.id),
       }));
       const result = {
@@ -119,25 +127,21 @@ const resolvers = {
       _: any,
       { type, date, fileName }: { type: QuizType; date: Date; fileName: string }
     ): Promise<{ quiz: Quiz; uploadLink: string }> => {
-      // Create quiz
       const uuid = uuidv4();
-      const created = await persistence.createQuiz({
-        id: uuid,
-        date,
-        type,
-        state: "PENDING_UPLOAD",
-        imageLink: undefined,
-      });
-      // Generate file upload url
-      const fileId = uuidv4();
-      const { uploadLink, fileKey } = await generateSignedUploadUrl(
-        fileId,
-        fileName
-      );
-      // Associate the key with redis
-      // TODO
+      const fileKey = createKey(uuid, fileName);
+      const [createdQuiz, uploadLink] = await Promise.all([
+        persistence.createQuiz({
+          id: uuid,
+          date,
+          type,
+          state: "PENDING_UPLOAD",
+          imageKey: fileKey,
+        }),
+        generateSignedUploadUrl(fileKey),
+      ]);
+      const { imageKey: _imageKey, ...quizWithoutImageKey } = createdQuiz;
       return {
-        quiz: created,
+        quiz: quizWithoutImageKey,
         uploadLink,
       };
     },
