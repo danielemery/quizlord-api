@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc",
     "start": "doppler run -- nodemon src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:migrate": "doppler run -- knex migrate:latest",
+    "db:rollback": "doppler run -- knex migrate:rollback"
   },
   "repository": {
     "type": "git",
@@ -24,10 +26,13 @@
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "apollo-server": "^3.8.2",
     "graphql": "^16.5.0",
+    "knex": "^2.1.0",
+    "pg": "^8.7.3",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@tsconfig/node16": "^1.0.3",
+    "@types/pg": "^8.6.5",
     "@types/uuid": "^8.3.4",
     "nodemon": "^2.0.16",
     "ts-node": "^10.8.1",

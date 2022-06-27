@@ -20,13 +20,13 @@ const typeDefs = gql`
   }
 
   type PageInfo {
-    hasPreviousPage: Boolean
     hasNextPage: Boolean
     startCursor: String
     endCursor: String
   }
 
   type Quiz {
+    id: String!
     type: QuizType!
     state: QuizState!
     date: Date!
@@ -78,20 +78,37 @@ const dateScalar = new GraphQLScalarType({
   },
 });
 
+function base64Encode(source: string) {
+  return Buffer.from(source).toString("base64");
+}
+
+function base64Decode(source: string) {
+  return Buffer.from(source, "base64").toString("ascii");
+}
+
 const resolvers = {
   Date: dateScalar,
   Query: {
-    quizzes: async (first: number, after: string) => {
-      const data = await persistence.getQuizzes();
+    quizzes: async (
+      _: any,
+      { first = 10, after }: { first: number; after?: string }
+    ) => {
+      const afterId = after ? base64Decode(after) : undefined;
+      const { data, hasMoreRows } = await persistence.getQuizzes({
+        afterId,
+        limit: first,
+      });
+      const edges = data.map((quiz) => ({
+        node: quiz,
+        cursor: base64Encode(quiz.id),
+      }));
       const result = {
-        edges: data.map((quiz) => ({
-          node: quiz,
-          cursor: "asdfsadfg",
-        })),
+        edges,
         pageInfo: {
-          hasNextPage: false,
-          hasPreviousPage: false,
-          startCursor: "sdfhjkhsdf",
+          hasNextPage: hasMoreRows,
+          startCursor: edges.length > 0 ? edges[0].cursor : undefined,
+          endCursor:
+            edges.length > 0 ? edges[edges.length - 1].cursor : undefined,
         },
       };
       return result;
@@ -103,7 +120,9 @@ const resolvers = {
       { type, date, fileName }: { type: QuizType; date: Date; fileName: string }
     ): Promise<{ quiz: Quiz; uploadLink: string }> => {
       // Create quiz
+      const uuid = uuidv4();
       const created = await persistence.createQuiz({
+        id: uuid,
         date,
         type,
         state: "PENDING_UPLOAD",
@@ -125,13 +144,24 @@ const resolvers = {
   },
 };
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  csrfPrevention: true,
-});
+async function initialise() {
+  const server = new ApolloServer({
+    typeDefs,
+    resolvers,
+    csrfPrevention: true,
+  });
 
-subscribeToFileUploads();
-server.listen().then(({ url }) => {
-  console.log(`🚀  Server ready at ${url}`);
-});
+  subscribeToFileUploads();
+  server.listen().then(({ url }) => {
+    console.log(`🚀  Server ready at ${url}`);
+  });
+}
+
+initialise()
+  .then(() => {
+    console.log("Server initialised sucessfully.");
+  })
+  .catch(() => {
+    console.log("Server encountered error initialising and had to shut down");
+    process.exit(1);
+  });
