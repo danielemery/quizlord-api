@@ -72,6 +72,20 @@ class Persistence {
     }
   }
 
+  async getQuizByImageKey(
+    imageKey: string
+  ): Promise<QuizPersistence | undefined> {
+    return this.#knexInstance<QuizPersistence>("quiz")
+      .where("imageKey", "=", imageKey)
+      .first();
+  }
+
+  async markQuizReady(id: string) {
+    await this.#knexInstance<QuizPersistence>("quiz")
+      .update({ state: "READY" })
+      .where("id", "=", id);
+  }
+
   async createQuiz(quiz: QuizPersistence): Promise<QuizPersistence> {
     await this.#knexInstance("quiz").insert<QuizPersistence>(quiz);
     return quiz;

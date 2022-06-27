@@ -5,6 +5,8 @@ import {
   DeleteMessageCommand,
 } from "@aws-sdk/client-sqs";
 
+import { persistence } from "./persistence";
+
 const client = new SQSClient({ region: process.env.AWS_REGION });
 
 export async function subscribeToFileUploads() {
@@ -67,5 +69,11 @@ async function processMessage(message: Message) {
 
 async function processUploadedItem(record: S3MessageContentRecord) {
   console.log("Processing uploaded item");
-  console.log(record);
+  const key = record.s3.object.key;
+  const quiz = await persistence.getQuizByImageKey(key);
+  if (quiz) {
+    await persistence.markQuizReady(quiz.id);
+  } else {
+    console.error(`Invalid file upload at key: ${key}`);
+  }
 }
