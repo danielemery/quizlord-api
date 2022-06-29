@@ -30,6 +30,7 @@ export async function subscribeToFileUploads() {
 
 interface S3MessageContent {
   Records: S3MessageContentRecord[];
+  Event: string;
 }
 
 interface S3MessageContentRecord {
@@ -44,16 +45,19 @@ interface S3MessageContentRecord {
 }
 
 async function processMessage(message: Message) {
-  console.log(`Processing message`);
-  console.log(message.Body);
-
   if (message.Body) {
     const messageBody = JSON.parse(message.Body);
     if (messageBody.Message) {
       const messageData: S3MessageContent = JSON.parse(messageBody.Message);
-      await Promise.all(
-        messageData.Records.map((record) => processUploadedItem(record))
-      );
+      if (messageData.Event === "ObjectCreated:Put") {
+        await Promise.all(
+          messageData.Records.map((record) => processUploadedItem(record))
+        );
+      } else {
+        console.warn("Unexpected inner message body type");
+      }
+    } else {
+      console.warn(`Unexpected empty inner message body`, message);
     }
   } else {
     console.warn(`Unexpected empty message body`, message);
