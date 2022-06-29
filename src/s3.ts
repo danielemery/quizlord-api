@@ -1,22 +1,31 @@
+import { createRequest } from "@aws-sdk/util-create-request";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { S3RequestPresigner } from "@aws-sdk/s3-request-presigner";
+import { formatUrl } from "@aws-sdk/util-format-url";
 
 const s3Client = new S3Client({ region: process.env.AWS_REGION });
 
 export async function generateSignedUploadUrl(key: string): Promise<string> {
-  const command = new PutObjectCommand({
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-    Body: "BODY",
+  const request = await createRequest(
+    s3Client,
+    new PutObjectCommand({
+      Key: key,
+      Bucket: process.env.AWS_BUCKET_NAME,
+    })
+  );
+
+  const signer = new S3RequestPresigner({
+    ...s3Client.config,
   });
-  const signedUrl = await getSignedUrl(s3Client, command, {
+
+  const url = await signer.presign(request, {
     expiresIn: 3600,
   });
-  return signedUrl;
+  return formatUrl(url);
 }
 
 export function keyToUrl(key: string): string {
-  return `https://quizlord-images.demery.net/${key}`;
+  return `https://quizlord-dev-uploads.demery.net/${key}`;
 }
 
 export function createKey(resourceId: string, fileName: string) {
