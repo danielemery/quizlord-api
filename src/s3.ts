@@ -25,7 +25,7 @@ export async function generateSignedUploadUrl(key: string): Promise<string> {
 }
 
 export function keyToUrl(key: string): string {
-  return `https://quizlord-dev-uploads.demery.net/${key}`;
+  return `${process.env.FILE_ACCESS_BASE_URL}/${key}`;
 }
 
 export function createKey(resourceId: string, fileName: string) {
