@@ -1,6 +1,6 @@
 import knex, { Knex } from "knex";
 import { types } from "pg";
-import { QuizState, QuizType } from "./models";
+import { QuizState, QuizType } from "../models";
 
 export interface QuizPersistence {
   id: string;
@@ -70,6 +70,14 @@ class Persistence {
         hasMoreRows: false,
       };
     }
+  }
+
+  async getQuizById({ id }: { id: string }) {
+    const quiz = await this.#knexInstance<QuizPersistence>("quiz")
+      .first()
+      .where("id", "=", id);
+    if (!quiz) throw new Error(`No quiz found with id ${id}`);
+    return quiz;
   }
 
   async getQuizByImageKey(

@@ -5,7 +5,7 @@ import {
   DeleteMessageCommand,
 } from "@aws-sdk/client-sqs";
 
-import { persistence } from "./persistence";
+import { persistence } from "./persistence/persistence";
 
 const client = new SQSClient({ region: process.env.AWS_REGION });
 
