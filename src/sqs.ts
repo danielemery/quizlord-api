@@ -29,8 +29,7 @@ export async function subscribeToFileUploads() {
 }
 
 interface S3MessageContent {
-  Records: S3MessageContentRecord[];
-  Event: string;
+  Records?: S3MessageContentRecord[];
 }
 
 interface S3MessageContentRecord {
@@ -49,12 +48,10 @@ async function processMessage(message: Message) {
     const messageBody = JSON.parse(message.Body);
     if (messageBody.Message) {
       const messageData: S3MessageContent = JSON.parse(messageBody.Message);
-      if (messageData.Event === "ObjectCreated:Put") {
+      if (messageData.Records) {
         await Promise.all(
           messageData.Records.map((record) => processUploadedItem(record))
         );
-      } else {
-        console.warn("Unexpected inner message body type");
       }
     } else {
       console.warn(`Unexpected empty inner message body`, message);
@@ -73,6 +70,9 @@ async function processMessage(message: Message) {
 
 async function processUploadedItem(record: S3MessageContentRecord) {
   console.log("Processing uploaded item");
+  if (record.eventName !== "ObjectCreated:Put") {
+    console.warn(`Unexpected event name <${record.eventName}>`);
+  }
   const key = record.s3.object.key;
   const quiz = await persistence.getQuizByImageKey(key);
   if (quiz) {

@@ -3,19 +3,26 @@ import { persistence, QuizPersistence } from "../persistence/persistence";
 import { v4 as uuidv4 } from "uuid";
 import { createKey, generateSignedUploadUrl, keyToUrl } from "../s3";
 import { base64Decode, base64Encode } from "./helpers";
+import { QuizlordContext } from "..";
 
 function quizPersistenceToQuiz(quiz: QuizPersistence): Quiz {
-  const { imageKey, ...quizWithoutImageKey } = quiz;
+  const { image_key, created_at, created_by, ...quizWithoutImageKey } = quiz;
   return {
     ...quizWithoutImageKey,
-    imageLink: keyToUrl(imageKey),
+    ...(quizWithoutImageKey.state !== "PENDING_UPLOAD" && {
+      imageLink: keyToUrl(image_key),
+    }),
+    uploadedAt: created_at,
+    uploadedBy: created_by,
   };
 }
 
 export async function quizzes(
   _: any,
-  { first = 10, after }: { first: number; after?: string }
+  { first = 10, after }: { first: number; after?: string },
+  context: QuizlordContext
 ) {
+  console.log(context);
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getQuizzes({
     afterId,
@@ -36,15 +43,22 @@ export async function quizzes(
   return result;
 }
 
-export async function quiz(_: any, { id }: { id: string }) {
+export async function quiz(
+  _: any,
+  { id }: { id: string },
+  context: QuizlordContext
+) {
+  console.log(context);
   const quiz = await persistence.getQuizById({ id });
   return quizPersistenceToQuiz(quiz);
 }
 
 export async function createQuiz(
   _: any,
-  { type, date, fileName }: { type: QuizType; date: Date; fileName: string }
+  { type, date, fileName }: { type: QuizType; date: Date; fileName: string },
+  context: QuizlordContext
 ): Promise<{ quiz: Quiz; uploadLink: string }> {
+  console.log(context);
   const uuid = uuidv4();
   const fileKey = createKey(uuid, fileName);
   const [createdQuiz, uploadLink] = await Promise.all([
@@ -53,13 +67,14 @@ export async function createQuiz(
       date,
       type,
       state: "PENDING_UPLOAD",
-      imageKey: fileKey,
+      image_key: fileKey,
+      created_at: new Date(),
+      created_by: context.email,
     }),
     generateSignedUploadUrl(fileKey),
   ]);
-  const { imageKey: _imageKey, ...quizWithoutImageKey } = createdQuiz;
   return {
-    quiz: quizWithoutImageKey,
+    quiz: quizPersistenceToQuiz(createdQuiz),
     uploadLink,
   };
 }

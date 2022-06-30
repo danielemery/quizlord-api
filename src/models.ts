@@ -7,4 +7,6 @@ export interface Quiz {
   state: QuizState;
   date: Date;
   imageLink?: string;
+  uploadedAt: Date;
+  uploadedBy: string;
 }

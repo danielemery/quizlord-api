@@ -7,7 +7,9 @@ export interface QuizPersistence {
   type: QuizType;
   state: QuizState;
   date: Date;
-  imageKey: string;
+  image_key: string;
+  created_at: Date;
+  created_by: string;
 }
 
 export interface PersistenceResult<T> {
@@ -84,7 +86,7 @@ class Persistence {
     imageKey: string
   ): Promise<QuizPersistence | undefined> {
     return this.#knexInstance<QuizPersistence>("quiz")
-      .where("imageKey", "=", imageKey)
+      .where("image_key", "=", imageKey)
       .first();
   }
 

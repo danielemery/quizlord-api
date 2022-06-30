@@ -9,11 +9,11 @@ export async function up(knex: Knex): Promise<void> {
     const states: QuizState[] = ["PENDING_UPLOAD", "READY"];
     table.enu("state", states).notNullable();
     table.date("date").notNullable();
-    table.string("imageKey");
+    table.string("image_key");
     table.unique(["date", "type"], { indexName: "quiz_uq_date_type" });
   });
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable("quizlord.quiz");
+  await knex.schema.dropTable("quiz");
 }

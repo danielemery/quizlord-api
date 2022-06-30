@@ -33,6 +33,10 @@ const resolvers = {
   },
 };
 
+export interface QuizlordContext {
+  email: string;
+}
+
 async function initialise() {
   const server = new ApolloServer({
     typeDefs,
@@ -43,12 +47,13 @@ async function initialise() {
 
       const sanitisedToken = token.replace("Bearer ", "");
 
-      // Try to retrieve a user with the token
       const jwt = await verifyToken(sanitisedToken);
 
-      return {
-        authJwt: jwt,
+      const context: QuizlordContext = {
+        email: (jwt as any)["https://dev.quizlord.net/email"] as string,
       };
+
+      return context;
     },
   });
 

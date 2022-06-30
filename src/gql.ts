@@ -25,6 +25,8 @@ const typeDefs = gql`
     state: QuizState!
     date: Date!
     imageLink: String
+    uploadedAt: Date!
+    uploadedBy: String!
   }
 
   type QuizEdge {
