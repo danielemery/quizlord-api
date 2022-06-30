@@ -5,6 +5,7 @@ import { persistence, QuizPersistence } from "./persistence";
 import { v4 as uuidv4 } from "uuid";
 import { createKey, generateSignedUploadUrl, keyToUrl } from "./s3";
 import { subscribeToFileUploads } from "./sqs";
+import { verifyToken } from "./auth";
 
 const typeDefs = gql`
   scalar Date
@@ -153,6 +154,18 @@ async function initialise() {
     typeDefs,
     resolvers,
     csrfPrevention: true,
+    context: async ({ req }) => {
+      const token = req.headers.authorization || "";
+
+      const sanitisedToken = token.replace("Bearer ", "");
+
+      // Try to retrieve a user with the token
+      const jwt = await verifyToken(sanitisedToken);
+
+      return {
+        authJwt: jwt,
+      };
+    },
   });
 
   subscribeToFileUploads();
