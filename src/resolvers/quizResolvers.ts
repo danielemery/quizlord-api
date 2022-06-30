@@ -22,7 +22,6 @@ export async function quizzes(
   { first = 10, after }: { first: number; after?: string },
   context: QuizlordContext
 ) {
-  console.log(context);
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getQuizzes({
     afterId,
@@ -48,7 +47,6 @@ export async function quiz(
   { id }: { id: string },
   context: QuizlordContext
 ) {
-  console.log(context);
   const quiz = await persistence.getQuizById({ id });
   return quizPersistenceToQuiz(quiz);
 }
@@ -58,7 +56,6 @@ export async function createQuiz(
   { type, date, fileName }: { type: QuizType; date: Date; fileName: string },
   context: QuizlordContext
 ): Promise<{ quiz: Quiz; uploadLink: string }> {
-  console.log(context);
   const uuid = uuidv4();
   const fileKey = createKey(uuid, fileName);
   const [createdQuiz, uploadLink] = await Promise.all([
