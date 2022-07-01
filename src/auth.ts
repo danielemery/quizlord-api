@@ -4,8 +4,10 @@ import jwt, {
   SigningKeyCallback,
   VerifyOptions,
 } from "jsonwebtoken";
+import config from './config';
+
 var client = jwksClient({
-  jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
+  jwksUri: `https://${config.AUTH0_DOMAIN}/.well-known/jwks.json`,
 });
 
 function getKey(header: JwtHeader, callback: SigningKeyCallback) {
@@ -22,8 +24,8 @@ function getKey(header: JwtHeader, callback: SigningKeyCallback) {
 
 const options: VerifyOptions = {
   algorithms: ["RS256"],
-  audience: process.env.AUTH0_AUDIENCE,
-  issuer: `https://${process.env.AUTH0_DOMAIN}/`,
+  audience: config.AUTH0_AUDIENCE,
+  issuer: `https://${config.AUTH0_DOMAIN}/`,
 };
 
 export async function verifyToken(

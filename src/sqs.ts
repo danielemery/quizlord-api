@@ -4,19 +4,20 @@ import {
   Message,
   DeleteMessageCommand,
 } from "@aws-sdk/client-sqs";
+import config from "./config";
 
 import { persistence } from "./persistence/persistence";
 
-const client = new SQSClient({ region: process.env.AWS_REGION });
+const client = new SQSClient({ region: config.AWS_REGION });
 
 export async function subscribeToFileUploads() {
   while (true) {
     console.log(
-      `Polling ${process.env.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`
+      `Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`
     );
     const result = await client.send(
       new ReceiveMessageCommand({
-        QueueUrl: process.env.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+        QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
         WaitTimeSeconds: 10,
       })
     );
@@ -62,7 +63,7 @@ async function processMessage(message: Message) {
 
   await client.send(
     new DeleteMessageCommand({
-      QueueUrl: process.env.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+      QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
       ReceiptHandle: message.ReceiptHandle,
     })
   );

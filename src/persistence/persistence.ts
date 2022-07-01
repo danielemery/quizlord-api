@@ -1,5 +1,6 @@
 import knex, { Knex } from "knex";
 import { types } from "pg";
+import config from "../config";
 import { QuizState, QuizType } from "../models";
 
 export interface QuizPersistence {
@@ -27,12 +28,10 @@ class Persistence {
   #knexInstance: Knex;
 
   constructor() {
-    console.log(
-      `Connecting to database with ${process.env.DB_CONNECTION_STRING}`
-    );
+    console.log(`Connecting to database`);
     this.#knexInstance = knex({
       client: "postgres",
-      connection: process.env.DB_CONNECTION_STRING,
+      connection: config.DB_CONNECTION_STRING,
     });
     this.#knexInstance.raw("select 1+1 as result").catch((err) => {
       console.log(err);
