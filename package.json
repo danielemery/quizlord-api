@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "doppler run -- nodemon src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo 'Test not yet implemented'",
     "db:migrate": "doppler run -- knex migrate:latest",
     "db:rollback": "doppler run -- knex migrate:rollback"
   },

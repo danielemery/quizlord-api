@@ -1,0 +1,106 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/node:16.15
+    steps:
+      - checkout
+      - run:
+          name: Install Packages
+          command: |
+            npm ci
+      - run:
+          name: Run Unit Tests
+          command: |
+            npm t
+      - run:
+          name: Build
+          command: |
+            npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/*
+            - migrations/*
+            - knexfile.ts
+            - Dockerfile
+            - .dockerignore
+            - package*.json
+
+  publish:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Setup Environment Variables
+          command: |
+            REGISTRY=$DOCKER_REGISTRY_URL/$DOCKER_REPOSITORY_API
+            echo "export REGISTRY=$REGISTRY" >> $BASH_ENV
+            TAG=$CIRCLE_TAG
+            echo $TAG
+            echo "export TAG=$TAG" >> $BASH_ENV
+      - run:
+          name: Run Docker Build
+          command: |
+            echo $REGISTRY:$TAG | base64
+            docker build -t $REGISTRY:$TAG .
+      - run:
+          name: Push Docker Image
+          command: |
+            echo $CR_PAT | docker login $DOCKER_REGISTRY_URL -u $DOCKER_USERNAME --password-stdin
+            docker push $REGISTRY:$TAG
+  publish-latest:
+    machine: true
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Setup Environment Variables
+          command: |
+            REGISTRY=$DOCKER_REGISTRY_URL/$DOCKER_REPOSITORY_API
+            echo $REGISTRY
+            echo "export REGISTRY=$REGISTRY" >> $BASH_ENV
+            TAG=$CIRCLE_TAG
+            echo $TAG
+            echo "export TAG=$TAG" >> $BASH_ENV
+      - run:
+          name: Run Docker Build
+          command: |
+            docker build -t $REGISTRY:$TAG .
+            docker tag $REGISTRY:$TAG $REGISTRY:latest
+      - run:
+          name: Push Docker Image
+          command: |
+            echo $CR_PAT | docker login $DOCKER_REGISTRY_URL -u $DOCKER_USERNAME --password-stdin
+            docker push $REGISTRY:$TAG
+            docker push $REGISTRY:latest
+workflows:
+  version: 2
+  ci:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only: /.*/
+
+      - publish:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /v([0-9])*.([0-9])*.([0-9])*-.*/
+            branches:
+              ignore: /.*/
+          context: quizlord
+
+      - publish-latest:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /v([0-9])*.([0-9])*.([0-9])*/
+            branches:
+              ignore: /.*/
+          context: quizlord
