@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  progressDeadlineSeconds: 60
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  replicas: 1
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          image: {{ .Values.api.registry }}:{{ .Values.api.version }}
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 50m
+              memory: 80Mi
+          ports:
+            - name: http-web
+              containerPort: 80
+          env:
+            - name: API_VERSION
+              value: {{ .Values.api.version | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.api.dopplerSecretName }}
+      imagePullSecrets:
+        - name: {{ .Values.docker.registrySecretName }}
