@@ -45,6 +45,7 @@ async function initialise() {
     csrfPrevention: true,
     cors: {
       origin: [config.CLIENT_URL, "https://studio.apollographql.com"],
+      credentials: true,
     },
     context: async ({ req }) => {
       const token = req.headers.authorization || "";
