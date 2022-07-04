@@ -31,7 +31,10 @@ class Persistence {
     console.log(`Connecting to database`);
     this.#knexInstance = knex({
       client: "postgres",
-      connection: config.DB_CONNECTION_STRING,
+      connection: {
+        connectionString: config.DB_CONNECTION_STRING,
+        ssl: { rejectUnauthorized: false },
+      },
     });
     this.#knexInstance.raw("select 1+1 as result").catch((err) => {
       console.log(err);

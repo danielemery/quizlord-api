@@ -16,7 +16,10 @@ const config: { [key: string]: Knex.Config } = {
 
   staging: {
     client: "postgresql",
-    connection: process.env.DB_CONNECTION_STRING,
+    connection: {
+      connectionString: process.env.DB_CONNECTION_STRING,
+      ssl: { rejectUnauthorized: false },
+    },
     pool: {
       min: 2,
       max: 10,
@@ -28,7 +31,10 @@ const config: { [key: string]: Knex.Config } = {
 
   production: {
     client: "postgresql",
-    connection: process.env.DB_CONNECTION_STRING,
+    connection: {
+      connectionString: process.env.DB_CONNECTION_STRING,
+      ssl: { rejectUnauthorized: false },
+    },
     pool: {
       min: 2,
       max: 10,
