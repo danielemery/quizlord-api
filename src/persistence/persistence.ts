@@ -33,7 +33,7 @@ class Persistence {
       client: "postgres",
       connection: {
         connectionString: config.DB_CONNECTION_STRING,
-        ssl: { rejectUnauthorized: false },
+        ...(config.NODE_ENV !== 'development' && { ssl: { rejectUnauthorized: false }, }),
       },
     });
     this.#knexInstance.raw("select 1+1 as result").catch((err) => {
