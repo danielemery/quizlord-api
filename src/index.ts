@@ -55,7 +55,7 @@ async function initialise() {
       const jwt = await verifyToken(sanitisedToken);
 
       const context: QuizlordContext = {
-        email: (jwt as any)["https://dev.quizlord.net/email"] as string,
+        email: (jwt as any)[`${config.CLIENT_URL}/email`] as string,
       };
 
       return context;
