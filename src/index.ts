@@ -4,6 +4,7 @@ import { subscribeToFileUploads } from "./sqs";
 import { verifyToken } from "./auth";
 import { createQuiz, quiz, quizzes } from "./resolvers/quizResolvers";
 import typeDefs from "./gql";
+import config from "./config";
 
 const dateScalar = new GraphQLScalarType({
   name: "Date",
@@ -42,6 +43,9 @@ async function initialise() {
     typeDefs,
     resolvers,
     csrfPrevention: true,
+    cors: {
+      origin: [config.CLIENT_URL, "https://studio.apollographql.com"],
+    },
     context: async ({ req }) => {
       const token = req.headers.authorization || "";
 

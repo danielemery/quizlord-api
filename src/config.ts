@@ -1,6 +1,7 @@
 import Joi from "joi";
 
 interface QuizlordConfig {
+  CLIENT_URL: string;
   DB_CONNECTION_STRING: string;
   AUTH0_AUDIENCE: string;
   AUTH0_DOMAIN: string;
@@ -12,6 +13,7 @@ interface QuizlordConfig {
 
 const schema = Joi.object<QuizlordConfig>()
   .keys({
+    CLIENT_URL: Joi.string().required(),
     DB_CONNECTION_STRING: Joi.string().uri().required(),
     AUTH0_DOMAIN: Joi.string().required(),
     AUTH0_AUDIENCE: Joi.string().uri().required(),
