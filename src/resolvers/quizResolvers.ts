@@ -47,7 +47,8 @@ export async function quizzes(
   context: QuizlordContext
 ) {
   const afterId = after ? base64Decode(after) : undefined;
-  const { data, hasMoreRows } = await persistence.getQuizzes({
+  const { data, hasMoreRows } = await persistence.getQuizzesWithMyResults({
+    userEmail: context.email,
     afterId,
     limit: first,
   });
@@ -71,7 +72,10 @@ export async function quiz(
   { id }: { id: string },
   context: QuizlordContext
 ) {
-  const quiz = await persistence.getQuizById({ id });
+  const quiz = await persistence.getQuizByIdWithMyResults({
+    id,
+    userEmail: context.email,
+  });
   return quizPersistenceToQuiz(quiz);
 }
 
@@ -98,4 +102,24 @@ export async function createQuiz(
     quiz: quizPersistenceToQuiz({ ...createdQuiz, completions: [] }),
     uploadLink,
   };
+}
+
+export async function completeQuiz(
+  _: any,
+  {
+    quizId,
+    completedBy,
+    score,
+  }: { quizId: string; completedBy: string[]; score: number },
+  context: QuizlordContext
+): Promise<{ completion: QuizCompletion }> {
+  const uuid = uuidv4();
+  const completion = await persistence.createQuizCompletion(
+    quizId,
+    uuid,
+    new Date(),
+    completedBy,
+    score
+  );
+  return { completion: quizCompletionPersistenceToQuizCompletion(completion) };
 }

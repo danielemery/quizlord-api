@@ -2,7 +2,12 @@ import { ApolloServer } from "apollo-server";
 import { GraphQLScalarType, Kind } from "graphql";
 import { subscribeToFileUploads } from "./sqs";
 import { verifyToken } from "./auth";
-import { createQuiz, quiz, quizzes } from "./resolvers/quizResolvers";
+import {
+  createQuiz,
+  quiz,
+  quizzes,
+  completeQuiz,
+} from "./resolvers/quizResolvers";
 import typeDefs from "./gql";
 import config from "./config";
 
@@ -31,6 +36,7 @@ const resolvers = {
   },
   Mutation: {
     createQuiz,
+    completeQuiz,
   },
 };
 

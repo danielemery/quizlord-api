@@ -66,7 +66,7 @@ const typeDefs = gql`
       date: Date!
       fileName: String!
     ): CreateQuizResult
-    completeQuiz(quizId: String!, completedBy: [String]!, score: Int!): CompleteQuizResult
+    completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
   }
 `;
 

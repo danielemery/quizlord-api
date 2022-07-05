@@ -21,7 +21,15 @@ class Persistence {
     this.#prisma = new PrismaClient();
   }
 
-  async getQuizzes({ afterId, limit }: { afterId?: string; limit: number }) {
+  async getQuizzesWithMyResults({
+    userEmail,
+    afterId,
+    limit,
+  }: {
+    userEmail: string;
+    afterId?: string;
+    limit: number;
+  }) {
     const result = await this.#prisma.quiz.findMany({
       take: limit + 1,
       ...(afterId && {
@@ -32,12 +40,26 @@ class Persistence {
       orderBy: {
         date: "desc",
       },
-      include: {
+      select: {
         completions: {
           include: {
             completedBy: true,
           },
+          where: {
+            completedBy: {
+              some: {
+                userEmail,
+              },
+            },
+          },
         },
+        date: true,
+        id: true,
+        imageKey: true,
+        state: true,
+        type: true,
+        uploadedAt: true,
+        uploadedBy: true,
       },
     });
 
@@ -54,17 +76,37 @@ class Persistence {
     }
   }
 
-  async getQuizById({ id }: { id: string }) {
+  async getQuizByIdWithMyResults({
+    id,
+    userEmail,
+  }: {
+    id: string;
+    userEmail: string;
+  }) {
     return this.#prisma.quiz.findFirstOrThrow({
       where: {
         id,
       },
-      include: {
+      select: {
         completions: {
           include: {
             completedBy: true,
           },
+          where: {
+            completedBy: {
+              some: {
+                userEmail,
+              },
+            },
+          },
         },
+        date: true,
+        id: true,
+        imageKey: true,
+        state: true,
+        type: true,
+        uploadedAt: true,
+        uploadedBy: true,
       },
     });
   }
@@ -92,6 +134,30 @@ class Persistence {
     return this.#prisma.quiz.create({
       data: quiz,
     });
+  }
+
+  async createQuizCompletion(
+    quizId: string,
+    completionId: string,
+    completedAt: Date,
+    completedBy: string[],
+    score: number
+  ) {
+    const result = await this.#prisma.quizCompletion.create({
+      data: {
+        completedAt,
+        id: completionId,
+        score,
+        completedBy: {
+          create: completedBy.map((userEmail) => ({ userEmail })),
+        },
+        quizId,
+      },
+      include: {
+        completedBy: true,
+      },
+    });
+    return result;
   }
 }
 
