@@ -27,6 +27,7 @@ const typeDefs = gql`
     imageLink: String
     uploadedAt: Date!
     uploadedBy: String!
+    myCompletions: [QuizCompletion]
   }
 
   type QuizEdge {
@@ -44,9 +45,19 @@ const typeDefs = gql`
     uploadLink: String!
   }
 
+  type QuizCompletion {
+    completedAt: Date!
+    completedBy: [String]!
+    score: Float!
+  }
+
+  type CompleteQuizResult {
+    completion: QuizCompletion
+  }
+
   type Query {
     quizzes(first: Int, after: String): QuizConnection
-    quiz(id: String): Quiz
+    quiz(id: String!): Quiz
   }
 
   type Mutation {
@@ -55,6 +66,7 @@ const typeDefs = gql`
       date: Date!
       fileName: String!
     ): CreateQuizResult
+    completeQuiz(quizId: String!, completedBy: [String]!, score: Int!): CompleteQuizResult
   }
 `;
 

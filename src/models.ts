@@ -1,6 +1,12 @@
 export type QuizType = "SHARK" | "BRAINWAVES";
 export type QuizState = "PENDING_UPLOAD" | "READY";
 
+export interface QuizCompletion {
+  completedAt: Date;
+  completedBy: string[];
+  score: number;
+}
+
 export interface Quiz {
   id: string;
   type: QuizType;
@@ -9,4 +15,5 @@ export interface Quiz {
   imageLink?: string;
   uploadedAt: Date;
   uploadedBy: string;
+  myCompletions: QuizCompletion[];
 }

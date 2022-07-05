@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_CONNECTION_STRING")
+}
+
+enum QuizType {
+  BRAINWAVES
+  SHARK
+
+  @@map("quiz_type")
+}
+
+enum QuizState {
+  PENDING_UPLOAD
+  READY
+
+  @@map("quiz_state")
+}
+
+model Quiz {
+  id         String    @id
+  type       QuizType
+  state      QuizState
+  date       DateTime  @db.Date
+  imageKey   String?   @map("image_key")
+  uploadedAt DateTime  @map("uploaded_at")
+  uploadedBy String    @map("uploaded_by")
+
+  completions QuizCompletion[]
+
+  @@unique(fields: [date, type])
+  @@map("quiz")
+}
+
+model QuizCompletion {
+  id          String   @id
+  quizId      String   @map("quiz_id")
+  completedAt DateTime @map("completed_at")
+  score       Decimal
+
+  quiz        Quiz                 @relation(fields: [quizId], references: [id])
+  completedBy QuizCompletionUser[]
+  @@map("quiz_completion")
+}
+
+model QuizCompletionUser {
+  quizCompletionId String @map("quiz_completion_id")
+  userEmail        String @map("user_email")
+
+  quizCompletion QuizCompletion @relation(fields: [quizCompletionId], references: [id])
+
+  @@id([quizCompletionId, userEmail])
+  @@map("quiz_completion_user")
+}

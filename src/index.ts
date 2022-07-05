@@ -72,7 +72,8 @@ initialise()
   .then(() => {
     console.log("Server initialised sucessfully.");
   })
-  .catch(() => {
-    console.log("Server encountered error initialising and had to shut down");
+  .catch((err) => {
+    console.error("Server encountered error initialising and had to shut down");
+    console.error(err);
     process.exit(1);
   });
