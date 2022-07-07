@@ -12,8 +12,18 @@ export interface Quiz {
   type: QuizType;
   state: QuizState;
   date: Date;
-  imageLink?: string;
   uploadedAt: Date;
   uploadedBy: string;
   myCompletions: QuizCompletion[];
+}
+
+export interface QuizDetails {
+  id: string;
+  type: QuizType;
+  state: QuizState;
+  date: Date;
+  imageLink?: string;
+  uploadedAt: Date;
+  uploadedBy: string;
+  completions: QuizCompletion[];
 }

@@ -24,10 +24,20 @@ const typeDefs = gql`
     type: QuizType!
     state: QuizState!
     date: Date!
-    imageLink: String
     uploadedAt: Date!
     uploadedBy: String!
     myCompletions: [QuizCompletion]
+  }
+
+  type QuizDetails {
+    id: String!
+    type: QuizType!
+    state: QuizState!
+    date: Date!
+    imageLink: String
+    uploadedAt: Date!
+    uploadedBy: String!
+    completions: [QuizCompletion]
   }
 
   type QuizEdge {
@@ -57,7 +67,7 @@ const typeDefs = gql`
 
   type Query {
     quizzes(first: Int, after: String): QuizConnection
-    quiz(id: String!): Quiz
+    quiz(id: String!): QuizDetails
   }
 
   type Mutation {

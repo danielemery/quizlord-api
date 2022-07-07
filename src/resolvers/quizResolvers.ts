@@ -1,4 +1,4 @@
-import { Quiz, QuizType, QuizCompletion } from "../models";
+import { Quiz, QuizDetails, QuizType, QuizCompletion } from "../models";
 import { persistence } from "../persistence/persistence";
 import { v4 as uuidv4 } from "uuid";
 import { createKey, generateSignedUploadUrl, keyToUrl } from "../s3";
@@ -23,7 +23,7 @@ function quizCompletionPersistenceToQuizCompletion(
   };
 }
 
-function quizPersistenceToQuiz(
+function quizPersistenceWithMyCompletionsToQuiz(
   quiz: QuizPersistence & {
     completions: (QuizCompletionPersistence & {
       completedBy: QuizCompletionUserPersistence[];
@@ -33,11 +33,25 @@ function quizPersistenceToQuiz(
   const { imageKey, completions, ...quizWithoutImageKey } = quiz;
   return {
     ...quizWithoutImageKey,
+    myCompletions: completions.map(quizCompletionPersistenceToQuizCompletion),
+  };
+}
+
+function quizPersistenceWithCompletionsToQuizDetails(
+  quiz: QuizPersistence & {
+    completions: (QuizCompletionPersistence & {
+      completedBy: QuizCompletionUserPersistence[];
+    })[];
+  }
+): QuizDetails {
+  const { imageKey, completions, ...quizWithoutImageKey } = quiz;
+  return {
+    ...quizWithoutImageKey,
     ...(quizWithoutImageKey.state !== "PENDING_UPLOAD" &&
       imageKey !== null && {
         imageLink: keyToUrl(imageKey),
       }),
-    myCompletions: completions.map(quizCompletionPersistenceToQuizCompletion),
+    completions: completions.map(quizCompletionPersistenceToQuizCompletion),
   };
 }
 
@@ -53,7 +67,7 @@ export async function quizzes(
     limit: first,
   });
   const edges = data.map((quiz) => ({
-    node: quizPersistenceToQuiz(quiz),
+    node: quizPersistenceWithMyCompletionsToQuiz(quiz),
     cursor: base64Encode(quiz.id),
   }));
   const result = {
@@ -72,11 +86,11 @@ export async function quiz(
   { id }: { id: string },
   context: QuizlordContext
 ) {
-  const quiz = await persistence.getQuizByIdWithMyResults({
+  const quiz = await persistence.getQuizByIdWithResults({
     id,
     userEmail: context.email,
   });
-  return quizPersistenceToQuiz(quiz);
+  return quizPersistenceWithCompletionsToQuizDetails(quiz);
 }
 
 export async function createQuiz(
@@ -99,7 +113,7 @@ export async function createQuiz(
     generateSignedUploadUrl(fileKey),
   ]);
   return {
-    quiz: quizPersistenceToQuiz({ ...createdQuiz, completions: [] }),
+    quiz: quizPersistenceWithMyCompletionsToQuiz({ ...createdQuiz, completions: [] }),
     uploadLink,
   };
 }
