@@ -19,6 +19,10 @@ class Persistence {
   constructor() {
     console.log(`Connecting to database`);
     this.#prisma = new PrismaClient();
+    this.#prisma.$queryRaw`SELECT 1`.catch((dbError) => {
+      console.log(dbError);
+      process.exit(1);
+    });
   }
 
   async getQuizzesWithMyResults({
