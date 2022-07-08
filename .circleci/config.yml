@@ -22,7 +22,7 @@ jobs:
           root: .
           paths:
             - dist/*
-            - migrations/*
+            - prisma/*
             - Dockerfile
             - .dockerignore
             - package*.json

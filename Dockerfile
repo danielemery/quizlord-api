@@ -5,6 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY ./dist/* ./
+COPY prisma ./
 
 RUN npm ci --omit=dev
 
