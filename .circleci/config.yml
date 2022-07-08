@@ -21,9 +21,8 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - dist/*
-            - migrations/*
-            - knexfile.ts
+            - dist
+            - prisma
             - Dockerfile
             - .dockerignore
             - package*.json

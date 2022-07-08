@@ -1,17 +1,6 @@
-import knex, { Knex } from "knex";
 import { types } from "pg";
-import config from "../config";
-import { QuizState, QuizType } from "../models";
 
-export interface QuizPersistence {
-  id: string;
-  type: QuizType;
-  state: QuizState;
-  date: Date;
-  image_key: string;
-  created_at: Date;
-  created_by: string;
-}
+import { PrismaClient, Quiz as QuizPersistence } from "@prisma/client";
 
 export interface PersistenceResult<T> {
   data: T[];
@@ -25,44 +14,61 @@ const parseDate = (value: string) => {
 types.setTypeParser(DATE_OID, parseDate);
 
 class Persistence {
-  #knexInstance: Knex;
+  #prisma: PrismaClient;
 
   constructor() {
     console.log(`Connecting to database`);
-    this.#knexInstance = knex({
-      client: "postgres",
-      connection: {
-        connectionString: config.DB_CONNECTION_STRING,
-        ...(config.NODE_ENV !== 'development' && { ssl: { rejectUnauthorized: false }, }),
-      },
-    });
-    this.#knexInstance.raw("select 1+1 as result").catch((err) => {
-      console.log(err);
-      process.exit(1);
-    });
+    this.#prisma = new PrismaClient();
+    this.#prisma.$queryRaw`SELECT 1`
+      .then(() => console.log("Connected to database successfully"))
+      .catch((dbError) => {
+        console.log(dbError);
+        process.exit(1);
+      });
   }
 
-  async getQuizzes({
+  async getQuizzesWithMyResults({
+    userEmail,
     afterId,
     limit,
   }: {
+    userEmail: string;
     afterId?: string;
     limit: number;
-  }): Promise<PersistenceResult<QuizPersistence>> {
-    const queryBuilder = this.#knexInstance<QuizPersistence>("quiz")
-      .select()
-      .limit(limit)
-      .orderBy("date", "desc");
+  }) {
+    const result = await this.#prisma.quiz.findMany({
+      take: limit + 1,
+      ...(afterId && {
+        cursor: {
+          id: afterId,
+        },
+      }),
+      orderBy: {
+        date: "desc",
+      },
+      select: {
+        completions: {
+          include: {
+            completedBy: true,
+          },
+          where: {
+            completedBy: {
+              some: {
+                userEmail,
+              },
+            },
+          },
+        },
+        date: true,
+        id: true,
+        imageKey: true,
+        state: true,
+        type: true,
+        uploadedAt: true,
+        uploadedBy: true,
+      },
+    });
 
-    if (afterId) {
-      const row = await this.#knexInstance<QuizPersistence>("quiz")
-        .first()
-        .where({ id: afterId });
-      if (row) {
-        queryBuilder.where("date", ">", row.date);
-      }
-    }
-    const result = await queryBuilder;
     if (result.length > limit) {
       return {
         data: result.slice(0, limit),
@@ -76,31 +82,68 @@ class Persistence {
     }
   }
 
-  async getQuizById({ id }: { id: string }) {
-    const quiz = await this.#knexInstance<QuizPersistence>("quiz")
-      .first()
-      .where("id", "=", id);
-    if (!quiz) throw new Error(`No quiz found with id ${id}`);
-    return quiz;
+  async getQuizByIdWithResults({ id }: { id: string; userEmail: string }) {
+    return this.#prisma.quiz.findFirstOrThrow({
+      where: {
+        id,
+      },
+      include: {
+        completions: {
+          include: {
+            completedBy: true,
+          },
+        },
+      },
+    });
   }
 
-  async getQuizByImageKey(
-    imageKey: string
-  ): Promise<QuizPersistence | undefined> {
-    return this.#knexInstance<QuizPersistence>("quiz")
-      .where("image_key", "=", imageKey)
-      .first();
+  async getQuizByImageKey(imageKey: string) {
+    return this.#prisma.quiz.findFirst({
+      where: {
+        imageKey,
+      },
+    });
   }
 
   async markQuizReady(id: string) {
-    await this.#knexInstance<QuizPersistence>("quiz")
-      .update({ state: "READY" })
-      .where("id", "=", id);
+    return this.#prisma.quiz.update({
+      data: {
+        state: "READY",
+      },
+      where: {
+        id,
+      },
+    });
   }
 
   async createQuiz(quiz: QuizPersistence): Promise<QuizPersistence> {
-    await this.#knexInstance("quiz").insert<QuizPersistence>(quiz);
-    return quiz;
+    return this.#prisma.quiz.create({
+      data: quiz,
+    });
+  }
+
+  async createQuizCompletion(
+    quizId: string,
+    completionId: string,
+    completedAt: Date,
+    completedBy: string[],
+    score: number
+  ) {
+    const result = await this.#prisma.quizCompletion.create({
+      data: {
+        completedAt,
+        id: completionId,
+        score,
+        completedBy: {
+          create: completedBy.map((userEmail) => ({ userEmail })),
+        },
+        quizId,
+      },
+      include: {
+        completedBy: true,
+      },
+    });
+    return result;
   }
 }
 

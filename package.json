@@ -1,14 +1,14 @@
 {
   "name": "@quizlord/api",
-  "version": "0.0.6",
+  "version": "0.1.0-prisma.7",
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "doppler run -- nodemon src/index.ts",
+    "start": "prisma generate && doppler run -- nodemon src/index.ts",
     "test": "echo 'Test not yet implemented'",
-    "db:migrate": "doppler run -- knex migrate:latest",
-    "db:rollback": "doppler run -- knex migrate:rollback"
+    "db:generate": "prisma generate",
+    "db:migrate": "doppler run -- prisma migrate dev --name init"
   },
   "repository": {
     "type": "git",
@@ -24,14 +24,15 @@
     "@aws-sdk/client-s3": "^3.118.0",
     "@aws-sdk/client-sqs": "^3.118.0",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
+    "@prisma/client": "^4.0.0",
     "apollo-server": "^3.8.2",
     "axios": "^0.27.2",
     "graphql": "^16.5.0",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^2.1.4",
-    "knex": "^2.1.0",
     "pg": "^8.7.3",
+    "prisma": "^4.0.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

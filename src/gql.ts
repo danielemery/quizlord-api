@@ -24,9 +24,20 @@ const typeDefs = gql`
     type: QuizType!
     state: QuizState!
     date: Date!
+    uploadedAt: Date!
+    uploadedBy: String!
+    myCompletions: [QuizCompletion]
+  }
+
+  type QuizDetails {
+    id: String!
+    type: QuizType!
+    state: QuizState!
+    date: Date!
     imageLink: String
     uploadedAt: Date!
     uploadedBy: String!
+    completions: [QuizCompletion]
   }
 
   type QuizEdge {
@@ -53,9 +64,19 @@ const typeDefs = gql`
     uploadLink: String!
   }
 
+  type QuizCompletion {
+    completedAt: Date!
+    completedBy: [String]!
+    score: Float!
+  }
+
+  type CompleteQuizResult {
+    completion: QuizCompletion
+  }
+
   type Query {
     quizzes(first: Int, after: String): QuizConnection
-    quiz(id: String): Quiz
+    quiz(id: String!): QuizDetails
     users(first: Int, after: String): UserConnection
   }
 
@@ -65,6 +86,11 @@ const typeDefs = gql`
       date: Date!
       fileName: String!
     ): CreateQuizResult
+    completeQuiz(
+      quizId: String!
+      completedBy: [String]!
+      score: Float!
+    ): CompleteQuizResult
   }
 `;
 

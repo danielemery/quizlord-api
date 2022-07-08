@@ -2,7 +2,12 @@ import { ApolloServer } from "apollo-server";
 import { GraphQLScalarType, Kind } from "graphql";
 import { subscribeToFileUploads } from "./sqs";
 import { verifyToken } from "./auth";
-import { createQuiz, quiz, quizzes } from "./resolvers/quizResolvers";
+import {
+  createQuiz,
+  quiz,
+  quizzes,
+  completeQuiz,
+} from "./resolvers/quizResolvers";
 import typeDefs from "./gql";
 import config from "./config";
 import { users } from "./resolvers/userResolvers";
@@ -33,6 +38,7 @@ const resolvers = {
   },
   Mutation: {
     createQuiz,
+    completeQuiz,
   },
 };
 
@@ -74,7 +80,8 @@ initialise()
   .then(() => {
     console.log("Server initialised sucessfully.");
   })
-  .catch(() => {
-    console.log("Server encountered error initialising and had to shut down");
+  .catch((err) => {
+    console.error("Server encountered error initialising and had to shut down");
+    console.error(err);
     process.exit(1);
   });
