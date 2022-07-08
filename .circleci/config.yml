@@ -23,7 +23,6 @@ jobs:
           paths:
             - dist/*
             - migrations/*
-            - knexfile.ts
             - Dockerfile
             - .dockerignore
             - package*.json
