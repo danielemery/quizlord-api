@@ -6,7 +6,7 @@ spec:
   template:
     spec:
       containers:
-        - name: {{ .Release.Name }}-migration
+        - name: {{ .Release.Name }}-migration-{{ .Release.Revision }}
           image: {{ .Values.api.registry }}:{{ .Values.api.version }}
           imagePullPolicy: Always
           resources:
