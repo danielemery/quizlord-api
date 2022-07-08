@@ -19,7 +19,7 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ .Values.api.dopplerSecretName }}
-          command: ["npx", "prisma", "deploy"]
+          command: ["npx", "prisma", "migrate", "deploy"]
       imagePullSecrets:
         - name: {{ .Values.docker.registrySecretName }}
       restartPolicy: Never
