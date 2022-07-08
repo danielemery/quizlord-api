@@ -5,6 +5,7 @@ import { verifyToken } from "./auth";
 import { createQuiz, quiz, quizzes } from "./resolvers/quizResolvers";
 import typeDefs from "./gql";
 import config from "./config";
+import { users } from "./resolvers/userResolvers";
 
 const dateScalar = new GraphQLScalarType({
   name: "Date",
@@ -28,6 +29,7 @@ const resolvers = {
   Query: {
     quizzes,
     quiz,
+    users,
   },
   Mutation: {
     createQuiz,

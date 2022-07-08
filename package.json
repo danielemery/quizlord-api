@@ -25,6 +25,7 @@
     "@aws-sdk/client-sqs": "^3.118.0",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "apollo-server": "^3.8.2",
+    "axios": "^0.27.2",
     "graphql": "^16.5.0",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
