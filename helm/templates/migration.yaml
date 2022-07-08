@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migration
+spec:
+  template:
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-migration
+          image: {{ .Values.api.registry }}:{{ .Values.api.version }}
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+          env:
+            - name: API_VERSION
+              value: {{ .Values.api.version | quote }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.api.dopplerSecretName }}
+          command: ["npx", "prisma", "deploy"]
+      imagePullSecrets:
+        - name: {{ .Values.docker.registrySecretName }}
+      restartPolicy: Never
+  backoffLimit: 4
