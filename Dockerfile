@@ -4,8 +4,8 @@ ENV NODE_ENV=production
 WORKDIR /app
 
 COPY package*.json ./
-COPY ./dist/* ./
-COPY prisma ./
+COPY ./dist/ ./dist
+COPY ./prisma ./prisma
 
 RUN npm ci --omit=dev
 
