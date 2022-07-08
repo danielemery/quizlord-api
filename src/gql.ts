@@ -41,12 +41,21 @@ const typeDefs = gql`
   }
 
   type QuizEdge {
-    node: Quiz
-    cursor: String
+    node: Quiz!
+    cursor: String!
   }
 
   type QuizConnection {
     edges: [QuizEdge]!
+    pageInfo: PageInfo!
+  }
+
+  type User {
+    email: String!
+  }
+
+  type UserConnection {
+    edges: [User]!
     pageInfo: PageInfo!
   }
 
@@ -68,6 +77,7 @@ const typeDefs = gql`
   type Query {
     quizzes(first: Int, after: String): QuizConnection
     quiz(id: String!): QuizDetails
+    users(first: Int, after: String): UserConnection
   }
 
   type Mutation {
@@ -76,7 +86,11 @@ const typeDefs = gql`
       date: Date!
       fileName: String!
     ): CreateQuizResult
-    completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
+    completeQuiz(
+      quizId: String!
+      completedBy: [String]!
+      score: Float!
+    ): CompleteQuizResult
   }
 `;
 

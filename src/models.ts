@@ -27,3 +27,7 @@ export interface QuizDetails {
   uploadedBy: string;
   completions: QuizCompletion[];
 }
+
+export interface User {
+  email: string;
+}

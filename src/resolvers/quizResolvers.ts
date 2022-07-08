@@ -2,7 +2,7 @@ import { Quiz, QuizDetails, QuizType, QuizCompletion } from "../models";
 import { persistence } from "../persistence/persistence";
 import { v4 as uuidv4 } from "uuid";
 import { createKey, generateSignedUploadUrl, keyToUrl } from "../s3";
-import { base64Decode, base64Encode } from "./helpers";
+import { base64Decode, base64Encode, PagedResult } from "./helpers";
 import { QuizlordContext } from "..";
 import {
   Quiz as QuizPersistence,
@@ -57,9 +57,9 @@ function quizPersistenceWithCompletionsToQuizDetails(
 
 export async function quizzes(
   _: any,
-  { first = 10, after }: { first: number; after?: string },
+  { first = 100, after }: { first: number; after?: string },
   context: QuizlordContext
-) {
+): Promise<PagedResult<Quiz>> {
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getQuizzesWithMyResults({
     userEmail: context.email,

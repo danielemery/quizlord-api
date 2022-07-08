@@ -1,6 +1,6 @@
 {
   "name": "@quizlord/api",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "scripts": {
@@ -26,6 +26,7 @@
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "@prisma/client": "^4.0.0",
     "apollo-server": "^3.8.2",
+    "axios": "^0.27.2",
     "graphql": "^16.5.0",
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
