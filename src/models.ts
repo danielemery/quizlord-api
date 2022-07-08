@@ -10,3 +10,7 @@ export interface Quiz {
   uploadedAt: Date;
   uploadedBy: string;
 }
+
+export interface User {
+  email: string;
+}
