@@ -2,7 +2,7 @@ import { User as UserPersistence } from '@prisma/client';
 import { QuizlordContext } from '..';
 import { User, UserDetails } from '../models';
 import { persistence } from '../persistence/persistence';
-import { base64Decode, base64Encode, PagedResult } from './helpers';
+import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
 
 function userPersistenceToUser(user: UserPersistence): User {
   return {
@@ -13,7 +13,9 @@ function userPersistenceToUser(user: UserPersistence): User {
 export async function users(
   _: unknown,
   { first = 100, after }: { first: number; after?: string },
+  context: QuizlordContext,
 ): Promise<PagedResult<User>> {
+  requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getUsersWithRole({
     role: 'USER',
