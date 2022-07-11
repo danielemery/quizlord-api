@@ -13,13 +13,20 @@ import { base64Decode, base64Encode, PagedResult } from './helpers';
 
 function quizCompletionPersistenceToQuizCompletion(
   quizCompletion: QuizCompletionPersistence & {
-    completedBy: QuizCompletionUserPersistence[];
+    completedBy: (QuizCompletionUserPersistence & {
+      user: User | null;
+    })[];
   },
 ): QuizCompletion {
   const { completedBy, score, ...otherFields } = quizCompletion;
   return {
     ...otherFields,
-    completedBy: completedBy.map((user) => user.userEmail),
+    completedBy: completedBy.map((user) => {
+      if (user.user === null) {
+        throw new Error('Persistence incorrectly retrieved non-matching quizCompletion');
+      }
+      return user.user.email;
+    }),
     score: score.toNumber(),
   };
 }
@@ -43,7 +50,9 @@ function quizPersistenceWithMyCompletionsToQuiz(
 function quizPersistenceWithCompletionsToQuizDetails(
   quiz: QuizPersistence & {
     completions: (QuizCompletionPersistence & {
-      completedBy: QuizCompletionUserPersistence[];
+      completedBy: (QuizCompletionUserPersistence & {
+        user: User | null;
+      })[];
     })[];
   },
 ): QuizDetails {

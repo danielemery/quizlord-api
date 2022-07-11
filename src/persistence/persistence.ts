@@ -91,7 +91,11 @@ class Persistence {
       include: {
         completions: {
           include: {
-            completedBy: true,
+            completedBy: {
+              include: {
+                user: true,
+              },
+            },
           },
         },
       },
@@ -137,26 +141,31 @@ class Persistence {
         },
       },
     });
-    for (const userEmail of completedBy) {
-      if (users.find((user) => user.email === userEmail) === undefined) {
-        throw new Error(`Unable to find user with email ${userEmail}`);
-      }
-    }
     const result = await this.#prisma.quizCompletion.create({
       data: {
         completedAt,
         id: completionId,
         score,
         completedBy: {
-          create: completedBy.map((userEmail) => ({
-            userEmail,
-            userId: users.find((user) => user.email === userEmail)?.id,
-          })),
+          create: completedBy.map((userEmail) => {
+            const user = users.find((user) => user.email === userEmail);
+            if (!user) {
+              throw new Error(`Unable to find user with email ${userEmail}`);
+            }
+            return {
+              user,
+              userId: user.id,
+            };
+          }),
         },
         quizId,
       },
       include: {
-        completedBy: true,
+        completedBy: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
     return result;
