@@ -1,5 +1,5 @@
-export type QuizType = "SHARK" | "BRAINWAVES";
-export type QuizState = "PENDING_UPLOAD" | "READY";
+export type QuizType = 'SHARK' | 'BRAINWAVES';
+export type QuizState = 'PENDING_UPLOAD' | 'READY';
 
 export interface QuizCompletion {
   completedAt: Date;

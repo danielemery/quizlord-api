@@ -11,6 +11,10 @@ jobs:
           command: |
             npm ci
       - run:
+          name: Lint
+          command: |
+            npm run lint
+      - run:
           name: Run Unit Tests
           command: |
             npm t

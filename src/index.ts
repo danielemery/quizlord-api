@@ -1,20 +1,15 @@
-import { ApolloServer } from "apollo-server";
-import { GraphQLScalarType, Kind } from "graphql";
-import { subscribeToFileUploads } from "./sqs";
-import { verifyToken } from "./auth";
-import {
-  createQuiz,
-  quiz,
-  quizzes,
-  completeQuiz,
-} from "./resolvers/quizResolvers";
-import typeDefs from "./gql";
-import config from "./config";
-import { users } from "./resolvers/userResolvers";
+import { ApolloServer } from 'apollo-server';
+import { GraphQLScalarType, Kind } from 'graphql';
+import { verifyToken } from './auth';
+import config from './config';
+import typeDefs from './gql';
+import { createQuiz, quiz, quizzes, completeQuiz } from './resolvers/quizResolvers';
+import { users } from './resolvers/userResolvers';
+import { subscribeToFileUploads } from './sqs';
 
 const dateScalar = new GraphQLScalarType({
-  name: "Date",
-  description: "Date custom scalar type",
+  name: 'Date',
+  description: 'Date custom scalar type',
   serialize(value) {
     return (value as Date).toISOString();
   },
@@ -52,13 +47,13 @@ async function initialise() {
     resolvers,
     csrfPrevention: true,
     cors: {
-      origin: [config.CLIENT_URL, "https://studio.apollographql.com"],
+      origin: [config.CLIENT_URL, 'https://studio.apollographql.com'],
       credentials: true,
     },
     context: async ({ req }) => {
-      const token = req.headers.authorization || "";
+      const token = req.headers.authorization || '';
 
-      const sanitisedToken = token.replace("Bearer ", "");
+      const sanitisedToken = token.replace('Bearer ', '');
 
       const jwt = await verifyToken(sanitisedToken);
 
@@ -78,10 +73,10 @@ async function initialise() {
 
 initialise()
   .then(() => {
-    console.log("Server initialised sucessfully.");
+    console.log('Server initialised sucessfully.');
   })
   .catch((err) => {
-    console.error("Server encountered error initialising and had to shut down");
+    console.error('Server encountered error initialising and had to shut down');
     console.error(err);
     process.exit(1);
   });

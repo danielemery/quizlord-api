@@ -1,19 +1,19 @@
-import { Quiz, QuizDetails, QuizType, QuizCompletion } from "../models";
-import { persistence } from "../persistence/persistence";
-import { v4 as uuidv4 } from "uuid";
-import { createKey, generateSignedUploadUrl, keyToUrl } from "../s3";
-import { base64Decode, base64Encode, PagedResult } from "./helpers";
-import { QuizlordContext } from "..";
 import {
   Quiz as QuizPersistence,
   QuizCompletion as QuizCompletionPersistence,
   QuizCompletionUser as QuizCompletionUserPersistence,
-} from "@prisma/client";
+} from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
+import { QuizlordContext } from '..';
+import { Quiz, QuizDetails, QuizType, QuizCompletion } from '../models';
+import { persistence } from '../persistence/persistence';
+import { createKey, generateSignedUploadUrl, keyToUrl } from '../s3';
+import { base64Decode, base64Encode, PagedResult } from './helpers';
 
 function quizCompletionPersistenceToQuizCompletion(
   quizCompletion: QuizCompletionPersistence & {
     completedBy: QuizCompletionUserPersistence[];
-  }
+  },
 ): QuizCompletion {
   const { completedBy, score, ...otherFields } = quizCompletion;
   return {
@@ -28,9 +28,9 @@ function quizPersistenceWithMyCompletionsToQuiz(
     completions: (QuizCompletionPersistence & {
       completedBy: QuizCompletionUserPersistence[];
     })[];
-  }
+  },
 ): Quiz {
-  const { imageKey, completions, ...quizWithoutImageKey } = quiz;
+  const { imageKey: _imageKey, completions, ...quizWithoutImageKey } = quiz;
   return {
     ...quizWithoutImageKey,
     myCompletions: completions.map(quizCompletionPersistenceToQuizCompletion),
@@ -42,12 +42,12 @@ function quizPersistenceWithCompletionsToQuizDetails(
     completions: (QuizCompletionPersistence & {
       completedBy: QuizCompletionUserPersistence[];
     })[];
-  }
+  },
 ): QuizDetails {
   const { imageKey, completions, ...quizWithoutImageKey } = quiz;
   return {
     ...quizWithoutImageKey,
-    ...(quizWithoutImageKey.state !== "PENDING_UPLOAD" &&
+    ...(quizWithoutImageKey.state !== 'PENDING_UPLOAD' &&
       imageKey !== null && {
         imageLink: keyToUrl(imageKey),
       }),
@@ -56,9 +56,9 @@ function quizPersistenceWithCompletionsToQuizDetails(
 }
 
 export async function quizzes(
-  _: any,
+  _: unknown,
   { first = 100, after }: { first: number; after?: string },
-  context: QuizlordContext
+  context: QuizlordContext,
 ): Promise<PagedResult<Quiz>> {
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getQuizzesWithMyResults({
@@ -81,11 +81,7 @@ export async function quizzes(
   return result;
 }
 
-export async function quiz(
-  _: any,
-  { id }: { id: string },
-  context: QuizlordContext
-) {
+export async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext) {
   const quiz = await persistence.getQuizByIdWithResults({
     id,
     userEmail: context.email,
@@ -94,9 +90,9 @@ export async function quiz(
 }
 
 export async function createQuiz(
-  _: any,
+  _: unknown,
   { type, date, fileName }: { type: QuizType; date: Date; fileName: string },
-  context: QuizlordContext
+  context: QuizlordContext,
 ): Promise<{ quiz: Quiz; uploadLink: string }> {
   const uuid = uuidv4();
   const fileKey = createKey(uuid, fileName);
@@ -105,7 +101,7 @@ export async function createQuiz(
       id: uuid,
       date,
       type,
-      state: "PENDING_UPLOAD",
+      state: 'PENDING_UPLOAD',
       imageKey: fileKey,
       uploadedAt: new Date(),
       uploadedBy: context.email,
@@ -119,21 +115,14 @@ export async function createQuiz(
 }
 
 export async function completeQuiz(
-  _: any,
-  {
-    quizId,
-    completedBy,
-    score,
-  }: { quizId: string; completedBy: string[]; score: number },
-  context: QuizlordContext
+  _: unknown,
+  { quizId, completedBy, score }: { quizId: string; completedBy: string[]; score: number },
+  context: QuizlordContext,
 ): Promise<{ completion: QuizCompletion }> {
   const uuid = uuidv4();
-  const completion = await persistence.createQuizCompletion(
-    quizId,
-    uuid,
-    new Date(),
-    completedBy,
-    score
-  );
+  const completion = await persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
+  if (!completedBy.includes(context.email)) {
+    throw new Error('Can only enter quiz completions which you participate in.');
+  }
   return { completion: quizCompletionPersistenceToQuizCompletion(completion) };
 }

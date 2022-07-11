@@ -7,6 +7,7 @@
     "build": "tsc",
     "start": "prisma generate && doppler run -- nodemon src/index.ts",
     "test": "echo 'Test not yet implemented'",
+    "lint": "eslint .",
     "db:generate": "prisma generate",
     "db:migrate": "doppler run -- prisma migrate dev --name init"
   },
@@ -36,10 +37,18 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@dtdot/eslint-config": "^0.0.4",
+    "@trivago/prettier-plugin-sort-imports": "^3.2.0",
     "@tsconfig/node16": "^1.0.3",
     "@types/pg": "^8.6.5",
     "@types/uuid": "^8.3.4",
+    "@typescript-eslint/eslint-plugin": "^5.30.5",
+    "@typescript-eslint/parser": "^5.30.5",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "nodemon": "^2.0.16",
+    "prettier": "^2.7.1",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
   }

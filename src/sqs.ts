@@ -1,30 +1,22 @@
-import {
-  SQSClient,
-  ReceiveMessageCommand,
-  Message,
-  DeleteMessageCommand,
-} from "@aws-sdk/client-sqs";
-import config from "./config";
-
-import { persistence } from "./persistence/persistence";
+import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
+import config from './config';
+import { persistence } from './persistence/persistence';
 
 const client = new SQSClient({ region: config.AWS_REGION });
 
 export async function subscribeToFileUploads() {
+  // todo exit this loop when app entering shutdown state.
+  // eslint-disable-next-line no-constant-condition
   while (true) {
-    console.log(
-      `Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`
-    );
+    console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
     const result = await client.send(
       new ReceiveMessageCommand({
         QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
         WaitTimeSeconds: 10,
-      })
+      }),
     );
     if (result.Messages) {
-      await Promise.all(
-        result.Messages.map((message) => processMessage(message))
-      );
+      await Promise.all(result.Messages.map((message) => processMessage(message)));
     }
   }
 }
@@ -50,9 +42,7 @@ async function processMessage(message: Message) {
     if (messageBody.Message) {
       const messageData: S3MessageContent = JSON.parse(messageBody.Message);
       if (messageData.Records) {
-        await Promise.all(
-          messageData.Records.map((record) => processUploadedItem(record))
-        );
+        await Promise.all(messageData.Records.map((record) => processUploadedItem(record)));
       }
     } else {
       console.warn(`Unexpected empty inner message body`, message);
@@ -65,13 +55,13 @@ async function processMessage(message: Message) {
     new DeleteMessageCommand({
       QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
       ReceiptHandle: message.ReceiptHandle,
-    })
+    }),
   );
 }
 
 async function processUploadedItem(record: S3MessageContentRecord) {
-  console.log("Processing uploaded item");
-  if (record.eventName !== "ObjectCreated:Put") {
+  console.log('Processing uploaded item');
+  if (record.eventName !== 'ObjectCreated:Put') {
     console.warn(`Unexpected event name <${record.eventName}>`);
   }
   const key = record.s3.object.key;
