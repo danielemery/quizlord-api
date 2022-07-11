@@ -17,12 +17,3 @@ export interface PagedResult<T> {
     endCursor?: string;
   };
 }
-
-export interface PagedResultWithoutNode<T> {
-  edges: T[];
-  pageInfo: {
-    hasNextPage: boolean;
-    startCursor?: string;
-    endCursor?: string;
-  };
-}

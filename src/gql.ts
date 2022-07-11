@@ -54,8 +54,13 @@ const typeDefs = gql`
     email: String!
   }
 
+  type UserEdge {
+    node: User!
+    cursor: String!
+  }
+
   type UserConnection {
-    edges: [User]!
+    edges: [UserEdge]!
     pageInfo: PageInfo!
   }
 

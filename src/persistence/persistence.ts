@@ -1,4 +1,4 @@
-import { PrismaClient, Quiz as QuizPersistence } from '@prisma/client';
+import { PrismaClient, Quiz as QuizPersistence, Role } from '@prisma/client';
 import { types } from 'pg';
 
 export interface PersistenceResult<T> {
@@ -168,6 +168,36 @@ class Persistence {
       },
     });
     return result;
+  }
+
+  async getUsersWithRole({ role, afterId, limit }: { role: Role; afterId?: string; limit: number }) {
+    const result = await this.#prisma.user.findMany({
+      take: limit + 1,
+      ...(afterId && {
+        cursor: {
+          id: afterId,
+        },
+      }),
+      where: {
+        roles: {
+          some: {
+            role,
+          },
+        },
+      },
+    });
+
+    if (result.length > limit) {
+      return {
+        data: result.slice(0, limit),
+        hasMoreRows: true,
+      };
+    } else {
+      return {
+        data: result,
+        hasMoreRows: false,
+      };
+    }
   }
 }
 
