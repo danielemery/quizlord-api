@@ -48,15 +48,14 @@ model QuizCompletion {
 }
 
 model QuizCompletionUser {
-  quizCompletionId String  @map("quiz_completion_id")
-  userEmail        String  @map("user_email")
-  userId           String? @map("user_id")
+  quizCompletionId String @map("quiz_completion_id")
+  userId           String @map("user_id")
 
-  user User? @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   quizCompletion QuizCompletion @relation(fields: [quizCompletionId], references: [id])
 
-  @@id([quizCompletionId, userEmail])
+  @@id([quizCompletionId, userId])
   @@map("quiz_completion_user")
 }
 
