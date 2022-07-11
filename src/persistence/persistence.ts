@@ -153,7 +153,6 @@ class Persistence {
               throw new Error(`Unable to find user with email ${userEmail}`);
             }
             return {
-              user,
               userId: user.id,
             };
           }),
