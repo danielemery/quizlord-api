@@ -1,6 +1,6 @@
 {
   "name": "@quizlord/api",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,8 @@
     "test": "echo 'Test not yet implemented'",
     "lint": "eslint .",
     "db:generate": "prisma generate",
-    "db:migrate": "doppler run -- prisma migrate dev --name init"
+    "db:dev:migrate": "doppler run -- prisma migrate dev",
+    "db:dev:reset": "doppler run -- prisma migrate reset"
   },
   "repository": {
     "type": "git",

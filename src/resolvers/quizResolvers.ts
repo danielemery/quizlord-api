@@ -2,6 +2,7 @@ import {
   Quiz as QuizPersistence,
   QuizCompletion as QuizCompletionPersistence,
   QuizCompletionUser as QuizCompletionUserPersistence,
+  User,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { QuizlordContext } from '..';
@@ -26,7 +27,9 @@ function quizCompletionPersistenceToQuizCompletion(
 function quizPersistenceWithMyCompletionsToQuiz(
   quiz: QuizPersistence & {
     completions: (QuizCompletionPersistence & {
-      completedBy: QuizCompletionUserPersistence[];
+      completedBy: (QuizCompletionUserPersistence & {
+        user: User | null;
+      })[];
     })[];
   },
 ): Quiz {
@@ -81,10 +84,9 @@ export async function quizzes(
   return result;
 }
 
-export async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext) {
+export async function quiz(_: unknown, { id }: { id: string }) {
   const quiz = await persistence.getQuizByIdWithResults({
     id,
-    userEmail: context.email,
   });
   return quizPersistenceWithCompletionsToQuizDetails(quiz);
 }
@@ -119,10 +121,10 @@ export async function completeQuiz(
   { quizId, completedBy, score }: { quizId: string; completedBy: string[]; score: number },
   context: QuizlordContext,
 ): Promise<{ completion: QuizCompletion }> {
-  const uuid = uuidv4();
-  const completion = await persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
   if (!completedBy.includes(context.email)) {
     throw new Error('Can only enter quiz completions which you participate in.');
   }
+  const uuid = uuidv4();
+  const completion = await persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
   return { completion: quizCompletionPersistenceToQuizCompletion(completion) };
 }

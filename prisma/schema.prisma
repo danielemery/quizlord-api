@@ -48,11 +48,41 @@ model QuizCompletion {
 }
 
 model QuizCompletionUser {
-  quizCompletionId String @map("quiz_completion_id")
-  userEmail        String @map("user_email")
+  quizCompletionId String  @map("quiz_completion_id")
+  userEmail        String  @map("user_email")
+  userId           String? @map("user_id")
+
+  user User? @relation(fields: [userId], references: [id])
 
   quizCompletion QuizCompletion @relation(fields: [quizCompletionId], references: [id])
 
   @@id([quizCompletionId, userEmail])
   @@map("quiz_completion_user")
+}
+
+model User {
+  id    String @id
+  email String
+
+  roles           UserRole[]
+  quizCompletions QuizCompletionUser[]
+
+  @@map("user")
+}
+
+enum Role {
+  USER
+  ADMIN
+
+  @@map("role")
+}
+
+model UserRole {
+  userId String @map("user_id")
+  role   Role
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, role])
+  @@map("user_role")
 }
