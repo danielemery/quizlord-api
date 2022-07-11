@@ -73,7 +73,7 @@ class Persistence {
     }
   }
 
-  async getQuizByIdWithResults({ id }: { id: string; userEmail: string }) {
+  async getQuizByIdWithResults({ id }: { id: string }) {
     return this.#prisma.quiz.findFirstOrThrow({
       where: {
         id,

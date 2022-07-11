@@ -9,7 +9,8 @@
     "test": "echo 'Test not yet implemented'",
     "lint": "eslint .",
     "db:generate": "prisma generate",
-    "db:migrate": "doppler run -- prisma migrate dev --name init"
+    "db:dev:migrate": "doppler run -- prisma migrate dev",
+    "db:dev:reset": "doppler run -- prisma migrate reset"
   },
   "repository": {
     "type": "git",
