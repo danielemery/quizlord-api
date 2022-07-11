@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "prisma generate && doppler run -- nodemon src/index.ts",
     "test": "echo 'Test not yet implemented'",
-    "lint": "npx eslint .",
+    "lint": "eslint .",
     "db:generate": "prisma generate",
     "db:migrate": "doppler run -- prisma migrate dev --name init"
   },
