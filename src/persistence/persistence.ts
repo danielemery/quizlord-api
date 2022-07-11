@@ -50,18 +50,7 @@ class Persistence {
             quizId: true,
             score: true,
           },
-        },
-        date: true,
-        id: true,
-        imageKey: true,
-        state: true,
-        type: true,
-        uploadedAt: true,
-        uploadedBy: true,
-      },
-      where: {
-        completions: {
-          some: {
+          where: {
             completedBy: {
               some: {
                 user: {
@@ -71,6 +60,13 @@ class Persistence {
             },
           },
         },
+        date: true,
+        id: true,
+        imageKey: true,
+        state: true,
+        type: true,
+        uploadedAt: true,
+        uploadedBy: true,
       },
     });
 
