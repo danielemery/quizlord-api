@@ -8,10 +8,7 @@ export class MemoryCache implements Cache {
   #values: Map<string, { value: string; expiresAt?: Date }> = new Map();
   getItem(key: string): Promise<string | undefined> {
     const record = this.#values.get(key);
-    if (
-      !record ||
-      (record.expiresAt && new Date().getTime() > record.expiresAt.getTime())
-    ) {
+    if (!record || (record.expiresAt && new Date().getTime() > record.expiresAt.getTime())) {
       return Promise.resolve(undefined);
     }
     return Promise.resolve(record.value);

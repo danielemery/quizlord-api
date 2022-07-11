@@ -1,4 +1,4 @@
-import { gql } from "apollo-server";
+import { gql } from 'apollo-server';
 
 const typeDefs = gql`
   scalar Date
@@ -81,16 +81,8 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    createQuiz(
-      type: QuizType!
-      date: Date!
-      fileName: String!
-    ): CreateQuizResult
-    completeQuiz(
-      quizId: String!
-      completedBy: [String]!
-      score: Float!
-    ): CompleteQuizResult
+    createQuiz(type: QuizType!, date: Date!, fileName: String!): CreateQuizResult
+    completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
   }
 `;
 

@@ -1,6 +1,5 @@
-import { types } from "pg";
-
-import { PrismaClient, Quiz as QuizPersistence } from "@prisma/client";
+import { PrismaClient, Quiz as QuizPersistence } from '@prisma/client';
+import { types } from 'pg';
 
 export interface PersistenceResult<T> {
   data: T[];
@@ -20,22 +19,14 @@ class Persistence {
     console.log(`Connecting to database`);
     this.#prisma = new PrismaClient();
     this.#prisma.$queryRaw`SELECT 1`
-      .then(() => console.log("Connected to database successfully"))
+      .then(() => console.log('Connected to database successfully'))
       .catch((dbError) => {
         console.log(dbError);
         process.exit(1);
       });
   }
 
-  async getQuizzesWithMyResults({
-    userEmail,
-    afterId,
-    limit,
-  }: {
-    userEmail: string;
-    afterId?: string;
-    limit: number;
-  }) {
+  async getQuizzesWithMyResults({ userEmail, afterId, limit }: { userEmail: string; afterId?: string; limit: number }) {
     const result = await this.#prisma.quiz.findMany({
       take: limit + 1,
       ...(afterId && {
@@ -44,7 +35,7 @@ class Persistence {
         },
       }),
       orderBy: {
-        date: "desc",
+        date: 'desc',
       },
       select: {
         completions: {
@@ -108,7 +99,7 @@ class Persistence {
   async markQuizReady(id: string) {
     return this.#prisma.quiz.update({
       data: {
-        state: "READY",
+        state: 'READY',
       },
       where: {
         id,
@@ -127,7 +118,7 @@ class Persistence {
     completionId: string,
     completedAt: Date,
     completedBy: string[],
-    score: number
+    score: number,
   ) {
     const result = await this.#prisma.quizCompletion.create({
       data: {

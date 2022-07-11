@@ -1,4 +1,4 @@
-import Joi from "joi";
+import Joi from 'joi';
 
 interface QuizlordConfig {
   NODE_ENV: string;
@@ -18,7 +18,7 @@ interface QuizlordConfig {
 
 const schema = Joi.object<QuizlordConfig>()
   .keys({
-    NODE_ENV: Joi.string().default("development"),
+    NODE_ENV: Joi.string().default('development'),
     CLIENT_URL: Joi.string().required(),
     DB_CONNECTION_STRING: Joi.string().uri().required(),
     AUTH0_DOMAIN: Joi.string().required(),
@@ -41,7 +41,7 @@ if (config.error || config.value === undefined) {
   if (config.error) {
     console.error(config.error.message);
   } else {
-    console.error("Unexpected error parsing environment variables...");
+    console.error('Unexpected error parsing environment variables...');
   }
   process.exit(1);
 }
