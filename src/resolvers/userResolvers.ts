@@ -1,5 +1,6 @@
 import { User as UserPersistence } from '@prisma/client';
-import { User } from '../models';
+import { QuizlordContext } from '..';
+import { User, UserDetails } from '../models';
 import { persistence } from '../persistence/persistence';
 import { base64Decode, base64Encode, PagedResult } from './helpers';
 
@@ -32,4 +33,11 @@ export async function users(
     },
   };
   return result;
+}
+
+export async function me(_: unknown, _params: Record<string, never>, context: QuizlordContext): Promise<UserDetails> {
+  return {
+    email: context.email,
+    roles: context.roles,
+  };
 }

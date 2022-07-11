@@ -170,6 +170,20 @@ class Persistence {
     return result;
   }
 
+  async getUserRoles(email: string): Promise<Role[]> {
+    const roles = await this.#prisma.userRole.findMany({
+      select: {
+        role: true,
+      },
+      where: {
+        user: {
+          email,
+        },
+      },
+    });
+    return roles.map((r) => r.role);
+  }
+
   async getUsersWithRole({ role, afterId, limit }: { role: Role; afterId?: string; limit: number }) {
     const result = await this.#prisma.user.findMany({
       take: limit + 1,

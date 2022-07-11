@@ -1,10 +1,12 @@
+import { Role } from '@prisma/client';
 import { ApolloServer } from 'apollo-server';
 import { GraphQLScalarType, Kind } from 'graphql';
 import { verifyToken } from './auth';
 import config from './config';
 import typeDefs from './gql';
+import { persistence } from './persistence/persistence';
 import { createQuiz, quiz, quizzes, completeQuiz } from './resolvers/quizResolvers';
-import { users } from './resolvers/userResolvers';
+import { me, users } from './resolvers/userResolvers';
 import { subscribeToFileUploads } from './sqs';
 
 const dateScalar = new GraphQLScalarType({
@@ -30,6 +32,7 @@ const resolvers = {
     quizzes,
     quiz,
     users,
+    me,
   },
   Mutation: {
     createQuiz,
@@ -39,6 +42,7 @@ const resolvers = {
 
 export interface QuizlordContext {
   email: string;
+  roles: Role[];
 }
 
 async function initialise() {
@@ -56,9 +60,13 @@ async function initialise() {
       const sanitisedToken = token.replace('Bearer ', '');
 
       const jwt = await verifyToken(sanitisedToken);
+      const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
+
+      const roles = await persistence.getUserRoles(email);
 
       const context: QuizlordContext = {
-        email: (jwt as any)[`${config.CLIENT_URL}/email`] as string,
+        email,
+        roles,
       };
 
       return context;

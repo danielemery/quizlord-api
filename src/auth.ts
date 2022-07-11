@@ -31,7 +31,6 @@ export async function verifyToken(token: string): Promise<string | jwt.Jwt | jwt
         reject(error);
       } else {
         resolve(result);
-        console.log('garbage');
       }
     });
   });
