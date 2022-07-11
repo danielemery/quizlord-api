@@ -2,6 +2,7 @@ import {
   Quiz as QuizPersistence,
   QuizCompletion as QuizCompletionPersistence,
   QuizCompletionUser as QuizCompletionUserPersistence,
+  User,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { QuizlordContext } from '..';
@@ -26,7 +27,9 @@ function quizCompletionPersistenceToQuizCompletion(
 function quizPersistenceWithMyCompletionsToQuiz(
   quiz: QuizPersistence & {
     completions: (QuizCompletionPersistence & {
-      completedBy: QuizCompletionUserPersistence[];
+      completedBy: (QuizCompletionUserPersistence & {
+        user: User | null;
+      })[];
     })[];
   },
 ): Quiz {

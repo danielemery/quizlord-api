@@ -39,15 +39,16 @@ class Persistence {
       },
       select: {
         completions: {
-          include: {
-            completedBy: true,
-          },
-          where: {
+          select: {
+            completedAt: true,
             completedBy: {
-              some: {
-                userEmail,
+              include: {
+                user: true,
               },
             },
+            id: true,
+            quizId: true,
+            score: true,
           },
         },
         date: true,
@@ -57,6 +58,19 @@ class Persistence {
         type: true,
         uploadedAt: true,
         uploadedBy: true,
+      },
+      where: {
+        completions: {
+          some: {
+            completedBy: {
+              some: {
+                user: {
+                  email: userEmail,
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -120,13 +134,28 @@ class Persistence {
     completedBy: string[],
     score: number,
   ) {
+    const users = await this.#prisma.user.findMany({
+      where: {
+        email: {
+          in: completedBy,
+        },
+      },
+    });
+    for (const userEmail of completedBy) {
+      if (users.find((user) => user.email === userEmail) === undefined) {
+        throw new Error(`Unable to find user with email ${userEmail}`);
+      }
+    }
     const result = await this.#prisma.quizCompletion.create({
       data: {
         completedAt,
         id: completionId,
         score,
         completedBy: {
-          create: completedBy.map((userEmail) => ({ userEmail })),
+          create: completedBy.map((userEmail) => ({
+            userEmail,
+            userId: users.find((user) => user.email === userEmail)?.id,
+          })),
         },
         quizId,
       },
