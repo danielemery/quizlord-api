@@ -1,4 +1,4 @@
-import { PrismaClient, Quiz as QuizPersistence } from '@prisma/client';
+import { PrismaClient, Quiz as QuizPersistence, Role } from '@prisma/client';
 import { types } from 'pg';
 
 export interface PersistenceResult<T> {
@@ -13,21 +13,31 @@ const parseDate = (value: string) => {
 types.setTypeParser(DATE_OID, parseDate);
 
 class Persistence {
-  #prisma: PrismaClient;
+  #prisma?: PrismaClient;
 
-  constructor() {
-    console.log(`Connecting to database`);
-    this.#prisma = new PrismaClient();
-    this.#prisma.$queryRaw`SELECT 1`
-      .then(() => console.log('Connected to database successfully'))
-      .catch((dbError) => {
-        console.log(dbError);
+  #getPrisma() {
+    if (this.#prisma === undefined) {
+      throw new Error('Error attempting to use database before connecting');
+    }
+    return this.#prisma;
+  }
+
+  async connect() {
+    if (!this.#prisma) {
+      console.log(`Connecting to database`);
+      this.#prisma = new PrismaClient();
+      try {
+        await this.#prisma.$queryRaw`SELECT 1`;
+      } catch (err) {
+        console.error(err);
         process.exit(1);
-      });
+      }
+      console.log('Connected to database successfully');
+    }
   }
 
   async getQuizzesWithMyResults({ userEmail, afterId, limit }: { userEmail: string; afterId?: string; limit: number }) {
-    const result = await this.#prisma.quiz.findMany({
+    const result = await this.#getPrisma().quiz.findMany({
       take: limit + 1,
       ...(afterId && {
         cursor: {
@@ -70,21 +80,11 @@ class Persistence {
       },
     });
 
-    if (result.length > limit) {
-      return {
-        data: result.slice(0, limit),
-        hasMoreRows: true,
-      };
-    } else {
-      return {
-        data: result,
-        hasMoreRows: false,
-      };
-    }
+    return slicePagedResults(result, limit, afterId !== undefined);
   }
 
   async getQuizByIdWithResults({ id }: { id: string }) {
-    return this.#prisma.quiz.findFirstOrThrow({
+    return this.#getPrisma().quiz.findFirstOrThrow({
       where: {
         id,
       },
@@ -103,7 +103,7 @@ class Persistence {
   }
 
   async getQuizByImageKey(imageKey: string) {
-    return this.#prisma.quiz.findFirst({
+    return this.#getPrisma().quiz.findFirst({
       where: {
         imageKey,
       },
@@ -111,7 +111,7 @@ class Persistence {
   }
 
   async markQuizReady(id: string) {
-    return this.#prisma.quiz.update({
+    return this.#getPrisma().quiz.update({
       data: {
         state: 'READY',
       },
@@ -122,7 +122,7 @@ class Persistence {
   }
 
   async createQuiz(quiz: QuizPersistence): Promise<QuizPersistence> {
-    return this.#prisma.quiz.create({
+    return this.#getPrisma().quiz.create({
       data: quiz,
     });
   }
@@ -134,14 +134,14 @@ class Persistence {
     completedBy: string[],
     score: number,
   ) {
-    const users = await this.#prisma.user.findMany({
+    const users = await this.#getPrisma().user.findMany({
       where: {
         email: {
           in: completedBy,
         },
       },
     });
-    const result = await this.#prisma.quizCompletion.create({
+    const result = await this.#getPrisma().quizCompletion.create({
       data: {
         completedAt,
         id: completionId,
@@ -168,6 +168,80 @@ class Persistence {
       },
     });
     return result;
+  }
+
+  async getUserRoles(email: string): Promise<Role[]> {
+    const roles = await this.#getPrisma().userRole.findMany({
+      select: {
+        role: true,
+      },
+      where: {
+        user: {
+          email,
+        },
+      },
+    });
+    return roles.map((r) => r.role);
+  }
+
+  async getUsersWithRole({ role, afterId, limit }: { role: Role; afterId?: string; limit: number }) {
+    const result = await this.#getPrisma().user.findMany({
+      take: limit + (afterId === undefined ? 1 : 2),
+      ...(afterId && {
+        cursor: {
+          id: afterId,
+        },
+      }),
+      where: {
+        roles: {
+          some: {
+            role,
+          },
+        },
+      },
+      orderBy: {
+        email: 'asc',
+      },
+    });
+
+    return slicePagedResults(result, limit, afterId !== undefined);
+  }
+}
+
+export function slicePagedResults<T>(
+  results: T[],
+  limit: number,
+  isUsingCursor: boolean,
+): { data: T[]; hasMoreRows: boolean } {
+  if (isUsingCursor) {
+    if (results.length === limit + 2) {
+      return {
+        data: results.slice(1, limit + 1),
+        hasMoreRows: true,
+      };
+    } else if (results.length > 1) {
+      return {
+        data: results.slice(1),
+        hasMoreRows: false,
+      };
+    } else {
+      return {
+        data: [],
+        hasMoreRows: false,
+      };
+    }
+  }
+
+  if (results.length === limit + 1) {
+    return {
+      data: results.slice(0, limit),
+      hasMoreRows: true,
+    };
+  } else {
+    return {
+      data: results,
+      hasMoreRows: false,
+    };
   }
 }
 

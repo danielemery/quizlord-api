@@ -9,7 +9,7 @@ import { QuizlordContext } from '..';
 import { Quiz, QuizDetails, QuizType, QuizCompletion } from '../models';
 import { persistence } from '../persistence/persistence';
 import { createKey, generateSignedUploadUrl, keyToUrl } from '../s3';
-import { base64Decode, base64Encode, PagedResult } from './helpers';
+import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
 
 function quizCompletionPersistenceToQuizCompletion(
   quizCompletion: QuizCompletionPersistence & {
@@ -72,6 +72,7 @@ export async function quizzes(
   { first = 100, after }: { first: number; after?: string },
   context: QuizlordContext,
 ): Promise<PagedResult<Quiz>> {
+  requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getQuizzesWithMyResults({
     userEmail: context.email,
@@ -93,7 +94,8 @@ export async function quizzes(
   return result;
 }
 
-export async function quiz(_: unknown, { id }: { id: string }) {
+export async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext) {
+  requireUserRole(context, 'USER');
   const quiz = await persistence.getQuizByIdWithResults({
     id,
   });
@@ -105,6 +107,7 @@ export async function createQuiz(
   { type, date, fileName }: { type: QuizType; date: Date; fileName: string },
   context: QuizlordContext,
 ): Promise<{ quiz: Quiz; uploadLink: string }> {
+  requireUserRole(context, 'USER');
   const uuid = uuidv4();
   const fileKey = createKey(uuid, fileName);
   const [createdQuiz, uploadLink] = await Promise.all([
@@ -133,6 +136,7 @@ export async function completeQuiz(
   if (!completedBy.includes(context.email)) {
     throw new Error('Can only enter quiz completions which you participate in.');
   }
+  requireUserRole(context, 'USER');
   const uuid = uuidv4();
   const completion = await persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
   return { completion: quizCompletionPersistenceToQuizCompletion(completion) };

@@ -13,6 +13,11 @@ const typeDefs = gql`
     READY
   }
 
+  enum UserRole {
+    USER
+    ADMIN
+  }
+
   type PageInfo {
     hasNextPage: Boolean
     startCursor: String
@@ -50,12 +55,22 @@ const typeDefs = gql`
     pageInfo: PageInfo!
   }
 
+  type UserDetails {
+    email: String!
+    roles: [UserRole]!
+  }
+
   type User {
     email: String!
   }
 
+  type UserEdge {
+    node: User!
+    cursor: String!
+  }
+
   type UserConnection {
-    edges: [User]!
+    edges: [UserEdge]!
     pageInfo: PageInfo!
   }
 
@@ -78,6 +93,7 @@ const typeDefs = gql`
     quizzes(first: Int, after: String): QuizConnection
     quiz(id: String!): QuizDetails
     users(first: Int, after: String): UserConnection
+    me: UserDetails
   }
 
   type Mutation {

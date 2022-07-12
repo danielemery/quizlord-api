@@ -1,3 +1,5 @@
+import { Role } from '@prisma/client';
+
 export type QuizType = 'SHARK' | 'BRAINWAVES';
 export type QuizState = 'PENDING_UPLOAD' | 'READY';
 
@@ -30,4 +32,9 @@ export interface QuizDetails {
 
 export interface User {
   email: string;
+}
+
+export interface UserDetails {
+  email: string;
+  roles: Role[];
 }
