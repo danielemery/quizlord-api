@@ -46,6 +46,7 @@ export interface QuizlordContext {
 }
 
 async function initialise() {
+  await persistence.connect();
   const server = new ApolloServer({
     typeDefs,
     resolvers,
