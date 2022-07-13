@@ -14,26 +14,44 @@ enum QuizType {
   @@map("quiz_type")
 }
 
-enum QuizState {
+enum QuizImageState {
   PENDING_UPLOAD
   READY
 
-  @@map("quiz_state")
+  @@map("quiz_image_state")
 }
 
 model Quiz {
-  id         String    @id
+  id         String   @id
   type       QuizType
-  state      QuizState
-  date       DateTime  @db.Date
-  imageKey   String?   @map("image_key")
-  uploadedAt DateTime  @map("uploaded_at")
-  uploadedBy String    @map("uploaded_by")
+  date       DateTime @db.Date
+  uploadedAt DateTime @map("uploaded_at")
+  uploadedBy String   @map("uploaded_by")
 
   completions QuizCompletion[]
+  images      QuizImage[]
 
   @@unique(fields: [date, type])
   @@map("quiz")
+}
+
+enum QuizImageType {
+  QUESTION
+  ANSWER
+  QUESTION_AND_ANSWER
+
+  @@map("quiz_image_type")
+}
+
+model QuizImage {
+  imageKey String         @id @map("image_key")
+  quizId   String         @map("quiz_id")
+  type     QuizImageType
+  state    QuizImageState @default(READY)
+
+  quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@map("quiz_image")
 }
 
 model QuizCompletion {

@@ -8,7 +8,7 @@ const typeDefs = gql`
     BRAINWAVES
   }
 
-  enum QuizState {
+  enum QuizImageState {
     PENDING_UPLOAD
     READY
   }
@@ -16,6 +16,12 @@ const typeDefs = gql`
   enum UserRole {
     USER
     ADMIN
+  }
+
+  enum QuizImageType {
+    QUESTION
+    ANSWER
+    QUESTION_AND_ANSWER
   }
 
   type PageInfo {
@@ -27,22 +33,26 @@ const typeDefs = gql`
   type Quiz {
     id: String!
     type: QuizType!
-    state: QuizState!
     date: Date!
     uploadedAt: Date!
     uploadedBy: String!
     myCompletions: [QuizCompletion]
   }
 
+  type QuizImage {
+    imageLink: String!
+    state: QuizImageState!
+    type: QuizImageType!
+  }
+
   type QuizDetails {
     id: String!
     type: QuizType!
-    state: QuizState!
     date: Date!
-    imageLink: String
     uploadedAt: Date!
     uploadedBy: String!
     completions: [QuizCompletion]
+    images: [QuizImage]
   }
 
   type QuizEdge {
@@ -74,9 +84,19 @@ const typeDefs = gql`
     pageInfo: PageInfo!
   }
 
+  input CreateQuizFile {
+    fileName: String!
+    type: QuizImageType!
+  }
+
+  type CreateQuizFileNameToUploadLink {
+    fileName: String!
+    link: String!
+  }
+
   type CreateQuizResult {
     quiz: Quiz!
-    uploadLink: String!
+    uploadLinks: [CreateQuizFileNameToUploadLink]!
   }
 
   type QuizCompletion {
@@ -97,7 +117,7 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    createQuiz(type: QuizType!, date: Date!, fileName: String!): CreateQuizResult
+    createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
     completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
   }
 `;
