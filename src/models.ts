@@ -1,7 +1,4 @@
-import { Role } from '@prisma/client';
-
-export type QuizType = 'SHARK' | 'BRAINWAVES';
-export type QuizState = 'PENDING_UPLOAD' | 'READY';
+import { QuizImageState, QuizImageType, QuizType, Role } from '@prisma/client';
 
 export interface QuizCompletion {
   completedAt: Date;
@@ -12,19 +9,23 @@ export interface QuizCompletion {
 export interface Quiz {
   id: string;
   type: QuizType;
-  state: QuizState;
   date: Date;
   uploadedAt: Date;
   uploadedBy: string;
   myCompletions: QuizCompletion[];
 }
 
+export interface QuizImage {
+  imageLink: string;
+  state: QuizImageState;
+  type: QuizImageType;
+}
+
 export interface QuizDetails {
   id: string;
   type: QuizType;
-  state: QuizState;
   date: Date;
-  imageLink?: string;
+  images: QuizImage[];
   uploadedAt: Date;
   uploadedBy: string;
   completions: QuizCompletion[];
@@ -37,4 +38,12 @@ export interface User {
 export interface UserDetails {
   email: string;
   roles: Role[];
+}
+
+export interface CreateQuizResult {
+  quiz: Quiz;
+  uploadLinks: {
+    fileName: string;
+    link: string;
+  }[];
 }

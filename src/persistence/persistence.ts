@@ -1,4 +1,4 @@
-import { PrismaClient, Quiz as QuizPersistence, Role } from '@prisma/client';
+import { PrismaClient, Quiz as QuizPersistence, QuizImage as QuizImagePersistence, Role } from '@prisma/client';
 import { types } from 'pg';
 
 export interface PersistenceResult<T> {
@@ -70,10 +70,9 @@ class Persistence {
             },
           },
         },
+        images: true,
         date: true,
         id: true,
-        imageKey: true,
-        state: true,
         type: true,
         uploadedAt: true,
         uploadedBy: true,
@@ -98,32 +97,43 @@ class Persistence {
             },
           },
         },
+        images: true,
       },
     });
   }
 
-  async getQuizByImageKey(imageKey: string) {
-    return this.#getPrisma().quiz.findFirst({
+  async getQuizImage(imageKey: string) {
+    return this.#getPrisma().quizImage.findFirst({
       where: {
         imageKey,
       },
     });
   }
 
-  async markQuizReady(id: string) {
-    return this.#getPrisma().quiz.update({
+  async markQuizImageReady(imageKey: string) {
+    return this.#getPrisma().quizImage.update({
       data: {
         state: 'READY',
       },
       where: {
-        id,
+        imageKey,
       },
     });
   }
 
-  async createQuiz(quiz: QuizPersistence): Promise<QuizPersistence> {
+  async createQuizWithImages(
+    quiz: QuizPersistence,
+    images: Omit<QuizImagePersistence, 'quizId'>[],
+  ): Promise<QuizPersistence> {
     return this.#getPrisma().quiz.create({
-      data: quiz,
+      data: {
+        ...quiz,
+        images: {
+          createMany: {
+            data: images,
+          },
+        },
+      },
     });
   }
 
