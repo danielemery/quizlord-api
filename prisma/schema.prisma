@@ -47,7 +47,7 @@ model QuizImage {
   imageKey String         @id @map("image_key")
   quizId   String         @map("quiz_id")
   type     QuizImageType
-  state    QuizImageState @default(READY)
+  state    QuizImageState
 
   quiz Quiz @relation(fields: [quizId], references: [id])
 
