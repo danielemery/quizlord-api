@@ -59,22 +59,20 @@ describe('persistence', () => {
     });
   });
   describe('getPagedQuery', () => {
-    it('must fetch one additional row so that slicePagedResults can determine whether more data exists', () => {
-      const actual = getPagedQuery(10);
+    it('must take limit plus one extra (the extra is to allow slicePagedResults to know whether there are more results)', () => {
       const expected = {
         take: 11,
       };
+      const actual = getPagedQuery(10);
 
       assert.deepEqual(actual, expected);
     });
-    it('must fetch two additional rows including and after the cursor so that slicePagedResults can collect the correct data', () => {
-      const actual = getPagedQuery(10, 'iamacurosr');
+    it('must include cursor and two extra (the futher extra is because the first result will be the cursor itself and will be sliced)', () => {
       const expected = {
+        cursor: { id: 'fake-cursor' },
         take: 12,
-        cursor: {
-          id: 'iamacurosr',
-        },
       };
+      const actual = getPagedQuery(10, 'fake-cursor');
 
       assert.deepEqual(actual, expected);
     });

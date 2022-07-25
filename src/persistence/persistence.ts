@@ -208,12 +208,12 @@ class Persistence {
   }
 }
 
-export function getPagedQuery(limit: number, cursor?: string) {
+export function getPagedQuery(limit: number, after?: string) {
   return {
-    take: limit + (cursor === undefined ? 1 : 2),
-    ...(cursor && {
+    take: limit + (after === undefined ? 1 : 2),
+    ...(after && {
       cursor: {
-        id: cursor,
+        id: after,
       },
     }),
   };
