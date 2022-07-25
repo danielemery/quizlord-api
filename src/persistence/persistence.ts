@@ -38,12 +38,7 @@ class Persistence {
 
   async getQuizzesWithMyResults({ userEmail, afterId, limit }: { userEmail: string; afterId?: string; limit: number }) {
     const result = await this.#getPrisma().quiz.findMany({
-      take: limit + 1,
-      ...(afterId && {
-        cursor: {
-          id: afterId,
-        },
-      }),
+      ...getPagedQuery(limit, afterId),
       orderBy: {
         date: 'desc',
       },
@@ -196,12 +191,7 @@ class Persistence {
 
   async getUsersWithRole({ role, afterId, limit }: { role: Role; afterId?: string; limit: number }) {
     const result = await this.#getPrisma().user.findMany({
-      take: limit + (afterId === undefined ? 1 : 2),
-      ...(afterId && {
-        cursor: {
-          id: afterId,
-        },
-      }),
+      ...getPagedQuery(limit, afterId),
       where: {
         roles: {
           some: {
@@ -216,6 +206,17 @@ class Persistence {
 
     return slicePagedResults(result, limit, afterId !== undefined);
   }
+}
+
+export function getPagedQuery(limit: number, after?: string) {
+  return {
+    take: limit + (after === undefined ? 1 : 2),
+    ...(after && {
+      cursor: {
+        id: after,
+      },
+    }),
+  };
 }
 
 export function slicePagedResults<T>(
