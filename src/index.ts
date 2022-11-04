@@ -42,6 +42,8 @@ const resolvers = {
 
 export interface QuizlordContext {
   email: string;
+  userId: string;
+  userName?: string;
   roles: Role[];
 }
 
@@ -62,11 +64,14 @@ async function initialise() {
 
       const jwt = await verifyToken(sanitisedToken);
       const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
+      const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
 
-      const roles = await persistence.getUserRoles(email);
+      const { roles, id } = await persistence.loadUserDetailsAndUpdateIfNecessary(email, name);
 
       const context: QuizlordContext = {
         email,
+        userId: id,
+        userName: name,
         roles,
       };
 

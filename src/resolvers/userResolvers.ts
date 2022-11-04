@@ -7,6 +7,7 @@ import { base64Decode, base64Encode, PagedResult, requireUserRole } from './help
 function userPersistenceToUser(user: UserPersistence): User {
   return {
     email: user.email,
+    name: user.name ?? undefined,
   };
 }
 
@@ -39,7 +40,9 @@ export async function users(
 
 export async function me(_: unknown, _params: Record<string, never>, context: QuizlordContext): Promise<UserDetails> {
   return {
+    id: context.userId,
     email: context.email,
+    name: context.userName,
     roles: context.roles,
   };
 }

@@ -22,14 +22,15 @@ enum QuizImageState {
 }
 
 model Quiz {
-  id         String   @id
-  type       QuizType
-  date       DateTime @db.Date
-  uploadedAt DateTime @map("uploaded_at")
-  uploadedBy String   @map("uploaded_by")
+  id               String   @id
+  type             QuizType
+  date             DateTime @db.Date
+  uploadedAt       DateTime @map("uploaded_at")
+  uploadedByUserId String   @map("uploaded_by_user_id")
 
-  completions QuizCompletion[]
-  images      QuizImage[]
+  completions    QuizCompletion[]
+  images         QuizImage[]
+  uploadedByUser User             @relation(fields: [uploadedByUserId], references: [id])
 
   @@unique(fields: [date, type])
   @@map("quiz")
@@ -62,6 +63,7 @@ model QuizCompletion {
 
   quiz        Quiz                 @relation(fields: [quizId], references: [id])
   completedBy QuizCompletionUser[]
+
   @@map("quiz_completion")
 }
 
@@ -78,11 +80,13 @@ model QuizCompletionUser {
 }
 
 model User {
-  id    String @id
+  id    String  @id
   email String
+  name  String?
 
   roles           UserRole[]
   quizCompletions QuizCompletionUser[]
+  uploadedQuizzes Quiz[]
 
   @@map("user")
 }
