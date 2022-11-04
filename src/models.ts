@@ -2,7 +2,7 @@ import { QuizImageState, QuizImageType, QuizType, Role } from '@prisma/client';
 
 export interface QuizCompletion {
   completedAt: Date;
-  completedBy: string[];
+  completedBy: User[];
   score: number;
 }
 
@@ -11,7 +11,7 @@ export interface Quiz {
   type: QuizType;
   date: Date;
   uploadedAt: Date;
-  uploadedBy: string;
+  uploadedBy: User;
   myCompletions: QuizCompletion[];
 }
 
@@ -27,16 +27,19 @@ export interface QuizDetails {
   date: Date;
   images: QuizImage[];
   uploadedAt: Date;
-  uploadedBy: string;
+  uploadedBy: User;
   completions: QuizCompletion[];
 }
 
 export interface User {
   email: string;
+  name?: string;
 }
 
 export interface UserDetails {
+  id: string;
   email: string;
+  name?: string;
   roles: Role[];
 }
 

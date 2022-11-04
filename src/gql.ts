@@ -35,7 +35,7 @@ const typeDefs = gql`
     type: QuizType!
     date: Date!
     uploadedAt: Date!
-    uploadedBy: String!
+    uploadedBy: User!
     myCompletions: [QuizCompletion]
   }
 
@@ -50,7 +50,7 @@ const typeDefs = gql`
     type: QuizType!
     date: Date!
     uploadedAt: Date!
-    uploadedBy: String!
+    uploadedBy: User!
     completions: [QuizCompletion]
     images: [QuizImage]
   }
@@ -72,6 +72,7 @@ const typeDefs = gql`
 
   type User {
     email: String!
+    name: String
   }
 
   type UserEdge {
@@ -101,7 +102,7 @@ const typeDefs = gql`
 
   type QuizCompletion {
     completedAt: Date!
-    completedBy: [String]!
+    completedBy: [User]!
     score: Float!
   }
 

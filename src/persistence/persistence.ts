@@ -70,7 +70,8 @@ class Persistence {
         id: true,
         type: true,
         uploadedAt: true,
-        uploadedBy: true,
+        uploadedByUserId: true,
+        uploadedByUser: true,
       },
     });
 
@@ -93,6 +94,7 @@ class Persistence {
           },
         },
         images: true,
+        uploadedByUser: true,
       },
     });
   }
@@ -173,6 +175,26 @@ class Persistence {
       },
     });
     return result;
+  }
+
+  async loadUserDetailsAndUpdateIfNecessary(
+    email: string,
+    name: string | undefined,
+  ): Promise<{ roles: Role[]; id: string }> {
+    const user = await this.#getPrisma().user.findFirstOrThrow({
+      include: {
+        roles: {},
+      },
+      where: {
+        email,
+      },
+    });
+
+    if (user?.name !== (name ?? null)) {
+      await this.#getPrisma().user.update({ data: { name }, where: { id: user.id } });
+    }
+
+    return { roles: user.roles.map((r) => r.role), id: user.id };
   }
 
   async getUserRoles(email: string): Promise<Role[]> {

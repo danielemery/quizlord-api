@@ -36,7 +36,10 @@ function quizCompletionPersistenceToQuizCompletion(
       if (user.user === null) {
         throw new Error('Persistence incorrectly retrieved non-matching quizCompletion');
       }
-      return user.user.email;
+      return {
+        email: user.user.email,
+        name: user.user.name ?? undefined,
+      };
     }),
     score: score.toNumber(),
   };
@@ -44,6 +47,7 @@ function quizCompletionPersistenceToQuizCompletion(
 
 function quizPersistenceWithMyCompletionsToQuiz(
   quiz: QuizPersistence & {
+    uploadedByUser: User;
     completions: (QuizCompletionPersistence & {
       completedBy: (QuizCompletionUserPersistence & {
         user: User | null;
@@ -51,28 +55,14 @@ function quizPersistenceWithMyCompletionsToQuiz(
     })[];
   },
 ): Quiz {
-  const { completions, ...quizWithoutImageKey } = quiz;
+  const { completions, uploadedByUser, ...quizWithoutImageKey } = quiz;
   return {
     ...quizWithoutImageKey,
     myCompletions: completions.map(quizCompletionPersistenceToQuizCompletion),
-  };
-}
-
-function quizPersistenceWithCompletionsToQuizDetails(
-  quiz: QuizPersistence & {
-    completions: (QuizCompletionPersistence & {
-      completedBy: (QuizCompletionUserPersistence & {
-        user: User | null;
-      })[];
-    })[];
-    images: QuizImagePersistence[];
-  },
-): QuizDetails {
-  const { images, completions, ...quizWithoutImages } = quiz;
-  return {
-    ...quizWithoutImages,
-    completions: completions.map(quizCompletionPersistenceToQuizCompletion),
-    images: images.map(quizImagePersistenceToQuizImage),
+    uploadedBy: {
+      email: uploadedByUser.email,
+      name: uploadedByUser.name ?? undefined,
+    },
   };
 }
 
@@ -103,12 +93,21 @@ export async function quizzes(
   return result;
 }
 
-export async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext) {
+export async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext): Promise<QuizDetails> {
   requireUserRole(context, 'USER');
   const quiz = await persistence.getQuizByIdWithResults({
     id,
   });
-  return quizPersistenceWithCompletionsToQuizDetails(quiz);
+  const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
+  return {
+    ...quizFieldsThatDoNotRequireTransform,
+    completions: completions.map(quizCompletionPersistenceToQuizCompletion),
+    images: images.map(quizImagePersistenceToQuizImage),
+    uploadedBy: {
+      email: uploadedByUser.email,
+      name: uploadedByUser.name ?? undefined,
+    },
+  };
 }
 
 async function populateFileWithUploadLink(file: { fileName: string; type: QuizImageType; imageKey: string }) {
@@ -134,7 +133,7 @@ export async function createQuiz(
         date,
         type,
         uploadedAt: new Date(),
-        uploadedBy: context.email,
+        uploadedByUserId: context.userId,
       },
       filesWithKeys.map((file) => ({
         imageKey: file.imageKey,
@@ -145,7 +144,15 @@ export async function createQuiz(
     ...filesWithKeys.map(populateFileWithUploadLink),
   ]);
   return {
-    quiz: quizPersistenceWithMyCompletionsToQuiz({ ...createdQuiz, completions: [] }),
+    quiz: quizPersistenceWithMyCompletionsToQuiz({
+      ...createdQuiz,
+      completions: [],
+      uploadedByUser: {
+        id: context.userId,
+        email: context.email,
+        name: context.userName ?? null,
+      },
+    }),
     uploadLinks: uploadLinks.map((ul) => ({ fileName: ul.fileName, link: ul.uploadLink })),
   };
 }
