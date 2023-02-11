@@ -8,6 +8,7 @@ import {
   User,
 } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+
 import { QuizlordContext } from '..';
 import { Quiz, QuizDetails, QuizCompletion, QuizImage, CreateQuizResult } from '../models';
 import { persistence } from '../persistence/persistence';

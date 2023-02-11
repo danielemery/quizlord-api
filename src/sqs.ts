@@ -1,4 +1,5 @@
 import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
+
 import config from './config';
 import { persistence } from './persistence/persistence';
 
