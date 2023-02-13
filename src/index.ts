@@ -1,6 +1,7 @@
 import { Role } from '@prisma/client';
 import { ApolloServer } from 'apollo-server';
 import { GraphQLScalarType, Kind } from 'graphql';
+
 import { verifyToken } from './auth';
 import config from './config';
 import typeDefs from './gql';

@@ -1,4 +1,5 @@
 import { User as UserPersistence } from '@prisma/client';
+
 import { QuizlordContext } from '..';
 import { User, UserDetails } from '../models';
 import { persistence } from '../persistence/persistence';

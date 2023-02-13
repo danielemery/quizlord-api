@@ -1,5 +1,6 @@
 import jwt, { JwtHeader, SigningKeyCallback, VerifyOptions } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
+
 import config from './config';
 
 const client = jwksClient({
