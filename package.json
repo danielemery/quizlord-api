@@ -1,6 +1,6 @@
 {
   "name": "@quizlord/api",
-  "version": "0.4.1-npm-bumps.1",
+  "version": "0.4.1",
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "scripts": {
