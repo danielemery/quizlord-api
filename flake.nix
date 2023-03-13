@@ -21,6 +21,8 @@
             buildInputs = with pkgs; [
               doppler
               nodejs-18_x
+
+              # See https://github.com/prisma/prisma/issues/3026#issuecomment-927258138 for all the details about running Prisma
               nodePackages.prisma
               openssl
             ];
