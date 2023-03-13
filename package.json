@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc",
     "start": "prisma generate && doppler run -- nodemon src/index.ts",
+    "debug": "prisma generate && doppler run -- nodemon --exec \"node --inspect --require ts-node/register src/index.ts\"",
     "test": "ts-mocha -p tsconfig.json src/**/*.test.ts",
     "lint": "eslint .",
     "db:generate": "prisma generate",
