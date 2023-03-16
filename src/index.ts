@@ -23,7 +23,7 @@ const dateScalar = new GraphQLScalarType({
     if (ast.kind === Kind.STRING) {
       return new Date(ast.value);
     }
-    return null; // Invalid hard-coded value (not an integer)
+    return null; // Invalid hard-coded value (not a string)
   },
 });
 
@@ -64,8 +64,11 @@ async function initialise() {
       const sanitisedToken = token.replace('Bearer ', '');
 
       const jwt = await verifyToken(sanitisedToken);
+
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
       const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
+      /* eslint-enable @typescript-eslint/no-explicit-any */
 
       const { roles, id } = await persistence.loadUserDetailsAndUpdateIfNecessary(email, name);
 
