@@ -1,5 +1,6 @@
 import { PrismaClient, Quiz as QuizPersistence, QuizImage as QuizImagePersistence, Role } from '@prisma/client';
 import { types } from 'pg';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface PersistenceResult<T> {
   data: T[];
@@ -181,7 +182,7 @@ class Persistence {
     email: string,
     name: string | undefined,
   ): Promise<{ roles: Role[]; id: string }> {
-    const user = await this.#getPrisma().user.findFirstOrThrow({
+    const user = await this.#getPrisma().user.findFirst({
       include: {
         roles: {},
       },
@@ -189,6 +190,22 @@ class Persistence {
         email,
       },
     });
+
+    if (!user) {
+      const newUserId = uuidv4();
+      await this.#getPrisma().user.create({
+        data: {
+          id: newUserId,
+          email,
+          name,
+        },
+      });
+
+      return {
+        id: newUserId,
+        roles: [],
+      };
+    }
 
     if (user?.name !== (name ?? null)) {
       await this.#getPrisma().user.update({ data: { name }, where: { id: user.id } });
