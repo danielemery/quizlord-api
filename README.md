@@ -11,6 +11,19 @@ Doppler is used to provide access to secrets, in order to run the app you first 
 - `doppler login`
 - `doppler setup`
 
+If using nixos a flake file is provided to load a shell with all the required dependencies.
+
+```sh
+nix develop
+```
+
+### Bootstrap project
+
+```sh
+npm ci
+npm run db:dev:migrate
+```
+
 ### Test Docker Image Locally
 
 ```sh
