@@ -4,12 +4,14 @@ Graphql api for sharing newspaper quizzes between friends, including results and
 
 Follows the [GraphQL Cursor Connections Specification](https://relay.dev/graphql/connections.htm).
 
-## Local Development
+# Local Development
 
 Doppler is used to provide access to secrets, in order to run the app you first need to run
 
 - `doppler login`
 - `doppler setup`
+
+## Using Nix
 
 If using nixos a flake file is provided to load a shell with all the required dependencies.
 
@@ -17,14 +19,34 @@ If using nixos a flake file is provided to load a shell with all the required de
 nix develop
 ```
 
-### Bootstrap project
+### Upgrade Flake
+
+The following can be run to upgrade the flake.lock file
+
+```sh
+nix flake update
+```
+
+Afterwards rerun `nix develop` and check the new versions installed by the flake match.
+
+```sh
+node --version
+prisma --version
+```
+
+The node and prisma versions **may** need to be updated to match.
+
+- Prisma: Just the `package.json` version
+- Node: The `package.json` engine entry, the `Dockerfile` `FROM` and the `.nvmrc` file
+
+## Bootstrap project
 
 ```sh
 npm ci
 npm run db:dev:migrate
 ```
 
-### Test Docker Image Locally
+## Test Docker Image Locally
 
 ```sh
 # Perform a local production build
@@ -37,7 +59,7 @@ docker run -p 4000:80 --env-file <(doppler secrets download --no-file --format d
 docker rm quizlord-api && docker image rm quizlord-api:local
 ```
 
-### Test Helm Locally
+## Test Helm Locally
 
 1. You first to have a local k8s cluster running.
 2. Ensure doppler is setup with `doppler setup`
