@@ -42,8 +42,15 @@ The node and prisma versions **may** need to be updated to match.
 ## Bootstrap project
 
 ```sh
+docker compose up -d
 npm ci
 npm run db:dev:migrate
+```
+
+## Run project
+
+```sh
+npm start
 ```
 
 ## Test Docker Image Locally
