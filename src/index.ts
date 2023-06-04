@@ -1,6 +1,12 @@
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { Role } from '@prisma/client';
-import { ApolloServer } from 'apollo-server';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import express from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
+import http from 'http';
 
 import { verifyToken } from './auth';
 import config from './config';
@@ -50,43 +56,64 @@ export interface QuizlordContext {
 
 async function initialise() {
   await persistence.connect();
+
+  // Required logic for integrating with Express
+  const app = express();
+  // Our httpServer handles incoming requests to our Express app.
+  // Below, we tell Apollo Server to "drain" this httpServer,
+  // enabling our servers to shut down gracefully.
+  const httpServer = http.createServer(app);
+
   const server = new ApolloServer({
     typeDefs,
     resolvers,
     csrfPrevention: true,
-    cors: {
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  });
+
+  await server.start();
+
+  app.use(
+    '/',
+    cors<cors.CorsRequest>({
       origin: [config.CLIENT_URL, 'https://studio.apollographql.com'],
       credentials: true,
-    },
-    context: async ({ req }) => {
-      const token = req.headers.authorization || '';
+    }),
+    // 50mb is the limit that `startStandaloneServer` uses, but you may configure this to suit your needs
+    bodyParser.json({ limit: '50mb' }),
+    // expressMiddleware accepts the same arguments:
+    // an Apollo Server instance and optional configuration options
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        const token = req.headers.authorization || '';
 
-      const sanitisedToken = token.replace('Bearer ', '');
+        const sanitisedToken = token.replace('Bearer ', '');
 
-      const jwt = await verifyToken(sanitisedToken);
+        const jwt = await verifyToken(sanitisedToken);
 
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
-      const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
-      /* eslint-enable @typescript-eslint/no-explicit-any */
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
+        const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
+        /* eslint-enable @typescript-eslint/no-explicit-any */
 
-      const { roles, id } = await persistence.loadUserDetailsAndUpdateIfNecessary(email, name);
+        const { roles, id } = await persistence.loadUserDetailsAndUpdateIfNecessary(email, name);
 
-      const context: QuizlordContext = {
-        email,
-        userId: id,
-        userName: name,
-        roles,
-      };
+        const context: QuizlordContext = {
+          email,
+          userId: id,
+          userName: name,
+          roles,
+        };
 
-      return context;
-    },
-  });
+        return context;
+      },
+    }),
+  );
 
   subscribeToFileUploads();
-  server.listen().then(({ url }) => {
-    console.log(`🚀  Server ready at ${url}`);
-  });
+  await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
+
+  console.log(`🚀 Server ready at http://localhost:4000/`);
 }
 
 initialise()
