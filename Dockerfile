@@ -1,6 +1,9 @@
 FROM node:18.16.0-alpine
 ENV NODE_ENV=production
 
+ARG IMAGE_VERSION
+ENV QUIZLORD_VERSION=$IMAGE_VERSION
+
 WORKDIR /app
 
 COPY package*.json ./

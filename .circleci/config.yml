@@ -76,7 +76,7 @@ jobs:
           name: Run Docker Build
           command: |
             echo $REGISTRY:$TAG | base64
-            docker build -t $REGISTRY:$TAG .
+            docker build -t $REGISTRY:$TAG --build-arg IMAGE_VERSION=$TAG .
       - run:
           name: Push Docker Image
           command: |
@@ -99,7 +99,7 @@ jobs:
       - run:
           name: Run Docker Build
           command: |
-            docker build -t $REGISTRY:$TAG .
+            docker build -t $REGISTRY:$TAG --build-arg IMAGE_VERSION=$TAG .
             docker tag $REGISTRY:$TAG $REGISTRY:latest
       - run:
           name: Push Docker Image
