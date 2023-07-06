@@ -16,6 +16,8 @@ import { createQuiz, quiz, quizzes, completeQuiz } from './resolvers/quizResolve
 import { me, users } from './resolvers/userResolvers';
 import { subscribeToFileUploads } from './sqs';
 
+const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
+
 const dateScalar = new GraphQLScalarType({
   name: 'Date',
   description: 'Date custom scalar type',
@@ -78,9 +80,14 @@ async function initialise() {
     cors<cors.CorsRequest>({
       origin: [config.CLIENT_URL, 'https://studio.apollographql.com'],
       credentials: true,
+      exposedHeaders: [QUIZLORD_VERSION_HEADER],
     }),
     // 50mb is the limit that `startStandaloneServer` uses, but you may configure this to suit your needs
     bodyParser.json({ limit: '50mb' }),
+    (_req, res, next) => {
+      res.set(QUIZLORD_VERSION_HEADER, config.QUIZLORD_VERSION);
+      next();
+    },
     // expressMiddleware accepts the same arguments:
     // an Apollo Server instance and optional configuration options
     expressMiddleware(server, {
