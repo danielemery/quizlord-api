@@ -80,7 +80,7 @@ async function initialise() {
     cors<cors.CorsRequest>({
       origin: [config.CLIENT_URL, 'https://studio.apollographql.com'],
       credentials: true,
-      allowedHeaders: ['authorization', 'content-type', QUIZLORD_VERSION_HEADER],
+      exposedHeaders: [QUIZLORD_VERSION_HEADER],
     }),
     // 50mb is the limit that `startStandaloneServer` uses, but you may configure this to suit your needs
     bodyParser.json({ limit: '50mb' }),
