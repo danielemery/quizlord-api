@@ -32,7 +32,7 @@
     "@aws-sdk/client-sqs": "^3.118.0",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "@aws-sdk/util-create-request": "^3.341.0",
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^5.2.0",
     "axios": "^1.2.6",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
@@ -62,7 +62,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "nodemon": "^2.0.16",
     "prettier": "^2.7.1",
-    "prisma": "^5.0.0",
+    "prisma": "^5.2.0",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.8.1",
     "typescript": "^5.0.4"
