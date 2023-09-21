@@ -1,4 +1,4 @@
-FROM node:18.16.0-alpine
+FROM node:18.17.1-alpine
 ENV NODE_ENV=production
 
 ARG IMAGE_VERSION
