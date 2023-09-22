@@ -1,8 +1,8 @@
-name: Build and test
+name: Validate PR
+description: |
+  This workflow validates pull requests by running unit tests and linting.
 
 on:
-  push:
-    branches: ['main']
   pull_request:
     branches: ['main']
 
