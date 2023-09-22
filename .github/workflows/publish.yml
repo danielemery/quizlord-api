@@ -91,12 +91,6 @@ jobs:
       - build
       - docker-publish
     runs-on: ubuntu-latest
-    container:
-      image: hypnoglow/helm-s3:master-helm3.11
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.HELM_DEPLOY_SECRET }}
-        AWS_DEFAULT_REGION: $${{ vars.HELM_DEPLOY_REGION }}
 
     steps:
       - name: Download chart definition
@@ -104,15 +98,16 @@ jobs:
         with:
           name: helm-chart
 
-      - name: Add repo
-        run: |
-          helm repo add demery-s3 s3://helm.demery.net
-          helm repo list
-
-      - name: Package chart
-        run: |
-          helm package ./helm --version=${{ github.ref_name }} --app-version=${{ github.ref_name }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.HELM_DEPLOY_SECRET }}
+          aws-region: $${{ vars.HELM_DEPLOY_REGION }}
 
       - name: Publish chart
-        run: |
-          helm s3 push --relative ./quizlord-api-${{ github.ref_name }}.tgz demery-s3
+        uses: shellbear/helm-release-action@0.1
+        with:
+          repo: s3://demery-s3/
+          chart: ./helm
+          version: ${{ github.ref }}
