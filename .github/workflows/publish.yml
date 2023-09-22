@@ -103,7 +103,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.HELM_DEPLOY_SECRET }}
-          aws-region: $${{ vars.HELM_DEPLOY_REGION }}
+          aws-region: ${{ vars.HELM_DEPLOY_REGION }}
 
       - name: Publish chart
         uses: shellbear/helm-release-action@v0.1
