@@ -1,8 +1,8 @@
+# This workflow publishes the Docker image to the GitHub Container Registry and the Helm chart to the appropriate s3 bucket.
+# It's triggered when a new tag is pushed to the repository, this can either be in main (as a release tag) or in a feature 
+# branch (as a prerelease tag).
+
 name: Publish
-description: |
-  This workflow publishes the Docker image to the GitHub Container Registry and the Helm chart to the appropriate s3 bucket.
-  It's triggered when a new tag is pushed to the repository, this can either be in main (as a release tag) or in a feature 
-  branch (as a prerelease tag).
 
 on:
   push:

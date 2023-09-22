@@ -1,6 +1,5 @@
+# This workflow validates pull requests by running unit tests and linting.
 name: Validate PR
-description: |
-  This workflow validates pull requests by running unit tests and linting.
 
 on:
   pull_request:
