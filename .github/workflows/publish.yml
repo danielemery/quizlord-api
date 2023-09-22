@@ -9,6 +9,9 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
 
+# Note this alone is not enough to give the action write access
+# In the registry settings https://github.com/users/danielemery/packages/container/quizlord-api/settings
+# you must also add the action with write access under Manage actions access
 permissions:
   packages: write
 
@@ -46,6 +49,12 @@ jobs:
             .dockerignore
             package*.json
 
+      - name: Upload helm chart
+        uses: actions/upload-artifact@v3
+        with:
+          name: helm-chart
+          path: helm
+
   docker-publish:
     needs: build
     runs-on: ubuntu-latest
@@ -76,3 +85,34 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  helm-publish:
+    needs:
+      - build
+      - docker-publish
+    runs-on: ubuntu-latest
+    container:
+      image: hypnoglow/helm-s3:master-helm3.11
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.HELM_DEPLOY_SECRET }}
+        AWS_DEFAULT_REGION: $${{ vars.HELM_DEPLOY_REGION }}
+
+    steps:
+      - name: Download chart definition
+        uses: actions/download-artifact@v3
+        with:
+          name: helm-chart
+
+      - name: Add repo
+        run: |
+          helm repo add demery-s3 s3://helm.demery.net
+          helm repo list
+
+      - name: Package chart
+        run: |
+          helm package ./helm --version=${{ github.ref_name }} --app-version=${{ github.ref_name }}
+
+      - name: Publish chart
+        run: |
+          helm s3 push --relative ./quizlord-api-${{ github.ref_name }}.tgz demery-s3
