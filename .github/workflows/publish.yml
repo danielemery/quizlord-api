@@ -89,7 +89,7 @@ jobs:
   helm-publish:
     needs:
       - build
-      - docker-publish
+      # - docker-publish
     runs-on: ubuntu-latest
 
     steps:
