@@ -101,6 +101,12 @@ jobs:
         with:
           name: helm-chart
 
+      - name: Print file contents
+        run: | 
+          ls
+          ls helm
+          cat helm/Chart.yaml
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
