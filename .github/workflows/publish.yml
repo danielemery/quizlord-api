@@ -109,7 +109,7 @@ jobs:
           aws-region: ${{ vars.HELM_DEPLOY_REGION }}
 
       - name: Publish chart
-        uses: danielemery/helm-release-action@414c0cb70b55f95a804d00a03f329110c1fc05c1
+        uses: danielemery/helm-release-action@9457cccde878836aa47ad5fd0c3f9759753d50f6
         with:
           repo: s3://helm.demery.net/
           chart: ./helm
