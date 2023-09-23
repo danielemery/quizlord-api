@@ -1,0 +1,124 @@
+# This workflow publishes the Docker image to the GitHub Container Registry and the Helm chart to the appropriate s3 bucket.
+# It's triggered when a new tag is pushed to the repository, this can either be in main (as a release tag) or in a feature 
+# branch (as a prerelease tag).
+
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+# Note this alone is not enough to give the action write access
+# In the registry settings https://github.com/users/danielemery/packages/container/quizlord-api/settings
+# you must also add the action with write access under Manage actions access
+permissions:
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: 18.17.1
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            dist
+            prisma
+            Dockerfile
+            .dockerignore
+            package*.json
+
+      - name: Upload helm chart
+        uses: actions/upload-artifact@v3
+        with:
+          name: helm-chart
+          path: helm
+
+  docker-publish:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  helm-publish:
+    needs:
+      - build
+      # - docker-publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extract version from github ref
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Download chart definition
+        uses: actions/download-artifact@v3
+        with:
+          name: helm-chart
+          path: helm
+
+      - name: Print file contents
+        run: | 
+          ls
+          ls helm
+          cat helm/Chart.yaml
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.HELM_DEPLOY_SECRET }}
+          aws-region: ${{ vars.HELM_DEPLOY_REGION }}
+
+      - name: Publish chart
+        uses: danielemery/helm-release-action@f19adb815088a067bb839b224decb0611072652d
+        with:
+          repo: s3://helm.demery.net/
+          chart: ./helm
+          version: ${{ env.RELEASE_VERSION }}
+          appVersion: ${{ env.RELEASE_VERSION }}
