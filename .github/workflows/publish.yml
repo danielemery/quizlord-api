@@ -99,7 +99,7 @@ jobs:
           name: helm-chart
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.HELM_DEPLOY_SECRET }}
@@ -108,6 +108,6 @@ jobs:
       - name: Publish chart
         uses: shellbear/helm-release-action@v0.1
         with:
-          repo: s3://demery-s3/
+          repo: s3://helm.demery.net/
           chart: ./helm
           version: ${{ github.ref }}
