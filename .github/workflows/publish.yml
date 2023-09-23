@@ -113,4 +113,4 @@ jobs:
         with:
           repo: s3://helm.demery.net/
           chart: ./helm
-            version: ${{ env.RELEASE_VERSION }}
+          version: ${{ env.RELEASE_VERSION }}
