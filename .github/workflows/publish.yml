@@ -110,4 +110,4 @@ jobs:
         with:
           repo: s3://helm.demery.net/
           chart: ./helm
-          version: ${{ github.ref }}
+          version: ${{ replace(github.ref, 'refs/tags/', '') }}
