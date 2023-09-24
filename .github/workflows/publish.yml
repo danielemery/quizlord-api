@@ -60,6 +60,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Extract version from github ref
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
       - name: Download build artifacts
         uses: actions/download-artifact@v3
         with:
@@ -85,6 +88,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            IMAGE_VERSION=${{ env.RELEASE_VERSION }}
 
   helm-publish:
     needs:
@@ -101,12 +106,6 @@ jobs:
         with:
           name: helm-chart
           path: helm
-
-      - name: Print file contents
-        run: | 
-          ls
-          ls helm
-          cat helm/Chart.yaml
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
