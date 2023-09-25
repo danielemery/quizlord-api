@@ -83,7 +83,7 @@ async function initialise() {
     ],
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
-    environment: config.NODE_ENV,
+    environment: config.DOPPLER_CONFIG,
   });
 
   await server.start();

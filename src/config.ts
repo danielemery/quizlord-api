@@ -16,6 +16,7 @@ interface QuizlordConfig {
   FILE_ACCESS_BASE_URL: string;
   QUIZLORD_VERSION: string;
   SENTRY_DSN: string;
+  DOPPLER_CONFIG: string;
 }
 
 const schema = Joi.object<QuizlordConfig>()
@@ -35,6 +36,7 @@ const schema = Joi.object<QuizlordConfig>()
     FILE_ACCESS_BASE_URL: Joi.string().required(),
     QUIZLORD_VERSION: Joi.string().default('development'),
     SENTRY_DSN: Joi.string().required(),
+    DOPPLER_CONFIG: Joi.string().required(),
   })
   .required()
   .unknown(true);
