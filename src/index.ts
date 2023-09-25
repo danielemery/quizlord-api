@@ -4,9 +4,10 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { Role } from '@prisma/client';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
+import * as Sentry from '@sentry/node';
 
 import { verifyToken } from './auth';
 import config from './config';
@@ -73,8 +74,21 @@ async function initialise() {
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   });
 
+  Sentry.init({
+    dsn: config.SENTRY_DSN,
+    integrations: [
+      ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+      new Sentry.Integrations.Prisma({ client: persistence.getPrismaClient() }),
+      new Sentry.Integrations.Apollo(),
+    ],
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+    environment: config.NODE_ENV,
+  });
+
   await server.start();
 
+  app.use(Sentry.Handlers.requestHandler());
   app.use(
     '/',
     cors<cors.CorsRequest>({
@@ -116,6 +130,12 @@ async function initialise() {
       },
     }),
   );
+  app.use(Sentry.Handlers.errorHandler());
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app.use((_err: unknown, _req: Request, res: Response<{ sentry: string }>, _next: NextFunction) => {
+    res.statusCode = 500;
+    res.end((res as unknown as { sentry: string }).sentry + '\n');
+  });
 
   subscribeToFileUploads();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));

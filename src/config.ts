@@ -15,6 +15,7 @@ interface QuizlordConfig {
   AWS_FILE_UPLOADED_SQS_QUEUE_URL: string;
   FILE_ACCESS_BASE_URL: string;
   QUIZLORD_VERSION: string;
+  SENTRY_DSN: string;
 }
 
 const schema = Joi.object<QuizlordConfig>()
@@ -33,6 +34,7 @@ const schema = Joi.object<QuizlordConfig>()
     AWS_FILE_UPLOADED_SQS_QUEUE_URL: Joi.string().required(),
     FILE_ACCESS_BASE_URL: Joi.string().required(),
     QUIZLORD_VERSION: Joi.string().default('development'),
+    SENTRY_DSN: Joi.string().required(),
   })
   .required()
   .unknown(true);
