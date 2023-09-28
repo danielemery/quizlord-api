@@ -77,7 +77,9 @@ async function initialise() {
   Sentry.init({
     dsn: config.SENTRY_DSN,
     integrations: [
-      ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
+      new Sentry.Integrations.Http({ tracing: true }),
+      new Sentry.Integrations.Express({ app }),
+      new Sentry.Integrations.Postgres(),
       new Sentry.Integrations.Prisma({ client: persistence.getPrismaClient() }),
       new Sentry.Integrations.Apollo(),
     ],
