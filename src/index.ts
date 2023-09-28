@@ -72,6 +72,12 @@ async function initialise() {
     resolvers,
     csrfPrevention: true,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    formatError(formattedError, error) {
+      if (formattedError.extensions?.code === 'INTERNAL_SERVER_ERROR') {
+        Sentry.captureException(error);
+      }
+      return formattedError;
+    },
   });
 
   Sentry.init({
