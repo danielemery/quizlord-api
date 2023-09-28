@@ -92,6 +92,7 @@ async function initialise() {
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
     environment: config.DOPPLER_CONFIG,
+    release: config.QUIZLORD_VERSION,
   });
 
   await server.start();
