@@ -91,6 +91,8 @@ async function initialise() {
   await server.start();
 
   app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+
   app.use(
     '/',
     cors<cors.CorsRequest>({
