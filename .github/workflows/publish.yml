@@ -158,3 +158,4 @@ jobs:
           environment: ${{ steps.version.outputs.is_stable == 'true' && 'prod' || 'stg' }}
           sourcemaps: ./dist
           version: ${{ steps.version.outputs.full }}
+          urlPrefix: '/app'
