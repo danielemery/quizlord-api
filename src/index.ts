@@ -7,6 +7,7 @@ import cors from 'cors';
 import express from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
+import * as Sentry from '@sentry/node';
 
 import { verifyToken } from './auth';
 import config from './config';
@@ -71,9 +72,33 @@ async function initialise() {
     resolvers,
     csrfPrevention: true,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+    formatError(formattedError, error) {
+      if (formattedError.extensions?.code === 'INTERNAL_SERVER_ERROR') {
+        Sentry.captureException(error);
+      }
+      return formattedError;
+    },
+  });
+
+  Sentry.init({
+    dsn: config.SENTRY_DSN,
+    integrations: [
+      new Sentry.Integrations.Http({ tracing: true }),
+      new Sentry.Integrations.Express({ app }),
+      new Sentry.Integrations.Postgres(),
+      new Sentry.Integrations.Prisma({ client: persistence.getPrismaClient() }),
+      new Sentry.Integrations.Apollo(),
+    ],
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+    environment: config.DOPPLER_CONFIG,
+    release: config.QUIZLORD_VERSION,
   });
 
   await server.start();
+
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
 
   app.use(
     '/',
@@ -116,6 +141,7 @@ async function initialise() {
       },
     }),
   );
+  app.use(Sentry.Handlers.errorHandler());
 
   subscribeToFileUploads();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));

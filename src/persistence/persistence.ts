@@ -16,7 +16,7 @@ types.setTypeParser(DATE_OID, parseDate);
 class Persistence {
   #prisma?: PrismaClient;
 
-  #getPrisma() {
+  getPrismaClient() {
     if (this.#prisma === undefined) {
       throw new Error('Error attempting to use database before connecting');
     }
@@ -38,7 +38,7 @@ class Persistence {
   }
 
   async getQuizzesWithMyResults({ userEmail, afterId, limit }: { userEmail: string; afterId?: string; limit: number }) {
-    const result = await this.#getPrisma().quiz.findMany({
+    const result = await this.getPrismaClient().quiz.findMany({
       ...getPagedQuery(limit, afterId),
       orderBy: {
         date: 'desc',
@@ -80,7 +80,7 @@ class Persistence {
   }
 
   async getQuizByIdWithResults({ id }: { id: string }) {
-    return this.#getPrisma().quiz.findFirstOrThrow({
+    return this.getPrismaClient().quiz.findFirstOrThrow({
       where: {
         id,
       },
@@ -101,7 +101,7 @@ class Persistence {
   }
 
   async getQuizImage(imageKey: string) {
-    return this.#getPrisma().quizImage.findFirst({
+    return this.getPrismaClient().quizImage.findFirst({
       where: {
         imageKey,
       },
@@ -109,7 +109,7 @@ class Persistence {
   }
 
   async markQuizImageReady(imageKey: string) {
-    return this.#getPrisma().quizImage.update({
+    return this.getPrismaClient().quizImage.update({
       data: {
         state: 'READY',
       },
@@ -123,7 +123,7 @@ class Persistence {
     quiz: QuizPersistence,
     images: Omit<QuizImagePersistence, 'quizId'>[],
   ): Promise<QuizPersistence> {
-    return this.#getPrisma().quiz.create({
+    return this.getPrismaClient().quiz.create({
       data: {
         ...quiz,
         images: {
@@ -142,14 +142,14 @@ class Persistence {
     completedBy: string[],
     score: number,
   ) {
-    const users = await this.#getPrisma().user.findMany({
+    const users = await this.getPrismaClient().user.findMany({
       where: {
         email: {
           in: completedBy,
         },
       },
     });
-    const result = await this.#getPrisma().quizCompletion.create({
+    const result = await this.getPrismaClient().quizCompletion.create({
       data: {
         completedAt,
         id: completionId,
@@ -182,7 +182,7 @@ class Persistence {
     email: string,
     name: string | undefined,
   ): Promise<{ roles: Role[]; id: string }> {
-    const user = await this.#getPrisma().user.findFirst({
+    const user = await this.getPrismaClient().user.findFirst({
       include: {
         roles: {},
       },
@@ -193,7 +193,7 @@ class Persistence {
 
     if (!user) {
       const newUserId = uuidv4();
-      await this.#getPrisma().user.create({
+      await this.getPrismaClient().user.create({
         data: {
           id: newUserId,
           email,
@@ -208,14 +208,14 @@ class Persistence {
     }
 
     if (user?.name !== (name ?? null)) {
-      await this.#getPrisma().user.update({ data: { name }, where: { id: user.id } });
+      await this.getPrismaClient().user.update({ data: { name }, where: { id: user.id } });
     }
 
     return { roles: user.roles.map((r) => r.role), id: user.id };
   }
 
   async getUserRoles(email: string): Promise<Role[]> {
-    const roles = await this.#getPrisma().userRole.findMany({
+    const roles = await this.getPrismaClient().userRole.findMany({
       select: {
         role: true,
       },
@@ -229,7 +229,7 @@ class Persistence {
   }
 
   async getUsersWithRole({ role, afterId, limit }: { role: Role; afterId?: string; limit: number }) {
-    const result = await this.#getPrisma().user.findMany({
+    const result = await this.getPrismaClient().user.findMany({
       ...getPagedQuery(limit, afterId),
       where: {
         roles: {
