@@ -142,11 +142,6 @@ async function initialise() {
     }),
   );
   app.use(Sentry.Handlers.errorHandler());
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  app.use((_err: unknown, _req: Request, res: Response<{ sentry: string }>, _next: NextFunction) => {
-    res.statusCode = 500;
-    res.end((res as unknown as { sentry: string }).sentry + '\n');
-  });
 
   subscribeToFileUploads();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
