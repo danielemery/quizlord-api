@@ -4,7 +4,7 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import { Role } from '@prisma/client';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 import * as Sentry from '@sentry/node';
