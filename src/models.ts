@@ -31,6 +31,10 @@ export interface QuizDetails {
   completions: QuizCompletion[];
 }
 
+export interface QuizFilters {
+  excludeCompletedBy?: string[];
+}
+
 export interface User {
   email: string;
   name?: string;

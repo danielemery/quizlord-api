@@ -10,7 +10,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { QuizlordContext } from '..';
-import { Quiz, QuizDetails, QuizCompletion, QuizImage, CreateQuizResult } from '../models';
+import { Quiz, QuizDetails, QuizCompletion, QuizImage, CreateQuizResult, QuizFilters } from '../models';
 import { persistence } from '../persistence/persistence';
 import { createKey, generateSignedUploadUrl, keyToUrl } from '../s3';
 import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
@@ -69,7 +69,7 @@ function quizPersistenceWithMyCompletionsToQuiz(
 
 export async function quizzes(
   _: unknown,
-  { first = 100, after }: { first: number; after?: string },
+  { first = 100, after, filters = {} }: { first: number; after?: string; filters: QuizFilters },
   context: QuizlordContext,
 ): Promise<PagedResult<Quiz>> {
   requireUserRole(context, 'USER');
@@ -78,6 +78,7 @@ export async function quizzes(
     userEmail: context.email,
     afterId,
     limit: first,
+    filters,
   });
   const edges = data.map((quiz) => ({
     node: quizPersistenceWithMyCompletionsToQuiz(quiz),
