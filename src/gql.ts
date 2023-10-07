@@ -110,8 +110,28 @@ const typeDefs = gql`
     completion: QuizCompletion
   }
 
+  "Available filters for the quizzes query"
+  input QuizFilters {
+    """
+    Optional list of user emails.
+    If provided, only quizzes completed by none of these users will be included in the results.
+    """
+    excludeCompletedBy: [String]
+  }
+
   type Query {
-    quizzes(first: Int, after: String): QuizConnection
+    """
+    Get a paged list of quizzes.
+    Optionally filter using the filters parameter.
+    """
+    quizzes(
+      "The number of results to return, capped at 100"
+      first: Int
+      "The cursor to start returning results from, for pagination"
+      after: String
+      "The filters to apply to the query"
+      filters: QuizFilters
+    ): QuizConnection
     quiz(id: String!): QuizDetails
     users(first: Int, after: String): UserConnection
     me: UserDetails

@@ -1,6 +1,7 @@
 import { PrismaClient, Quiz as QuizPersistence, QuizImage as QuizImagePersistence, Role } from '@prisma/client';
 import { types } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
+import { QuizFilters } from '../models';
 
 export interface PersistenceResult<T> {
   data: T[];
@@ -37,7 +38,17 @@ class Persistence {
     }
   }
 
-  async getQuizzesWithMyResults({ userEmail, afterId, limit }: { userEmail: string; afterId?: string; limit: number }) {
+  async getQuizzesWithMyResults({
+    userEmail,
+    afterId,
+    limit,
+    filters,
+  }: {
+    userEmail: string;
+    afterId?: string;
+    limit: number;
+    filters: QuizFilters;
+  }) {
     const result = await this.getPrismaClient().quiz.findMany({
       ...getPagedQuery(limit, afterId),
       orderBy: {
@@ -73,6 +84,23 @@ class Persistence {
         uploadedAt: true,
         uploadedByUserId: true,
         uploadedByUser: true,
+      },
+      where: {
+        ...(filters.excludeCompletedBy && {
+          completions: {
+            none: {
+              completedBy: {
+                some: {
+                  user: {
+                    email: {
+                      in: filters.excludeCompletedBy,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        }),
       },
     });
 
