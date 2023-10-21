@@ -307,7 +307,7 @@ class Persistence {
         result = (await this.getPrismaClient().$queryRaw`
 select id, email, name from 
   (
-    select "user".*, count(quiz_completion.id) as completions from "user"
+    select "user".*, count(my_completion.user_id) as completions from "user"
     left outer join quiz_completion_user as their_completion on "user".id = their_completion.user_id
     left outer join quiz_completion on their_completion.quiz_completion_id = quiz_completion.id
     left outer join quiz_completion_user as my_completion on my_completion.quiz_completion_id = quiz_completion.id and my_completion.user_id = ${currentUserId}
