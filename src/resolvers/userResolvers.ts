@@ -1,7 +1,7 @@
 import { User as UserPersistence } from '@prisma/client';
 
 import { QuizlordContext } from '..';
-import { User, UserDetails } from '../models';
+import { User, UserDetails, UserSortOption } from '../models';
 import { persistence } from '../persistence/persistence';
 import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
 
@@ -14,7 +14,11 @@ function userPersistenceToUser(user: UserPersistence): User {
 
 export async function users(
   _: unknown,
-  { first = 100, after }: { first: number; after?: string },
+  {
+    first = 100,
+    after,
+    sortedBy = 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC',
+  }: { first: number; after?: string; sortedBy: UserSortOption },
   context: QuizlordContext,
 ): Promise<PagedResult<User>> {
   requireUserRole(context, 'USER');
@@ -23,6 +27,8 @@ export async function users(
     role: 'USER',
     afterId,
     limit: first,
+    sortedBy,
+    currentUserId: context.userId,
   });
   const edges = data.map((user) => ({
     node: userPersistenceToUser(user),
