@@ -3,7 +3,7 @@
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "engines": {
-    "node": "v18.17.1"
+    "node": "v20.8.0"
   },
   "scripts": {
     "build": "tsc",
@@ -31,7 +31,7 @@
     "@aws-sdk/client-sqs": "^3.118.0",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "@aws-sdk/util-create-request": "^3.341.0",
-    "@prisma/client": "^5.2.0",
+    "@prisma/client": "^5.4.1",
     "@sentry/node": "^7.71.0",
     "@sentry/profiling-node": "^1.2.1",
     "axios": "^1.2.6",
@@ -63,7 +63,7 @@
     "eslint-plugin-prettier": "^5.0.0",
     "nodemon": "^3.0.1",
     "prettier": "^3.0.3",
-    "prisma": "^5.2.0",
+    "prisma": "^5.4.1",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.8.1",
     "typescript": "^5.0.4"

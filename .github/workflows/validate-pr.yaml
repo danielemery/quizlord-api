@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 18.17.1
+  NODE_VERSION: 20.8.0
 
 jobs:
   build:
