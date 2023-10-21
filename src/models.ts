@@ -54,3 +54,5 @@ export interface CreateQuizResult {
     link: string;
   }[];
 }
+
+export type UserSortOption = 'EMAIL_ASC' | 'NAME_ASC' | 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC';

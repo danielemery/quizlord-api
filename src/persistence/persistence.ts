@@ -1,7 +1,7 @@
-import { PrismaClient, Quiz as QuizPersistence, QuizImage as QuizImagePersistence, Role } from '@prisma/client';
+import { PrismaClient, Quiz as QuizPersistence, QuizImage as QuizImagePersistence, Role, User } from '@prisma/client';
 import { types } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { QuizFilters } from '../models';
+import { QuizFilters, UserSortOption } from '../models';
 
 export interface PersistenceResult<T> {
   data: T[];
@@ -256,8 +256,20 @@ class Persistence {
     return roles.map((r) => r.role);
   }
 
-  async getUsersWithRole({ role, afterId, limit }: { role: Role; afterId?: string; limit: number }) {
-    const result = await this.getPrismaClient().user.findMany({
+  async getUsersWithRole({
+    role,
+    afterId,
+    limit,
+    sortedBy,
+    currentUserId,
+  }: {
+    role: Role;
+    afterId?: string;
+    limit: number;
+    sortedBy: UserSortOption;
+    currentUserId: string;
+  }) {
+    const pagedWhereQuery = {
       ...getPagedQuery(limit, afterId),
       where: {
         roles: {
@@ -266,10 +278,45 @@ class Persistence {
           },
         },
       },
-      orderBy: {
-        email: 'asc',
-      },
-    });
+    };
+
+    let result;
+    switch (sortedBy) {
+      case 'EMAIL_ASC':
+        result = await this.getPrismaClient().user.findMany({
+          ...pagedWhereQuery,
+          orderBy: {
+            email: 'asc',
+          },
+        });
+        break;
+      case 'NAME_ASC':
+        result = await this.getPrismaClient().user.findMany({
+          ...pagedWhereQuery,
+          orderBy: {
+            name: 'asc',
+          },
+        });
+        break;
+      case 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC':
+      default:
+        /**
+         * Prisma does not yet support ordering by a relation with anything other than count.
+         * We need to do something quite a bit more complex.
+         */
+        result = (await this.getPrismaClient().$queryRaw`
+select id, email, name from 
+  (
+    select "user".*, count(quiz_completion.id) as completions from "user"
+    left outer join quiz_completion_user as their_completion on "user".id = their_completion.user_id
+    left outer join quiz_completion on their_completion.quiz_completion_id = quiz_completion.id
+    left outer join quiz_completion_user as my_completion on my_completion.quiz_completion_id = quiz_completion.id and my_completion.user_id = ${currentUserId}
+    group by "user".id
+  ) as completions_with_current_user
+order by completions_with_current_user.completions desc;
+        `) as User[];
+        break;
+    }
 
     return slicePagedResults(result, limit, afterId !== undefined);
   }

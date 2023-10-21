@@ -24,6 +24,12 @@ const typeDefs = gql`
     QUESTION_AND_ANSWER
   }
 
+  enum UserSortOption {
+    EMAIL_ASC
+    NAME_ASC
+    NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC
+  }
+
   type PageInfo {
     hasNextPage: Boolean
     startCursor: String
@@ -133,7 +139,10 @@ const typeDefs = gql`
       filters: QuizFilters
     ): QuizConnection
     quiz(id: String!): QuizDetails
-    users(first: Int, after: String): UserConnection
+    """
+    Get a paged list of users.
+    """
+    users(first: Int, after: String, sortedBy: UserSortOption): UserConnection
     me: UserDetails
   }
 
