@@ -49,7 +49,7 @@
   "devDependencies": {
     "@dtdot/eslint-config": "^0.0.8",
     "@trivago/prettier-plugin-sort-imports": "^4.0.0",
-    "@tsconfig/node18": "^18.2.2",
+    "@tsconfig/node20": "^20.1.2",
     "@types/chai": "^4.3.1",
     "@types/cors": "^2.8.13",
     "@types/mocha": "^10.0.1",
