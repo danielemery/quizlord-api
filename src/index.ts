@@ -9,13 +9,12 @@ import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 import * as Sentry from '@sentry/node';
 
-import { authenticationService } from './service.locator';
+import { authenticationService, queueService } from './service.locator';
 import config from './config/config';
 import typeDefs from './gql';
 import { persistence } from './persistence/persistence';
 import { createQuiz, quiz, quizzes, completeQuiz } from './quiz/quizResolvers';
 import { me, users } from './user/userResolvers';
-import { subscribeToFileUploads } from './queue/sqs';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -143,7 +142,7 @@ async function initialise() {
   );
   app.use(Sentry.Handlers.errorHandler());
 
-  subscribeToFileUploads();
+  queueService.subscribeToFileUploads();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
 
   console.log(`🚀 Server ready at http://localhost:4000/`);

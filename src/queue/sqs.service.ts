@@ -1,0 +1,81 @@
+import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
+
+import config from '../config/config';
+import { persistence } from '../persistence/persistence';
+
+interface S3MessageContent {
+  Records?: S3MessageContentRecord[];
+}
+
+interface S3MessageContentRecord {
+  eventTime: string;
+  eventName: string;
+  s3: {
+    object: {
+      key: string;
+      size: number;
+    };
+  };
+}
+
+export class SQSQueueService {
+  #client: SQSClient;
+
+  constructor() {
+    this.#client = new SQSClient({ region: config.AWS_REGION });
+  }
+
+  async subscribeToFileUploads() {
+    // todo exit this loop when app entering shutdown state.
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
+      const result = await this.#client.send(
+        new ReceiveMessageCommand({
+          QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+          WaitTimeSeconds: 10,
+        }),
+      );
+      if (result.Messages) {
+        await Promise.all(result.Messages.map((message) => this.processMessage(message)));
+      }
+    }
+  }
+
+  async processMessage(message: Message) {
+    if (message.Body) {
+      const messageBody = JSON.parse(message.Body);
+      if (messageBody.Message) {
+        const messageData: S3MessageContent = JSON.parse(messageBody.Message);
+        if (messageData.Records) {
+          await Promise.all(messageData.Records.map((record) => this.processUploadedItem(record)));
+        }
+      } else {
+        console.warn(`Unexpected empty inner message body`, message);
+      }
+    } else {
+      console.warn(`Unexpected empty message body`, message);
+    }
+
+    await this.#client.send(
+      new DeleteMessageCommand({
+        QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+        ReceiptHandle: message.ReceiptHandle,
+      }),
+    );
+  }
+
+  async processUploadedItem(record: S3MessageContentRecord) {
+    console.log('Processing uploaded item');
+    if (record.eventName !== 'ObjectCreated:Put') {
+      console.warn(`Unexpected event name <${record.eventName}>`);
+    }
+    const key = record.s3.object.key;
+    const quiz = await persistence.getQuizImage(key);
+    if (quiz) {
+      await persistence.markQuizImageReady(key);
+    } else {
+      console.error(`Invalid file upload at key: ${key}`);
+    }
+  }
+}

@@ -12,13 +12,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { QuizlordContext } from '..';
 import { Quiz, QuizDetails, QuizCompletion, QuizImage, CreateQuizResult, QuizFilters } from '../models';
 import { persistence } from '../persistence/persistence';
-import { createKey, generateSignedUploadUrl, keyToUrl } from '../file/s3';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
-import { authorisationService } from '../service.locator';
+import { authorisationService, fileService } from '../service.locator';
 
 function quizImagePersistenceToQuizImage(quizImage: QuizImagePersistence): QuizImage {
   return {
-    imageLink: keyToUrl(quizImage.imageKey),
+    imageLink: fileService.keyToUrl(quizImage.imageKey),
     state: quizImage.state,
     type: quizImage.type,
   };
@@ -114,7 +113,7 @@ export async function quiz(_: unknown, { id }: { id: string }, context: Quizlord
 }
 
 async function populateFileWithUploadLink(file: { fileName: string; type: QuizImageType; imageKey: string }) {
-  const uploadLink = await generateSignedUploadUrl(file.imageKey);
+  const uploadLink = await fileService.generateSignedUploadUrl(file.imageKey);
   return {
     ...file,
     uploadLink,
@@ -128,7 +127,7 @@ export async function createQuiz(
 ): Promise<CreateQuizResult> {
   authorisationService.requireUserRole(context, 'USER');
   const uuid = uuidv4();
-  const filesWithKeys = files.map((file) => ({ ...file, imageKey: createKey(uuid, file.fileName) }));
+  const filesWithKeys = files.map((file) => ({ ...file, imageKey: fileService.createKey(uuid, file.fileName) }));
   const [createdQuiz, ...uploadLinks] = await Promise.all([
     persistence.createQuizWithImages(
       {
