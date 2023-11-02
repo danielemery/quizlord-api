@@ -6,7 +6,7 @@ export interface QuizCompletion {
   score: number;
 }
 
-type QuizType = 'BRAINWAVES' | 'SHARK';
+export type QuizType = 'BRAINWAVES' | 'SHARK';
 
 export interface Quiz {
   id: string;
@@ -17,10 +17,12 @@ export interface Quiz {
   myCompletions: QuizCompletion[];
 }
 
+export type QuizImageType = 'QUESTION' | 'ANSWER' | 'QUESTION_AND_ANSWER';
+
 export interface QuizImage {
   imageLink: string;
   state: 'PENDING_UPLOAD' | 'READY';
-  type: 'QUESTION' | 'ANSWER' | 'QUESTION_AND_ANSWER';
+  type: QuizImageType;
 }
 
 export interface QuizDetails {

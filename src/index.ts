@@ -8,10 +8,9 @@ import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 import * as Sentry from '@sentry/node';
 
-import { authenticationService, queueService } from './service.locator';
+import { authenticationService, prismaService, queueService, userService } from './service.locator';
 import config from './config/config';
 import typeDefs from './gql';
-import { persistence } from './persistence/persistence';
 import { userQueries } from './user/user.gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 import { Role } from './user/user.dto';
@@ -54,7 +53,7 @@ export interface QuizlordContext {
 }
 
 async function initialise() {
-  await persistence.connect();
+  await prismaService.connect();
 
   // Required logic for integrating with Express
   const app = express();
@@ -82,7 +81,7 @@ async function initialise() {
       new Sentry.Integrations.Http({ tracing: true }),
       new Sentry.Integrations.Express({ app }),
       new Sentry.Integrations.Postgres(),
-      new Sentry.Integrations.Prisma({ client: persistence.getPrismaClient() }),
+      new Sentry.Integrations.Prisma({ client: prismaService.client() }),
       new Sentry.Integrations.Apollo(),
     ],
     tracesSampleRate: 1.0,
@@ -124,7 +123,7 @@ async function initialise() {
         const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
         /* eslint-enable @typescript-eslint/no-explicit-any */
 
-        const { roles, id } = await persistence.loadUserDetailsAndUpdateIfNecessary(email, name);
+        const { roles, id } = await userService.loadUserDetailsAndUpdateIfNecessary(email, name);
 
         const context: QuizlordContext = {
           email,

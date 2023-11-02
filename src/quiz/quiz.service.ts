@@ -1,21 +1,23 @@
 import { v4 as uuidv4 } from 'uuid';
 import {
-  Quiz as QuizPersistence,
-  QuizCompletion as QuizCompletionPersistence,
-  QuizCompletionUser as QuizCompletionUserPersistence,
-  QuizImage as QuizImagePersistence,
-  User,
+  Quiz as QuizPersistenceModel,
+  QuizCompletion as QuizCompletionPersistenceModel,
+  QuizCompletionUser as QuizCompletionUserPersistenceModel,
+  QuizImage as QuizImagePersistenceModel,
+  User as UserPersistenceModel,
   QuizImageType,
   QuizType,
 } from '@prisma/client';
 import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { S3FileService } from '../file/s3.service';
-import { persistence } from '../persistence/persistence';
+import { QuizPersistence } from './quiz.persistence';
 
 export class QuizService {
+  #persistence: QuizPersistence;
   #fileService: S3FileService;
 
-  constructor() {
+  constructor(persistence: QuizPersistence) {
+    this.#persistence = persistence;
     this.#fileService = new S3FileService();
   }
 
@@ -30,7 +32,7 @@ export class QuizService {
     afterId?: string;
     filters: QuizFilters;
   }) {
-    const { data, hasMoreRows } = await persistence.getQuizzesWithMyResults({
+    const { data, hasMoreRows } = await this.#persistence.getQuizzesWithMyResults({
       userEmail: email,
       afterId,
       limit: first,
@@ -40,7 +42,7 @@ export class QuizService {
   }
 
   async getQuizDetails(id: string) {
-    const quiz = await persistence.getQuizByIdWithResults({
+    const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
     });
     const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
@@ -77,7 +79,7 @@ export class QuizService {
       imageKey: this.#fileService.createKey(uuid, file.fileName),
     }));
     const [createdQuiz, ...uploadLinks] = await Promise.all([
-      persistence.createQuizWithImages(
+      this.#persistence.createQuizWithImages(
         {
           id: uuid,
           date,
@@ -122,8 +124,16 @@ export class QuizService {
       throw new Error('Can only enter quiz completions which you participate in.');
     }
     const uuid = uuidv4();
-    const completion = await persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
+    const completion = await this.#persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
     return { completion: this.#quizCompletionPersistenceToQuizCompletion(completion) };
+  }
+
+  async markQuizImageReady(imageKey: string) {
+    const quizImage = await this.#persistence.getQuizImage(imageKey);
+    if (!quizImage) {
+      throw new Error(`Unable to find quizImage with key ${imageKey}`);
+    }
+    await this.#persistence.markQuizImageReady(imageKey);
   }
 
   async #populateFileWithUploadLink(file: { fileName: string; type: QuizImageType; imageKey: string }) {
@@ -134,7 +144,7 @@ export class QuizService {
     };
   }
 
-  #quizImagePersistenceToQuizImage(quizImage: QuizImagePersistence): QuizImage {
+  #quizImagePersistenceToQuizImage(quizImage: QuizImagePersistenceModel): QuizImage {
     return {
       imageLink: this.#fileService.keyToUrl(quizImage.imageKey),
       state: quizImage.state,
@@ -143,9 +153,9 @@ export class QuizService {
   }
 
   #quizCompletionPersistenceToQuizCompletion(
-    quizCompletion: QuizCompletionPersistence & {
-      completedBy: (QuizCompletionUserPersistence & {
-        user: User | null;
+    quizCompletion: QuizCompletionPersistenceModel & {
+      completedBy: (QuizCompletionUserPersistenceModel & {
+        user: UserPersistenceModel | null;
       })[];
     },
   ): QuizCompletion {
@@ -167,11 +177,11 @@ export class QuizService {
   }
 
   #quizPersistenceWithMyCompletionsToQuiz(
-    quiz: QuizPersistence & {
-      uploadedByUser: User;
-      completions: (QuizCompletionPersistence & {
-        completedBy: (QuizCompletionUserPersistence & {
-          user: User | null;
+    quiz: QuizPersistenceModel & {
+      uploadedByUser: UserPersistenceModel;
+      completions: (QuizCompletionPersistenceModel & {
+        completedBy: (QuizCompletionUserPersistenceModel & {
+          user: UserPersistenceModel | null;
         })[];
       })[];
     },

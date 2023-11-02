@@ -1,7 +1,7 @@
 import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
 
 import config from '../config/config';
-import { persistence } from '../persistence/persistence';
+import { quizService } from '../service.locator';
 
 interface S3MessageContent {
   Records?: S3MessageContentRecord[];
@@ -71,11 +71,10 @@ export class SQSQueueService {
       console.warn(`Unexpected event name <${record.eventName}>`);
     }
     const key = record.s3.object.key;
-    const quiz = await persistence.getQuizImage(key);
-    if (quiz) {
-      await persistence.markQuizImageReady(key);
-    } else {
-      console.error(`Invalid file upload at key: ${key}`);
+    try {
+      await quizService.markQuizImageReady(key);
+    } catch (err) {
+      console.error(`Error marking quiz image ready at key: ${key}`, err);
     }
   }
 }

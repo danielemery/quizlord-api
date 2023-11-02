@@ -1,8 +1,39 @@
-import { User as UserPersistence } from '@prisma/client';
-import { persistence } from '../persistence/persistence';
-import { User, UserSortOption } from './user.dto';
+import { v4 as uuidv4 } from 'uuid';
+
+import { User as UserPersistenceModel } from '@prisma/client';
+import { Role, User, UserSortOption } from './user.dto';
+import { UserPersistence } from './user.persistence';
 
 export class UserService {
+  #persistence: UserPersistence;
+  constructor(persistence: UserPersistence) {
+    this.#persistence = persistence;
+  }
+
+  async loadUserDetailsAndUpdateIfNecessary(
+    email: string,
+    name: string | undefined,
+  ): Promise<{ roles: Role[]; id: string }> {
+    const user = await this.#persistence.getUserByEmail(email);
+
+    if (!user) {
+      const newUserId = uuidv4();
+
+      await this.#persistence.createNewUser(newUserId, email, name);
+
+      return {
+        id: newUserId,
+        roles: [],
+      };
+    }
+
+    if (name && user?.name !== name) {
+      await this.#persistence.updateUserName(user.id, name);
+    }
+
+    return { roles: user.roles.map((r) => r.role), id: user.id };
+  }
+
   async getUsers({
     userId,
     first,
@@ -14,7 +45,7 @@ export class UserService {
     afterId?: string;
     sortedBy: UserSortOption;
   }) {
-    const { data, hasMoreRows } = await persistence.getUsersWithRole({
+    const { data, hasMoreRows } = await this.#persistence.getUsersWithRole({
       role: 'USER',
       afterId,
       limit: first,
@@ -27,7 +58,7 @@ export class UserService {
     };
   }
 
-  #userPersistenceToUser(user: UserPersistence): User {
+  #userPersistenceToUser(user: UserPersistenceModel): User {
     return {
       id: user.id,
       email: user.email,
