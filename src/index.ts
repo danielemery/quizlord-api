@@ -13,7 +13,7 @@ import { authenticationService, queueService } from './service.locator';
 import config from './config/config';
 import typeDefs from './gql';
 import { persistence } from './persistence/persistence';
-import { me, users } from './user/userResolvers';
+import { userQueries } from './user/user.gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
@@ -39,8 +39,7 @@ const resolvers = {
   Date: dateScalar,
   Query: {
     ...quizQueries,
-    users,
-    me,
+    ...userQueries,
   },
   Mutation: {
     ...quizMutations,

@@ -49,6 +49,7 @@ export class QuizService {
       completions: completions.map(this.#quizCompletionPersistenceToQuizCompletion),
       images: images.map(this.#quizImagePersistenceToQuizImage),
       uploadedBy: {
+        id: uploadedByUser.id,
         email: uploadedByUser.email,
         name: uploadedByUser.name ?? undefined,
       },
@@ -156,6 +157,7 @@ export class QuizService {
           throw new Error('Persistence incorrectly retrieved non-matching quizCompletion');
         }
         return {
+          id: user.user.id,
           email: user.user.email,
           name: user.user.name ?? undefined,
         };
@@ -179,6 +181,7 @@ export class QuizService {
       ...quizWithoutImageKey,
       myCompletions: completions.map(this.#quizCompletionPersistenceToQuizCompletion),
       uploadedBy: {
+        id: uploadedByUser.id,
         email: uploadedByUser.email,
         name: uploadedByUser.name ?? undefined,
       },
