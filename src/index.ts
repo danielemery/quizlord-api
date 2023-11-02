@@ -13,8 +13,8 @@ import { authenticationService, queueService } from './service.locator';
 import config from './config/config';
 import typeDefs from './gql';
 import { persistence } from './persistence/persistence';
-import { createQuiz, quiz, quizzes, completeQuiz } from './quiz/quizResolvers';
 import { me, users } from './user/userResolvers';
+import { quizMutations, quizQueries } from './quiz/quiz.gql';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -38,14 +38,12 @@ const dateScalar = new GraphQLScalarType({
 const resolvers = {
   Date: dateScalar,
   Query: {
-    quizzes,
-    quiz,
+    ...quizQueries,
     users,
     me,
   },
   Mutation: {
-    createQuiz,
-    completeQuiz,
+    ...quizMutations,
   },
 };
 
