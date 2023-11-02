@@ -1,10 +1,12 @@
-import { QuizImageState, QuizImageType, QuizType, Role } from '@prisma/client';
+import { User } from '../user/user.dto';
 
 export interface QuizCompletion {
   completedAt: Date;
   completedBy: User[];
   score: number;
 }
+
+type QuizType = 'BRAINWAVES' | 'SHARK';
 
 export interface Quiz {
   id: string;
@@ -17,8 +19,8 @@ export interface Quiz {
 
 export interface QuizImage {
   imageLink: string;
-  state: QuizImageState;
-  type: QuizImageType;
+  state: 'PENDING_UPLOAD' | 'READY';
+  type: 'QUESTION' | 'ANSWER' | 'QUESTION_AND_ANSWER';
 }
 
 export interface QuizDetails {
@@ -35,19 +37,6 @@ export interface QuizFilters {
   excludeCompletedBy?: string[];
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-}
-
-export interface UserDetails {
-  id: string;
-  email: string;
-  name?: string;
-  roles: Role[];
-}
-
 export interface CreateQuizResult {
   quiz: Quiz;
   uploadLinks: {
@@ -55,5 +44,3 @@ export interface CreateQuizResult {
     link: string;
   }[];
 }
-
-export type UserSortOption = 'EMAIL_ASC' | 'NAME_ASC' | 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC';

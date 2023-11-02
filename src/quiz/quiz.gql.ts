@@ -1,9 +1,9 @@
 import { QuizImageType, QuizType } from '@prisma/client';
 
 import { QuizlordContext } from '..';
-import { Quiz, QuizDetails, QuizCompletion, CreateQuizResult, QuizFilters } from '../models';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { authorisationService, quizService } from '../service.locator';
+import { CreateQuizResult, Quiz, QuizCompletion, QuizDetails, QuizFilters } from './quiz.dto';
 
 async function quizzes(
   _: unknown,

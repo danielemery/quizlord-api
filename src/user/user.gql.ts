@@ -1,7 +1,7 @@
 import { QuizlordContext } from '..';
-import { User, UserDetails, UserSortOption } from '../models';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { authorisationService, userService } from '../service.locator';
+import { User, UserDetails, UserSortOption } from './user.dto';
 
 async function users(
   _: unknown,

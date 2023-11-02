@@ -1,7 +1,6 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { Role } from '@prisma/client';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
@@ -15,6 +14,7 @@ import typeDefs from './gql';
 import { persistence } from './persistence/persistence';
 import { userQueries } from './user/user.gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
+import { Role } from './user/user.dto';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 

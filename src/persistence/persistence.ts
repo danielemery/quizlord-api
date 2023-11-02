@@ -1,7 +1,8 @@
 import { PrismaClient, Quiz as QuizPersistence, QuizImage as QuizImagePersistence, Role, User } from '@prisma/client';
 import { types } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { QuizFilters, UserSortOption } from '../models';
+import { QuizFilters } from '../quiz/quiz.dto';
+import { UserSortOption } from '../user/user.dto';
 
 export interface PersistenceResult<T> {
   data: T[];

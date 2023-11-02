@@ -1,6 +1,6 @@
 import { User as UserPersistence } from '@prisma/client';
-import { User, UserSortOption } from '../models';
 import { persistence } from '../persistence/persistence';
+import { User, UserSortOption } from './user.dto';
 
 export class UserService {
   async getUsers({
