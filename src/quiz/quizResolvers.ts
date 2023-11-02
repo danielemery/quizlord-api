@@ -14,7 +14,7 @@ import { Quiz, QuizDetails, QuizCompletion, QuizImage, CreateQuizResult, QuizFil
 import { persistence } from '../persistence/persistence';
 import { createKey, generateSignedUploadUrl, keyToUrl } from '../file/s3';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
-import { requireUserRole } from '../auth/authorisation';
+import { authorisationService } from '../service.locator';
 
 function quizImagePersistenceToQuizImage(quizImage: QuizImagePersistence): QuizImage {
   return {
@@ -73,7 +73,7 @@ export async function quizzes(
   { first = 100, after, filters = {} }: { first: number; after?: string; filters: QuizFilters },
   context: QuizlordContext,
 ): Promise<PagedResult<Quiz>> {
-  requireUserRole(context, 'USER');
+  authorisationService.requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getQuizzesWithMyResults({
     userEmail: context.email,
@@ -97,7 +97,7 @@ export async function quizzes(
 }
 
 export async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext): Promise<QuizDetails> {
-  requireUserRole(context, 'USER');
+  authorisationService.requireUserRole(context, 'USER');
   const quiz = await persistence.getQuizByIdWithResults({
     id,
   });
@@ -126,7 +126,7 @@ export async function createQuiz(
   { type, date, files }: { type: QuizType; date: Date; files: { fileName: string; type: QuizImageType }[] },
   context: QuizlordContext,
 ): Promise<CreateQuizResult> {
-  requireUserRole(context, 'USER');
+  authorisationService.requireUserRole(context, 'USER');
   const uuid = uuidv4();
   const filesWithKeys = files.map((file) => ({ ...file, imageKey: createKey(uuid, file.fileName) }));
   const [createdQuiz, ...uploadLinks] = await Promise.all([
@@ -168,7 +168,7 @@ export async function completeQuiz(
   if (!completedBy.includes(context.email)) {
     throw new Error('Can only enter quiz completions which you participate in.');
   }
-  requireUserRole(context, 'USER');
+  authorisationService.requireUserRole(context, 'USER');
   const uuid = uuidv4();
   const completion = await persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
   return { completion: quizCompletionPersistenceToQuizCompletion(completion) };

@@ -4,7 +4,7 @@ import { QuizlordContext } from '..';
 import { User, UserDetails, UserSortOption } from '../models';
 import { persistence } from '../persistence/persistence';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
-import { requireUserRole } from '../auth/authorisation';
+import { authorisationService } from '../service.locator';
 
 function userPersistenceToUser(user: UserPersistence): User {
   return {
@@ -22,7 +22,7 @@ export async function users(
   }: { first: number; after?: string; sortedBy: UserSortOption },
   context: QuizlordContext,
 ): Promise<PagedResult<User>> {
-  requireUserRole(context, 'USER');
+  authorisationService.requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await persistence.getUsersWithRole({
     role: 'USER',

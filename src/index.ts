@@ -9,7 +9,7 @@ import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 import * as Sentry from '@sentry/node';
 
-import { verifyToken } from './auth/authentication';
+import { authenticationService } from './service.locator';
 import config from './config/config';
 import typeDefs from './gql';
 import { persistence } from './persistence/persistence';
@@ -121,7 +121,7 @@ async function initialise() {
 
         const sanitisedToken = token.replace('Bearer ', '');
 
-        const jwt = await verifyToken(sanitisedToken);
+        const jwt = await authenticationService.verifyToken(sanitisedToken);
 
         /* eslint-disable @typescript-eslint/no-explicit-any */
         const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
