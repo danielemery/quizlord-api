@@ -3,7 +3,7 @@ import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
 import { createRequest } from '@aws-sdk/util-create-request';
 import { formatUrl } from '@aws-sdk/util-format-url';
 
-import config from './config';
+import config from '../config/config';
 
 const s3Client = new S3Client({ region: config.AWS_REGION });
 

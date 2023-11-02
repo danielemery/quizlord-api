@@ -1,7 +1,7 @@
 import jwt, { JwtHeader, SigningKeyCallback, VerifyOptions } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 
-import config from './config';
+import config from '../config/config';
 
 const client = jwksClient({
   jwksUri: `https://${config.AUTH0_DOMAIN}/.well-known/jwks.json`,

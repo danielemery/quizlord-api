@@ -1,7 +1,7 @@
 import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
 
-import config from './config';
-import { persistence } from './persistence/persistence';
+import config from '../config/config';
+import { persistence } from '../persistence/persistence';
 
 const client = new SQSClient({ region: config.AWS_REGION });
 

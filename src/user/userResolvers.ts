@@ -3,7 +3,8 @@ import { User as UserPersistence } from '@prisma/client';
 import { QuizlordContext } from '..';
 import { User, UserDetails, UserSortOption } from '../models';
 import { persistence } from '../persistence/persistence';
-import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
+import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
+import { requireUserRole } from '../auth/authorisation';
 
 function userPersistenceToUser(user: UserPersistence): User {
   return {

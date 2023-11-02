@@ -12,8 +12,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { QuizlordContext } from '..';
 import { Quiz, QuizDetails, QuizCompletion, QuizImage, CreateQuizResult, QuizFilters } from '../models';
 import { persistence } from '../persistence/persistence';
-import { createKey, generateSignedUploadUrl, keyToUrl } from '../s3';
-import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
+import { createKey, generateSignedUploadUrl, keyToUrl } from '../file/s3';
+import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
+import { requireUserRole } from '../auth/authorisation';
 
 function quizImagePersistenceToQuizImage(quizImage: QuizImagePersistence): QuizImage {
   return {

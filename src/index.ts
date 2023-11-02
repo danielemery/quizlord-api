@@ -9,13 +9,13 @@ import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 import * as Sentry from '@sentry/node';
 
-import { verifyToken } from './auth';
-import config from './config';
+import { verifyToken } from './auth/authentication';
+import config from './config/config';
 import typeDefs from './gql';
 import { persistence } from './persistence/persistence';
-import { createQuiz, quiz, quizzes, completeQuiz } from './resolvers/quizResolvers';
-import { me, users } from './resolvers/userResolvers';
-import { subscribeToFileUploads } from './sqs';
+import { createQuiz, quiz, quizzes, completeQuiz } from './quiz/quizResolvers';
+import { me, users } from './user/userResolvers';
+import { subscribeToFileUploads } from './queue/sqs';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
