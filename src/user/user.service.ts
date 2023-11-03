@@ -53,7 +53,7 @@ export class UserService {
       currentUserId: userId,
     });
     return {
-      data: data.map(this.#userPersistenceToUser),
+      data: data.map((user) => this.#userPersistenceToUser(user)),
       hasMoreRows,
     };
   }

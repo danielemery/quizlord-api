@@ -19,8 +19,9 @@ export class AuthenticationService {
   }
 
   async verifyToken(token: string): Promise<string | jwt.Jwt | jwt.JwtPayload | undefined> {
+    const boundGetKey = this.#getKey.bind(this);
     return new Promise((resolve, reject) => {
-      jwt.verify(token, this.#getKey, this.#options, function (error, result) {
+      jwt.verify(token, boundGetKey, this.#options, function (error, result) {
         if (error) {
           reject(error);
         } else {

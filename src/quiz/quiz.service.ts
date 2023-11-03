@@ -38,7 +38,7 @@ export class QuizService {
       limit: first,
       filters,
     });
-    return { data: data.map(this.#quizPersistenceWithMyCompletionsToQuiz), hasMoreRows };
+    return { data: data.map((entry) => this.#quizPersistenceWithMyCompletionsToQuiz(entry)), hasMoreRows };
   }
 
   async getQuizDetails(id: string) {
@@ -48,8 +48,8 @@ export class QuizService {
     const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
-      completions: completions.map(this.#quizCompletionPersistenceToQuizCompletion),
-      images: images.map(this.#quizImagePersistenceToQuizImage),
+      completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
+      images: images.map((entry) => this.#quizImagePersistenceToQuizImage(entry)),
       uploadedBy: {
         id: uploadedByUser.id,
         email: uploadedByUser.email,
@@ -93,7 +93,7 @@ export class QuizService {
           state: 'PENDING_UPLOAD',
         })),
       ),
-      ...filesWithKeys.map(this.#populateFileWithUploadLink),
+      ...filesWithKeys.map((entry) => this.#populateFileWithUploadLink(entry)),
     ]);
     return {
       quiz: this.#quizPersistenceWithMyCompletionsToQuiz({
@@ -189,7 +189,7 @@ export class QuizService {
     const { completions, uploadedByUser, ...quizWithoutImageKey } = quiz;
     return {
       ...quizWithoutImageKey,
-      myCompletions: completions.map(this.#quizCompletionPersistenceToQuizCompletion),
+      myCompletions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
       uploadedBy: {
         id: uploadedByUser.id,
         email: uploadedByUser.email,
