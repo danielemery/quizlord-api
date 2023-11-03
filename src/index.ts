@@ -1,7 +1,6 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { Role } from '@prisma/client';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
@@ -9,13 +8,12 @@ import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 import * as Sentry from '@sentry/node';
 
-import { verifyToken } from './auth';
-import config from './config';
+import { authenticationService, prismaService, queueService, userService } from './service.locator';
+import config from './config/config';
 import typeDefs from './gql';
-import { persistence } from './persistence/persistence';
-import { createQuiz, quiz, quizzes, completeQuiz } from './resolvers/quizResolvers';
-import { me, users } from './resolvers/userResolvers';
-import { subscribeToFileUploads } from './sqs';
+import { userQueries } from './user/user.gql';
+import { quizMutations, quizQueries } from './quiz/quiz.gql';
+import { Role } from './user/user.dto';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -39,14 +37,11 @@ const dateScalar = new GraphQLScalarType({
 const resolvers = {
   Date: dateScalar,
   Query: {
-    quizzes,
-    quiz,
-    users,
-    me,
+    ...quizQueries,
+    ...userQueries,
   },
   Mutation: {
-    createQuiz,
-    completeQuiz,
+    ...quizMutations,
   },
 };
 
@@ -58,7 +53,7 @@ export interface QuizlordContext {
 }
 
 async function initialise() {
-  await persistence.connect();
+  await prismaService.connect();
 
   // Required logic for integrating with Express
   const app = express();
@@ -86,7 +81,7 @@ async function initialise() {
       new Sentry.Integrations.Http({ tracing: true }),
       new Sentry.Integrations.Express({ app }),
       new Sentry.Integrations.Postgres(),
-      new Sentry.Integrations.Prisma({ client: persistence.getPrismaClient() }),
+      new Sentry.Integrations.Prisma({ client: prismaService.client() }),
       new Sentry.Integrations.Apollo(),
     ],
     tracesSampleRate: 1.0,
@@ -121,14 +116,14 @@ async function initialise() {
 
         const sanitisedToken = token.replace('Bearer ', '');
 
-        const jwt = await verifyToken(sanitisedToken);
+        const jwt = await authenticationService.verifyToken(sanitisedToken);
 
         /* eslint-disable @typescript-eslint/no-explicit-any */
         const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
         const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
         /* eslint-enable @typescript-eslint/no-explicit-any */
 
-        const { roles, id } = await persistence.loadUserDetailsAndUpdateIfNecessary(email, name);
+        const { roles, id } = await userService.loadUserDetailsAndUpdateIfNecessary(email, name);
 
         const context: QuizlordContext = {
           email,
@@ -143,7 +138,7 @@ async function initialise() {
   );
   app.use(Sentry.Handlers.errorHandler());
 
-  subscribeToFileUploads();
+  queueService.subscribeToFileUploads();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
 
   console.log(`🚀 Server ready at http://localhost:4000/`);

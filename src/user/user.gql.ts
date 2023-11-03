@@ -1,18 +1,9 @@
-import { User as UserPersistence } from '@prisma/client';
-
 import { QuizlordContext } from '..';
-import { User, UserDetails, UserSortOption } from '../models';
-import { persistence } from '../persistence/persistence';
-import { base64Decode, base64Encode, PagedResult, requireUserRole } from './helpers';
+import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
+import { authorisationService, userService } from '../service.locator';
+import { User, UserDetails, UserSortOption } from './user.dto';
 
-function userPersistenceToUser(user: UserPersistence): User {
-  return {
-    email: user.email,
-    name: user.name ?? undefined,
-  };
-}
-
-export async function users(
+async function users(
   _: unknown,
   {
     first = 100,
@@ -21,17 +12,16 @@ export async function users(
   }: { first: number; after?: string; sortedBy: UserSortOption },
   context: QuizlordContext,
 ): Promise<PagedResult<User>> {
-  requireUserRole(context, 'USER');
+  authorisationService.requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
-  const { data, hasMoreRows } = await persistence.getUsersWithRole({
-    role: 'USER',
+  const { data, hasMoreRows } = await userService.getUsers({
+    userId: context.userId,
     afterId,
-    limit: first,
+    first,
     sortedBy,
-    currentUserId: context.userId,
   });
   const edges = data.map((user) => ({
-    node: userPersistenceToUser(user),
+    node: user,
     cursor: base64Encode(user.id),
   }));
   const result = {
@@ -45,7 +35,7 @@ export async function users(
   return result;
 }
 
-export async function me(_: unknown, _params: Record<string, never>, context: QuizlordContext): Promise<UserDetails> {
+async function me(_: unknown, _params: Record<string, never>, context: QuizlordContext): Promise<UserDetails> {
   return {
     id: context.userId,
     email: context.email,
@@ -53,3 +43,8 @@ export async function me(_: unknown, _params: Record<string, never>, context: Qu
     roles: context.roles,
   };
 }
+
+export const userQueries = {
+  users,
+  me,
+};
