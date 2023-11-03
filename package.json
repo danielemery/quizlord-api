@@ -47,7 +47,7 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@dtdot/eslint-config": "^0.0.8",
+    "@dtdot/eslint-config": "^0.0.9",
     "@trivago/prettier-plugin-sort-imports": "^4.0.0",
     "@tsconfig/node20": "^20.1.2",
     "@types/chai": "^4.3.1",
