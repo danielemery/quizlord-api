@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-
 import { User as UserPersistenceModel } from '@prisma/client';
+
 import { Role, User, UserSortOption } from './user.dto';
 import { UserPersistence } from './user.persistence';
 

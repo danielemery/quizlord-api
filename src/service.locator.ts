@@ -18,9 +18,6 @@ export const prismaService = new PrismaService();
 // file
 export const fileService = new S3FileService();
 
-// queue
-export const queueService = new SQSQueueService();
-
 // quiz
 export const quizPersistence = new QuizPersistence(prismaService);
 export const quizService = new QuizService(quizPersistence);
@@ -28,3 +25,6 @@ export const quizService = new QuizService(quizPersistence);
 // user
 export const userPersistence = new UserPersistence(prismaService);
 export const userService = new UserService(userPersistence);
+
+// queue
+export const queueService = new SQSQueueService(quizService);

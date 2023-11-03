@@ -1,7 +1,7 @@
 import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
 
 import config from '../config/config';
-import { quizService } from '../service.locator';
+import { QuizService } from '../quiz/quiz.service';
 
 interface S3MessageContent {
   Records?: S3MessageContentRecord[];
@@ -20,9 +20,11 @@ interface S3MessageContentRecord {
 
 export class SQSQueueService {
   #client: SQSClient;
+  #quizService: QuizService;
 
-  constructor() {
+  constructor(quizService: QuizService) {
     this.#client = new SQSClient({ region: config.AWS_REGION });
+    this.#quizService = quizService;
   }
 
   async subscribeToFileUploads() {
@@ -72,7 +74,7 @@ export class SQSQueueService {
     }
     const key = record.s3.object.key;
     try {
-      await quizService.markQuizImageReady(key);
+      await this.#quizService.markQuizImageReady(key);
     } catch (err) {
       console.error(`Error marking quiz image ready at key: ${key}`, err);
     }

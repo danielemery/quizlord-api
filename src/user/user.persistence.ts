@@ -1,5 +1,6 @@
-import { PrismaService } from '../database/prisma.service';
 import { Role, User } from '@prisma/client';
+
+import { PrismaService } from '../database/prisma.service';
 import { UserSortOption } from '../user/user.dto';
 import { getPagedQuery, slicePagedResults } from '../util/paging-helpers';
 
