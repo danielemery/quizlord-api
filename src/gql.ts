@@ -116,6 +116,13 @@ const typeDefs = gql`
     completion: QuizCompletion
   }
 
+  type IndividualUserStatistic {
+    name: String
+    email: String!
+    totalQuizCompletions: Int!
+    averageScorePercentage: Float!
+  }
+
   "Available filters for the quizzes query"
   input QuizFilters {
     """
@@ -144,6 +151,7 @@ const typeDefs = gql`
     """
     users(first: Int, after: String, sortedBy: UserSortOption): UserConnection
     me: UserDetails
+    individualUserStatistics: [IndividualUserStatistic]
   }
 
   type Mutation {
