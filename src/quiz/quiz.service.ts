@@ -137,6 +137,61 @@ export class QuizService {
     await this.#persistence.markQuizImageReady(imageKey);
   }
 
+  /**
+   * Get the max score for a quiz type.
+   * @param quizType The type of quiz to get the max score for.
+   * @returns The max score for the quiz type.
+   */
+  getMaxScoreForQuizType(quizType: QuizType) {
+    switch (quizType) {
+      case 'BRAINWAVES':
+        return 50;
+      case 'SHARK':
+        return 20;
+      default:
+        throw new Error(`Unknown quizType ${quizType}`);
+    }
+  }
+
+  /**
+   * Get a paginated list of quiz percentages for a user.
+   * @param filters Paging and filtering options.
+   * @returns A list of quiz percentages (as a number between 0 and 1) for the user in stats and a cursor to load the next set of scores.
+   */
+  async quizScorePercentagesForUser({
+    email,
+    first = 100,
+    afterId,
+  }: {
+    /**
+     * The email of the user to get quiz percentages for.
+     */
+    email: string;
+    /**
+     * The number of quiz percentages to get.
+     */
+    first: number;
+    /**
+     * The cursor to start getting quiz percentages from.
+     * If not provided, the first quiz percentage will be returned.
+     * Will have been returned in the previous call to this function.
+     */
+    afterId?: string;
+  }) {
+    const { data, hasMoreRows } = await this.#persistence.getCompletionScoreWithQuizTypesForUser({
+      email,
+      limit: first,
+      afterId,
+    });
+    return {
+      stats: data.map((completion) => {
+        const maxScore = this.getMaxScoreForQuizType(completion.quiz.type);
+        return completion.score.toNumber() / maxScore;
+      }),
+      cursor: hasMoreRows ? data[data.length - 1]?.id : undefined,
+    };
+  }
+
   async #populateFileWithUploadLink(file: { fileName: string; type: QuizImageType; imageKey: string }) {
     const uploadLink = await this.#fileService.generateSignedUploadUrl(file.imageKey);
     return {
