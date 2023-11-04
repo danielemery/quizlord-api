@@ -174,4 +174,38 @@ export class QuizPersistence {
     });
     return result;
   }
+
+  async getCompletionScoreWithQuizTypesForUser({
+    email,
+    afterId,
+    limit,
+  }: {
+    email: string;
+    afterId?: string;
+    limit: number;
+  }) {
+    const result = await this.#prisma.client().quizCompletion.findMany({
+      ...getPagedQuery(limit, afterId),
+      orderBy: {
+        id: 'desc',
+      },
+      where: {
+        completedBy: {
+          some: {
+            user: {
+              email,
+            },
+          },
+        },
+      },
+      include: {
+        quiz: {
+          select: {
+            type: true,
+          },
+        },
+      },
+    });
+    return slicePagedResults(result, limit, afterId !== undefined);
+  }
 }

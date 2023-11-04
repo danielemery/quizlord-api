@@ -35,12 +35,12 @@ export class UserService {
   }
 
   async getUsers({
-    userId,
+    currentUserId,
     first,
     afterId,
     sortedBy,
   }: {
-    userId: string;
+    currentUserId: string;
     first: number;
     afterId?: string;
     sortedBy: UserSortOption;
@@ -50,7 +50,7 @@ export class UserService {
       afterId,
       limit: first,
       sortedBy,
-      currentUserId: userId,
+      currentUserId,
     });
     return {
       data: data.map((user) => this.#userPersistenceToUser(user)),
