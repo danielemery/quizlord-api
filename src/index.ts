@@ -14,6 +14,7 @@ import typeDefs from './gql';
 import { userQueries } from './user/user.gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 import { Role } from './user/user.dto';
+import { statisticsQueries } from './statistics/statistics.gql';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -39,6 +40,7 @@ const resolvers = {
   Query: {
     ...quizQueries,
     ...userQueries,
+    ...statisticsQueries,
   },
   Mutation: {
     ...quizMutations,

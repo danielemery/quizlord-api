@@ -15,7 +15,7 @@ async function users(
   authorisationService.requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
   const { data, hasMoreRows } = await userService.getUsers({
-    userId: context.userId,
+    currentUserId: context.userId,
     afterId,
     first,
     sortedBy,
