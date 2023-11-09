@@ -81,6 +81,13 @@ export class StatisticsService {
       hasMoreRows = !!latestCursor;
     }
 
+    if (completionsScores.length === 0) {
+      return {
+        totalQuizCompletions: 0,
+        averageScorePercentage: 0,
+      };
+    }
+
     return {
       totalQuizCompletions: completionsScores.length,
       averageScorePercentage: completionsScores.reduce((a, b) => a + b, 0) / completionsScores.length,
