@@ -71,6 +71,7 @@ async function initialise() {
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     formatError(formattedError, error) {
       if (formattedError.extensions?.code === 'INTERNAL_SERVER_ERROR') {
+        console.error(error);
         Sentry.captureException(error);
       }
       return formattedError;
