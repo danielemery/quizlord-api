@@ -242,7 +242,9 @@ export class QuizService {
       })[];
     },
   ): Quiz {
-    const { completions, uploadedByUser, ...quizWithoutImageKey } = quiz;
+    // TODO modify linting tules to allow unused vars in destructuring
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { completions, uploadedByUser, uploadedByUserId, ...quizWithoutImageKey } = quiz;
     return {
       ...quizWithoutImageKey,
       myCompletions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),

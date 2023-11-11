@@ -49,7 +49,6 @@ export class QuizPersistence {
             },
           },
         },
-        images: true,
         date: true,
         id: true,
         type: true,
