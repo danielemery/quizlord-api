@@ -10,6 +10,8 @@ import { UserPersistence } from './user/user.persistence';
 import { UserService } from './user/user.service';
 import { MemoryCache } from './util/cache';
 
+import config from './config/config';
+
 const memoryCache = new MemoryCache();
 
 // auth
@@ -20,11 +22,11 @@ export const authorisationService = new AuthorisationService();
 export const prismaService = new PrismaService();
 
 // file
-export const fileService = new S3FileService();
+export const fileService = new S3FileService(config.AWS_REGION, config.AWS_BUCKET_NAME, config.FILE_ACCESS_BASE_URL);
 
 // quiz
 export const quizPersistence = new QuizPersistence(prismaService);
-export const quizService = new QuizService(quizPersistence);
+export const quizService = new QuizService(quizPersistence, fileService);
 
 // user
 export const userPersistence = new UserPersistence(prismaService);

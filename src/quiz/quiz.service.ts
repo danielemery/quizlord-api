@@ -17,9 +17,9 @@ export class QuizService {
   #persistence: QuizPersistence;
   #fileService: S3FileService;
 
-  constructor(persistence: QuizPersistence) {
+  constructor(persistence: QuizPersistence, fileService: S3FileService) {
     this.#persistence = persistence;
-    this.#fileService = new S3FileService();
+    this.#fileService = fileService;
   }
 
   async getQuizzesWithMyResults({
