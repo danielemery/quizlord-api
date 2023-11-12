@@ -28,7 +28,7 @@ export class StatisticsService {
   ): Promise<IndividualUserStatistic[]> {
     const cachedResult = await this.#cache.getItem<IndividualUserStatistic[]>(INDIVIDUAL_STATISTICS_CACHE_KEY);
     if (cachedResult) {
-      return this.#sortIndividualUserStatistics(cachedResult, sortedBy);
+      return this.sortIndividualUserStatistics(cachedResult, sortedBy);
     }
 
     const results: IndividualUserStatistic[] = [];
@@ -43,7 +43,7 @@ export class StatisticsService {
       });
 
       for (const user of data) {
-        const { totalQuizCompletions, averageScorePercentage } = await this.#getStatisticsForUser(user.email);
+        const { totalQuizCompletions, averageScorePercentage } = await this.getStatisticsForUser(user.email);
         results.push({
           email: user.email,
           name: user.name,
@@ -57,10 +57,16 @@ export class StatisticsService {
     }
 
     await this.#cache.setItem(INDIVIDUAL_STATISTICS_CACHE_KEY, results, INDIVIDUAL_STATISTICS_CACHE_TTL);
-    return this.#sortIndividualUserStatistics(results, sortedBy);
+    return this.sortIndividualUserStatistics(results, sortedBy);
   }
 
-  #sortIndividualUserStatistics(
+  /**
+   * Sorts the individual user statistics by the provided option.
+   * @param statistics The statistics to sort.
+   * @param sortedBy The sorting option to use.
+   * @returns The sorted statistics.
+   */
+  sortIndividualUserStatistics(
     statistics: IndividualUserStatistic[],
     sortedBy: IndividualUserStatisticsSortOption,
   ): IndividualUserStatistic[] {
@@ -70,7 +76,7 @@ export class StatisticsService {
       case 'AVERAGE_SCORE_DESC':
         return statistics.sort((a, b) => b.averageScorePercentage - a.averageScorePercentage);
       default:
-        throw new Error(`Unknown sorting option: ${sortedBy}`);
+        return statistics;
     }
   }
 
@@ -81,7 +87,7 @@ export class StatisticsService {
    *
    * @tags worker
    */
-  async #getStatisticsForUser(userEmail: string) {
+  async getStatisticsForUser(userEmail: string) {
     let hasMoreRows = true;
     let cursor: string | undefined = undefined;
     const completionsScores: number[] = [];
