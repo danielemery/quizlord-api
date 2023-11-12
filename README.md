@@ -4,6 +4,8 @@ Graphql api for sharing newspaper quizzes between friends, including results and
 
 Follows the [GraphQL Cursor Connections Specification](https://relay.dev/graphql/connections.htm).
 
+[![codecov](https://codecov.io/gh/danielemery/quizlord-api/graph/badge.svg?token=5N2X0OK5OX)](https://codecov.io/gh/danielemery/quizlord-api)
+
 # Deployment
 
 The api is packaged in docker and deployed with github actions to the (github registry)[https://github.com/danielemery/quizlord-api/pkgs/container/quizlord-api].
