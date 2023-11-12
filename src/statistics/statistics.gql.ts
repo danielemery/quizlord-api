@@ -1,14 +1,14 @@
 import { QuizlordContext } from '..';
 import { authorisationService, statisticsService } from '../service.locator';
-import { IndividualUserStatistic } from './statistics.dto';
+import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto';
 
 async function individualUserStatistics(
   _p: unknown,
-  _: void,
+  { sortedBy }: { sortedBy?: IndividualUserStatisticsSortOption },
   context: QuizlordContext,
 ): Promise<IndividualUserStatistic[]> {
   authorisationService.requireUserRole(context, 'USER');
-  return statisticsService.getIndividualUserStatistics();
+  return statisticsService.getIndividualUserStatistics(sortedBy);
 }
 
 export const statisticsQueries = {

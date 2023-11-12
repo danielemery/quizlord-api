@@ -30,6 +30,11 @@ const typeDefs = gql`
     NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC
   }
 
+  enum IndividualUserStatisticsSortOption {
+    QUIZZES_COMPLETED_DESC
+    AVERAGE_SCORE_DESC
+  }
+
   type PageInfo {
     hasNextPage: Boolean
     startCursor: String
@@ -151,7 +156,16 @@ const typeDefs = gql`
     """
     users(first: Int, after: String, sortedBy: UserSortOption): UserConnection
     me: UserDetails
-    individualUserStatistics: [IndividualUserStatistic]
+    """
+    Get statistics for every user.
+    Optionally sort using the sortedBy parameter.
+
+    Results from this endpoint may be delayed by up to 24 hours.
+    """
+    individualUserStatistics(
+      "The sorting option to use"
+      sortedBy: IndividualUserStatisticsSortOption
+    ): [IndividualUserStatistic]
   }
 
   type Mutation {
