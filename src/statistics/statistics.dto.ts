@@ -4,3 +4,5 @@ export interface IndividualUserStatistic {
   totalQuizCompletions: number;
   averageScorePercentage: number;
 }
+
+export type IndividualUserStatisticsSortOption = 'QUIZZES_COMPLETED_DESC' | 'AVERAGE_SCORE_DESC';

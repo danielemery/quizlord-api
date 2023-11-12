@@ -34,6 +34,8 @@ export class UserService {
     return { roles: user.roles.map((r) => r.role), id: user.id };
   }
 
+  // TODO overload this function to only require the currentUserId parameter when the sortedBy parameter is
+  // NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC
   async getUsers({
     currentUserId,
     first,
