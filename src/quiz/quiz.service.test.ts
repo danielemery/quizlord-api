@@ -6,7 +6,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 jest.mock('./quiz.persistence');
 
 const mockPersistence = {
-  getQuizzesWithMyResults: jest.fn(),
+  getQuizzesWithUserResults: jest.fn(),
 };
 const mockFileService = {};
 
@@ -16,8 +16,8 @@ describe('QuizService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
-  describe('getQuizzesWithMyResults', () => {
-    it('must call getQuizzesWithMyResults on persistence with correct arguments and transform the result', async () => {
+  describe('getQuizzesWithUserResults', () => {
+    it('must call getQuizzesWithUserResults on persistence with correct arguments and transform the result', async () => {
       const persistenceResult = [
         {
           id: 'fake-id-one',
@@ -60,14 +60,16 @@ describe('QuizService', () => {
           },
         },
       ];
-      mockPersistence.getQuizzesWithMyResults.mockImplementationOnce(() =>
+      mockPersistence.getQuizzesWithUserResults.mockImplementationOnce(() =>
         Promise.resolve({ data: persistenceResult, hasMoreRows: false }),
       );
 
-      const actual = await sut.getQuizzesWithMyResults({
-        email: 'fake@fake.com',
-        first: 10,
-        filters: {},
+      const actual = await sut.getQuizzesWithUsersResults('fake@fake.com', 10);
+
+      expect(mockPersistence.getQuizzesWithUserResults).toHaveBeenCalledTimes(1);
+      expect(mockPersistence.getQuizzesWithUserResults).toHaveBeenCalledWith({
+        userEmail: 'fake@fake.com',
+        limit: 10,
       });
 
       expect(actual).toEqual({

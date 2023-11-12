@@ -10,16 +10,16 @@ export class QuizPersistence {
     this.#prisma = prisma;
   }
 
-  async getQuizzesWithMyResults({
+  async getQuizzesWithUserResults({
     userEmail,
     afterId,
     limit,
-    filters,
+    filters = {},
   }: {
     userEmail: string;
     afterId?: string;
     limit: number;
-    filters: QuizFilters;
+    filters?: QuizFilters;
   }) {
     const result = await this.#prisma.client().quiz.findMany({
       ...getPagedQuery(limit, afterId),

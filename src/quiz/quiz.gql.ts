@@ -10,12 +10,7 @@ async function quizzes(
 ): Promise<PagedResult<Quiz>> {
   authorisationService.requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
-  const { data, hasMoreRows } = await quizService.getQuizzesWithMyResults({
-    email: context.email,
-    afterId,
-    first,
-    filters,
-  });
+  const { data, hasMoreRows } = await quizService.getQuizzesWithUsersResults(context.email, first, afterId, filters);
   const edges = data.map((quiz) => ({
     node: quiz,
     cursor: base64Encode(quiz.id),
