@@ -160,29 +160,12 @@ export class QuizService {
 
   /**
    * Get a paginated list of quiz percentages for a user.
-   * @param filters Paging and filtering options.
+   * @param email The email of the user to get quiz percentages for.
+   * @param first The number of quiz percentages to get, defaults to the maximum of 100.
+   * @param afterId Optionally an id to use as a cursor to get quiz percentages after. This will have been provided in a previous call to this function.
    * @returns A list of quiz percentages (as a number between 0 and 1) for the user in stats and a cursor to load the next set of scores.
    */
-  async quizScorePercentagesForUser({
-    email,
-    first = 100,
-    afterId,
-  }: {
-    /**
-     * The email of the user to get quiz percentages for.
-     */
-    email: string;
-    /**
-     * The number of quiz percentages to get.
-     */
-    first: number;
-    /**
-     * The cursor to start getting quiz percentages from.
-     * If not provided, the first quiz percentage will be returned.
-     * Will have been returned in the previous call to this function.
-     */
-    afterId?: string;
-  }) {
+  async quizScorePercentagesForUser(email: string, first = 100, afterId?: string) {
     const { data, hasMoreRows } = await this.#persistence.getCompletionScoreWithQuizTypesForUser({
       email,
       limit: first,

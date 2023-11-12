@@ -5,6 +5,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 const mockPersistence = {
   getQuizzesWithUserResults: jest.fn(),
+  getCompletionScoreWithQuizTypesForUser: jest.fn(),
 };
 const mockFileService = {};
 
@@ -13,7 +14,7 @@ const sut = new QuizService(mockPersistence as unknown as QuizPersistence, mockF
 describe('quiz', () => {
   describe('quiz.service', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
+      jest.restoreAllMocks();
     });
     describe('getQuizzesWithUserResults', () => {
       it('must call getQuizzesWithUserResults on persistence with correct arguments and transform the result', async () => {
@@ -111,6 +112,71 @@ describe('quiz', () => {
             },
           ],
           hasMoreRows: false,
+        });
+      });
+    });
+    describe('quizScorePercentagesForUser', () => {
+      it('must call getCompletionScoreWithQuizTypesForUser on persistence with correct arguments and calculate percentages for the results', async () => {
+        mockPersistence.getCompletionScoreWithQuizTypesForUser.mockResolvedValueOnce({
+          data: [
+            {
+              id: '1',
+              quiz: {
+                type: 'SHARK',
+              },
+              score: new Decimal(10),
+            },
+            {
+              id: '2',
+              quiz: {
+                type: 'BRAINWAVES',
+              },
+              score: new Decimal(12.5),
+            },
+          ],
+          hasMoreRows: false,
+        });
+
+        const actual = await sut.quizScorePercentagesForUser('master@quizlord.net', 2, 'test-cursor');
+
+        expect(mockPersistence.getCompletionScoreWithQuizTypesForUser).toHaveBeenCalledTimes(1);
+        expect(mockPersistence.getCompletionScoreWithQuizTypesForUser).toHaveBeenCalledWith({
+          email: 'master@quizlord.net',
+          limit: 2,
+          afterId: 'test-cursor',
+        });
+
+        expect(actual).toEqual({
+          stats: [0.5, 0.25],
+          cursor: undefined,
+        });
+      });
+      it('must provide the correct cursor if more data is available', async () => {
+        mockPersistence.getCompletionScoreWithQuizTypesForUser.mockResolvedValueOnce({
+          data: [
+            {
+              id: '1',
+              quiz: {
+                type: 'SHARK',
+              },
+              score: new Decimal(10),
+            },
+            {
+              id: '2',
+              quiz: {
+                type: 'BRAINWAVES',
+              },
+              score: new Decimal(12.5),
+            },
+          ],
+          hasMoreRows: true,
+        });
+
+        const actual = await sut.quizScorePercentagesForUser('master@quizlord.net');
+
+        expect(actual).toEqual({
+          stats: [0.5, 0.25],
+          cursor: '2',
         });
       });
     });

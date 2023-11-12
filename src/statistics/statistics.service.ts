@@ -92,11 +92,11 @@ export class StatisticsService {
     let cursor: string | undefined = undefined;
     const completionsScores: number[] = [];
     while (hasMoreRows) {
-      const { stats, cursor: latestCursor } = await this.#quizService.quizScorePercentagesForUser({
-        email: userEmail,
-        first: 100,
-        afterId: cursor,
-      });
+      const { stats, cursor: latestCursor } = await this.#quizService.quizScorePercentagesForUser(
+        userEmail,
+        100,
+        cursor,
+      );
 
       completionsScores.push(...stats);
 

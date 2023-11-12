@@ -204,16 +204,18 @@ describe('statistics', () => {
         const actual = await sut.getStatisticsForUser('master@quizlord.net');
 
         expect(mockQuizService.quizScorePercentagesForUser).toHaveBeenCalledTimes(2);
-        expect(mockQuizService.quizScorePercentagesForUser).toHaveBeenNthCalledWith(1, {
-          email: 'master@quizlord.net',
-          first: 100,
-          afterId: undefined,
-        });
-        expect(mockQuizService.quizScorePercentagesForUser).toHaveBeenNthCalledWith(2, {
-          email: 'master@quizlord.net',
-          first: 100,
-          afterId: 'fake-cursor',
-        });
+        expect(mockQuizService.quizScorePercentagesForUser).toHaveBeenNthCalledWith(
+          1,
+          'master@quizlord.net',
+          100,
+          undefined,
+        );
+        expect(mockQuizService.quizScorePercentagesForUser).toHaveBeenNthCalledWith(
+          2,
+          'master@quizlord.net',
+          100,
+          'fake-cursor',
+        );
 
         expect(actual).toEqual({ totalQuizCompletions: 4, averageScorePercentage: 0.5 });
       });
