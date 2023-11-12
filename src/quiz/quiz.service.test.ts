@@ -40,7 +40,6 @@ describe('QuizService', () => {
           uploadedByUserId: 'fake-user-id',
           completions: [
             {
-              id: 'completion-id',
               completedAt: new Date('2023-03-10'),
               completedBy: [
                 {
@@ -51,7 +50,6 @@ describe('QuizService', () => {
                   },
                 },
               ],
-              quizId: 'fake-id-two',
               score: new Decimal(10),
             },
           ],
@@ -98,8 +96,6 @@ describe('QuizService', () => {
             },
             myCompletions: [
               {
-                id: 'completion-id', // TODO modify logic to not return this
-                quizId: 'fake-id-two', // TODO modify logic to not return this
                 completedAt: new Date('2023-03-10'),
                 completedBy: [
                   {

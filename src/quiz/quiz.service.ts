@@ -209,7 +209,7 @@ export class QuizService {
   }
 
   #quizCompletionPersistenceToQuizCompletion(
-    quizCompletion: QuizCompletionPersistenceModel & {
+    quizCompletion: Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
       completedBy: (QuizCompletionUserPersistenceModel & {
         user: UserPersistenceModel | null;
       })[];
@@ -235,7 +235,7 @@ export class QuizService {
   #quizPersistenceWithMyCompletionsToQuiz(
     quiz: QuizPersistenceModel & {
       uploadedByUser: UserPersistenceModel;
-      completions: (QuizCompletionPersistenceModel & {
+      completions: (Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
         completedBy: (QuizCompletionUserPersistenceModel & {
           user: UserPersistenceModel | null;
         })[];

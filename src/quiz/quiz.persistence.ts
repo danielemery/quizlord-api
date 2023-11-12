@@ -35,8 +35,6 @@ export class QuizPersistence {
                 user: true,
               },
             },
-            id: true,
-            quizId: true,
             score: true,
           },
           where: {
