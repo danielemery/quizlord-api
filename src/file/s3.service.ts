@@ -3,12 +3,15 @@ import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
 import { createRequest } from '@aws-sdk/util-create-request';
 import { formatUrl } from '@aws-sdk/util-format-url';
 
-import config from '../config/config';
-
 export class S3FileService {
   #s3Client: S3Client;
-  constructor() {
-    this.#s3Client = new S3Client({ region: config.AWS_REGION });
+  #fileAccessBaseUrl: string;
+  #bucketName: string;
+
+  constructor(region: string, bucketName: string, fileAccessBaseUrl: string) {
+    this.#s3Client = new S3Client({ region: region });
+    this.#fileAccessBaseUrl = fileAccessBaseUrl;
+    this.#bucketName = bucketName;
   }
 
   async generateSignedUploadUrl(key: string): Promise<string> {
@@ -16,7 +19,7 @@ export class S3FileService {
       this.#s3Client,
       new PutObjectCommand({
         Key: key,
-        Bucket: config.AWS_BUCKET_NAME,
+        Bucket: this.#bucketName,
       }),
     );
 
@@ -31,7 +34,7 @@ export class S3FileService {
   }
 
   keyToUrl(key: string): string {
-    return `${config.FILE_ACCESS_BASE_URL}/${key}`;
+    return `${this.#fileAccessBaseUrl}/${key}`;
   }
 
   createKey(resourceId: string, fileName: string) {

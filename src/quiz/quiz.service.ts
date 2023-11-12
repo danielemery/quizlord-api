@@ -13,27 +13,32 @@ import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { S3FileService } from '../file/s3.service';
 import { QuizPersistence } from './quiz.persistence';
 
+const MAXIMUM_QUIZ_PAGE_SIZE = 100;
+
 export class QuizService {
   #persistence: QuizPersistence;
   #fileService: S3FileService;
 
-  constructor(persistence: QuizPersistence) {
+  constructor(persistence: QuizPersistence, fileService: S3FileService) {
     this.#persistence = persistence;
-    this.#fileService = new S3FileService();
+    this.#fileService = fileService;
   }
 
-  async getQuizzesWithMyResults({
-    email,
-    first = 100,
-    afterId,
-    filters = {},
-  }: {
-    email: string;
-    first: number;
-    afterId?: string;
-    filters: QuizFilters;
-  }) {
-    const { data, hasMoreRows } = await this.#persistence.getQuizzesWithMyResults({
+  /**
+   * Get a paginated list of quizzes along with their completions of it for a user.
+   * @param email The email of the user to get quizzes for.
+   * @param first The number of quizzes to get, defaults to the maximum of 100.
+   * @param afterId Optionally an id to use as a cursor to get quizzes after.
+   * @param filters Optionally filters to apply to the quizzes.
+   * @returns A list of quizzes for the user and a cursor to load the next set of quizzes.
+   */
+  async getQuizzesWithUsersResults(
+    email: string,
+    first: number = MAXIMUM_QUIZ_PAGE_SIZE,
+    afterId?: string,
+    filters?: QuizFilters,
+  ) {
+    const { data, hasMoreRows } = await this.#persistence.getQuizzesWithUserResults({
       userEmail: email,
       afterId,
       limit: first,
@@ -209,7 +214,7 @@ export class QuizService {
   }
 
   #quizCompletionPersistenceToQuizCompletion(
-    quizCompletion: QuizCompletionPersistenceModel & {
+    quizCompletion: Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
       completedBy: (QuizCompletionUserPersistenceModel & {
         user: UserPersistenceModel | null;
       })[];
@@ -235,14 +240,16 @@ export class QuizService {
   #quizPersistenceWithMyCompletionsToQuiz(
     quiz: QuizPersistenceModel & {
       uploadedByUser: UserPersistenceModel;
-      completions: (QuizCompletionPersistenceModel & {
+      completions: (Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
         completedBy: (QuizCompletionUserPersistenceModel & {
           user: UserPersistenceModel | null;
         })[];
       })[];
     },
   ): Quiz {
-    const { completions, uploadedByUser, ...quizWithoutImageKey } = quiz;
+    // TODO modify linting tules to allow unused vars in destructuring
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { completions, uploadedByUser, uploadedByUserId, ...quizWithoutImageKey } = quiz;
     return {
       ...quizWithoutImageKey,
       myCompletions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),

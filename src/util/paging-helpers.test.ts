@@ -1,5 +1,3 @@
-import { assert } from 'chai';
-
 import { slicePagedResults, getPagedQuery } from './paging-helpers';
 
 describe('util', () => {
@@ -9,55 +7,55 @@ describe('util', () => {
         const rows = ['a', 'b', 'c'];
         const expected = { data: ['a', 'b'], hasMoreRows: true };
 
-        assert.deepEqual(slicePagedResults(rows, 2, false), expected);
+        expect(slicePagedResults(rows, 2, false)).toEqual(expected);
       });
       it('must return results sliced to limit and hasMoreRows false when not using cursor and just enough items are present', () => {
         const rows = ['a', 'b'];
         const expected = { data: ['a', 'b'], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 2, false), expected);
+        expect(slicePagedResults(rows, 2, false)).toEqual(expected);
       });
       it('must return all the results it can and hasMoreRows false when not using cursor and not enough items are present', () => {
         const rows = ['a', 'b'];
         const expected = { data: ['a', 'b'], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 3, false), expected);
+        expect(slicePagedResults(rows, 3, false)).toEqual(expected);
       });
       it('must return empty results and hasMoreRows false when not using cursor and no items are present', () => {
         const rows: string[] = [];
         const expected = { data: [], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 3, false), expected);
+        expect(slicePagedResults(rows, 3, false)).toEqual(expected);
       });
       it('must return results sliced to limit and hasMoreRows true when using cursor and more than enough items are present', () => {
         const rows = ['a', 'b', 'c', 'd'];
         const expected = { data: ['b', 'c'], hasMoreRows: true };
 
-        assert.deepEqual(slicePagedResults(rows, 2, true), expected);
+        expect(slicePagedResults(rows, 2, true)).toEqual(expected);
       });
       it('must return results sliced to limit and hasMoreRows false when using cursor and just enough items are present', () => {
         const rows = ['a', 'b', 'c'];
         const expected = { data: ['b', 'c'], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 2, true), expected);
+        expect(slicePagedResults(rows, 2, true)).toEqual(expected);
       });
       it('must return all the results it can and hasMoreRows false when using cursor and not enough items are present', () => {
         const rows = ['a', 'b'];
         const expected = { data: ['b'], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 2, true), expected);
+        expect(slicePagedResults(rows, 2, true)).toEqual(expected);
       });
       it('must return empty results and hasMoreRows false when using cursor and no additional items are present', () => {
         const rows = ['a'];
         const expected = { data: [], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 2, true), expected);
+        expect(slicePagedResults(rows, 2, true)).toEqual(expected);
       });
       it('must return empty results and hasMoreRows false when using cursor and no items are present', () => {
         const rows: string[] = [];
         const expected = { data: [], hasMoreRows: false };
 
-        assert.deepEqual(slicePagedResults(rows, 2, true), expected);
+        expect(slicePagedResults(rows, 2, true)).toEqual(expected);
       });
     });
     describe('getPagedQuery', () => {
@@ -67,7 +65,7 @@ describe('util', () => {
         };
         const actual = getPagedQuery(10);
 
-        assert.deepEqual(actual, expected);
+        expect(actual).toEqual(expected);
       });
       it('must include cursor and two extra (the futher extra is because the first result will be the cursor itself and will be sliced)', () => {
         const expected = {
@@ -76,7 +74,7 @@ describe('util', () => {
         };
         const actual = getPagedQuery(10, 'fake-cursor');
 
-        assert.deepEqual(actual, expected);
+        expect(actual).toEqual(expected);
       });
     });
   });
