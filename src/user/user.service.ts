@@ -10,6 +10,15 @@ export class UserService {
     this.#persistence = persistence;
   }
 
+  /**
+   * Load user details based on the provided email.
+   * If the user does not exist, create a new user.
+   * If the user's name has changed, it will be updated.
+   *
+   * @param email The email to load the user by.
+   * @param name Optionally the user's name.
+   * @returns The resulting user's roles and id.
+   */
   async loadUserDetailsAndUpdateIfNecessary(
     email: string,
     name: string | undefined,
