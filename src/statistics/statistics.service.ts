@@ -3,8 +3,8 @@ import { UserService } from '../user/user.service';
 import { Cache } from '../util/cache';
 import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto';
 
-const INDIVIDUAL_STATISTICS_CACHE_KEY = 'invidual-user-statistics';
-const INDIVIDUAL_STATISTICS_CACHE_TTL = 60 * 60 * 1000; // 24 hours
+const INDIVIDUAL_STATISTICS_CACHE_KEY = 'individual-user-statistics';
+const INDIVIDUAL_STATISTICS_CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class StatisticsService {
   #userService: UserService;
@@ -56,7 +56,7 @@ export class StatisticsService {
       hasMoreRows = moreRows;
     }
 
-    await this.#cache.setItem(INDIVIDUAL_STATISTICS_CACHE_KEY, results, INDIVIDUAL_STATISTICS_CACHE_TTL);
+    await this.#cache.setItem(INDIVIDUAL_STATISTICS_CACHE_KEY, results, INDIVIDUAL_STATISTICS_CACHE_TTL_MILLIS);
     return this.sortIndividualUserStatistics(results, sortedBy);
   }
 

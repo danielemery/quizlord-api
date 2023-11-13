@@ -20,9 +20,9 @@ export interface Cache {
    *
    * @param key The key to set the item for.
    * @param value The value to set.
-   * @param expiresInSeconds The number of seconds until the item expires.
+   * @param expiresInMillis The number of milliseconds until the item expires.
    */
-  setItem<T>(key: string, value: T, expiresInSeconds: number): Promise<void>;
+  setItem<T>(key: string, value: T, expiresInMillis: number): Promise<void>;
 
   /**
    * Manually expire an item in the cache.
@@ -45,8 +45,8 @@ export class MemoryCache implements Cache {
     }
     return Promise.resolve(record.value);
   }
-  setItem<T>(key: string, value: T, expiresInSeconds: number): Promise<void> {
-    const expiresAt = new Date(new Date().getTime() + expiresInSeconds * 1000);
+  setItem<T>(key: string, value: T, expiresInMillis: number): Promise<void> {
+    const expiresAt = new Date(new Date().getTime() + expiresInMillis);
     this.#values.set(key, {
       value,
       expiresAt,

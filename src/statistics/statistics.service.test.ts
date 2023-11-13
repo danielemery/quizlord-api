@@ -46,7 +46,7 @@ describe('statistics', () => {
         const actual = await sut.getIndividualUserStatistics();
 
         expect(mockCache.getItem).toHaveBeenCalledTimes(1);
-        expect(mockCache.getItem).toHaveBeenCalledWith('invidual-user-statistics');
+        expect(mockCache.getItem).toHaveBeenCalledWith('individual-user-statistics');
 
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledTimes(1);
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledWith(
@@ -150,6 +150,9 @@ describe('statistics', () => {
 
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledTimes(1);
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledWith(expected, 'QUIZZES_COMPLETED_DESC');
+
+        expect(mockCache.setItem).toHaveBeenCalledTimes(1);
+        expect(mockCache.setItem).toHaveBeenCalledWith('individual-user-statistics', expected, 24 * 60 * 60 * 1000);
 
         expect(actual).toEqual(expected);
       });
