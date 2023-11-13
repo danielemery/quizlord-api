@@ -1,20 +1,18 @@
 import jwt, { JwtHeader, SigningKeyCallback, VerifyOptions } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 
-import config from '../config/config';
-
 export class AuthenticationService {
   #client: jwksClient.JwksClient;
   #options: VerifyOptions;
 
-  constructor() {
+  constructor(auth0Domain: string, auth0Audience: string) {
     this.#client = jwksClient({
-      jwksUri: `https://${config.AUTH0_DOMAIN}/.well-known/jwks.json`,
+      jwksUri: `https://${auth0Domain}/.well-known/jwks.json`,
     });
     this.#options = {
       algorithms: ['RS256'],
-      audience: config.AUTH0_AUDIENCE,
-      issuer: `https://${config.AUTH0_DOMAIN}/`,
+      audience: auth0Audience,
+      issuer: `https://${auth0Domain}/`,
     };
   }
 

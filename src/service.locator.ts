@@ -15,7 +15,7 @@ import config from './config/config';
 const memoryCache = new MemoryCache();
 
 // auth
-export const authenticationService = new AuthenticationService();
+export const authenticationService = new AuthenticationService(config.AUTH0_DOMAIN, config.AUTH0_AUDIENCE);
 export const authorisationService = new AuthorisationService();
 
 // prisma
