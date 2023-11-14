@@ -2,6 +2,7 @@ import { QuizlordContext } from '..';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { authorisationService, userService } from '../service.locator';
 import { User, UserDetails, UserSortOption } from './user.dto';
+import { GetUsersResult } from './user.service';
 
 async function users(
   _: unknown,
@@ -14,12 +15,13 @@ async function users(
 ): Promise<PagedResult<User>> {
   authorisationService.requireUserRole(context, 'USER');
   const afterId = after ? base64Decode(after) : undefined;
-  const { data, hasMoreRows } = await userService.getUsers({
-    currentUserId: context.userId,
-    afterId,
-    first,
-    sortedBy,
-  });
+  let serviceResult: GetUsersResult;
+  if (sortedBy === 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC') {
+    serviceResult = await userService.getUsers(first, sortedBy, context.userId, afterId);
+  } else {
+    serviceResult = await userService.getUsers(first, sortedBy, afterId);
+  }
+  const { data, hasMoreRows } = serviceResult;
   const edges = data.map((user) => ({
     node: user,
     cursor: base64Encode(user.id),

@@ -1,5 +1,5 @@
 import { QuizService } from '../quiz/quiz.service';
-import { UserService } from '../user/user.service';
+import { GetUsersResult, UserService } from '../user/user.service';
 import { Cache } from '../util/cache';
 import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto';
 
@@ -35,12 +35,8 @@ export class StatisticsService {
     let hasMoreRows = true;
     let cursor: string | undefined = undefined;
     while (hasMoreRows) {
-      const { data, hasMoreRows: moreRows } = await this.#userService.getUsers({
-        currentUserId: '1', // Current user id isn't valid here and isn't used for sorting by EMAIL_ASC
-        first: 100,
-        afterId: cursor,
-        sortedBy: 'EMAIL_ASC',
-      });
+      const userPage: GetUsersResult = await this.#userService.getUsers(100, 'EMAIL_ASC', cursor);
+      const { data, hasMoreRows: moreRows } = userPage;
 
       for (const user of data) {
         const { totalQuizCompletions, averageScorePercentage } = await this.getStatisticsForUser(user.email);
