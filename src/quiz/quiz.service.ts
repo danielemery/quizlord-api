@@ -47,11 +47,16 @@ export class QuizService {
     return { data: data.map((entry) => this.#quizPersistenceWithMyCompletionsToQuiz(entry)), hasMoreRows };
   }
 
+  /**
+   * Get a quiz along with all its completions and images.
+   * @param id Id of the quiz to get details for.
+   * @returns The quiz and its completions.
+   */
   async getQuizDetails(id: string) {
     const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
     });
-    const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
+    const { images, completions, uploadedByUser, uploadedByUserId, ...quizFieldsThatDoNotRequireTransform } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
       completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),

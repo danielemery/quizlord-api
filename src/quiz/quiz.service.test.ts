@@ -4,8 +4,9 @@ import { S3FileService } from '../file/s3.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
 const mockPersistence = {
-  getQuizzesWithUserResults: jest.fn(),
   getCompletionScoreWithQuizTypesForUser: jest.fn(),
+  getQuizzesWithUserResults: jest.fn(),
+  getQuizByIdWithResults: jest.fn(),
 };
 const mockFileService = {};
 
@@ -177,6 +178,39 @@ describe('quiz', () => {
         expect(actual).toEqual({
           stats: [0.5, 0.25],
           cursor: '2',
+        });
+      });
+    });
+    describe('getQuizDetails', () => {
+      it('must call getQuizByIdWithResults on persistence with correct arguments and transform the result', async () => {
+        mockPersistence.getQuizByIdWithResults.mockResolvedValueOnce({
+          id: 'fake-quiz-id',
+          type: 'SHARK',
+          date: new Date('2023-01-01'),
+          uploadedAt: new Date('2023-01-02'),
+          completions: [],
+          images: [],
+          uploadedByUser: {
+            id: 'fake-user-id',
+            email: 'master@quizlord.net',
+            name: 'Master',
+          },
+        });
+
+        const actual = await sut.getQuizDetails('fake-quiz-id');
+
+        expect(actual).toEqual({
+          id: 'fake-quiz-id',
+          type: 'SHARK',
+          date: new Date('2023-01-01'),
+          uploadedAt: new Date('2023-01-02'),
+          completions: [],
+          images: [],
+          uploadedBy: {
+            id: 'fake-user-id',
+            email: 'master@quizlord.net',
+            name: 'Master',
+          },
         });
       });
     });
