@@ -3,6 +3,7 @@ import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@pri
 
 import { Role, User, UserSortOption } from './user.dto';
 import { UserPersistence } from './user.persistence';
+import { UserNotFoundError } from './user.errors';
 
 export interface GetUsersResult {
   data: User[];
@@ -105,6 +106,20 @@ export class UserService {
       data: data.map((user) => this.#userPersistenceToUser(user)),
       hasMoreRows,
     };
+  }
+
+  /**
+   * Get the user with the given id.
+   * @param userId The id to load the user for.
+   * @returns The user with the given id.
+   * @throws UserNotFoundError when no user exists with the given id.
+   */
+  async getUser(userId: string) {
+    const persistenceUser = await this.#persistence.getUserById(userId);
+    if (persistenceUser === null) {
+      throw new UserNotFoundError(`No user found with id ${userId}`);
+    }
+    return this.#userPersistenceToUser(persistenceUser);
   }
 
   #userPersistenceToUser(user: UserPersistenceModel): User {

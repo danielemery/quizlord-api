@@ -30,6 +30,14 @@ export class UserPersistence {
     });
   }
 
+  async getUserById(id: string) {
+    return this.#prisma.client().user.findFirst({
+      where: {
+        id,
+      },
+    });
+  }
+
   async createNewUser(id: string, email: string, name: string | undefined) {
     await this.#prisma.client().user.create({
       data: {

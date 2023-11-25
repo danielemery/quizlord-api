@@ -2,13 +2,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { UserPersistence } from './user.persistence';
 import { UserService } from './user.service';
+import { UserNotFoundError } from './user.errors';
 
 jest.mock('uuid');
 
 const mockedUUIDv4 = jest.mocked(uuidv4);
 const fakeUserPersistence = {
-  getUserByEmail: jest.fn(),
   createNewUser: jest.fn(),
+  getUserByEmail: jest.fn(),
+  getUserById: jest.fn(),
   updateUserName: jest.fn(),
 };
 
@@ -100,6 +102,26 @@ describe('user', () => {
         expect(actual).toEqual({
           id: 'fake-id',
           roles: ['ADMIN'],
+        });
+      });
+    });
+    describe('getUser', () => {
+      it("must throw if user doesn't exist", async () => {
+        fakeUserPersistence.getUserById.mockResolvedValueOnce(null);
+
+        await expect(() => sut.getUser('fake-id')).rejects.toThrow(UserNotFoundError);
+
+        expect(fakeUserPersistence.getUserById).toHaveBeenCalledTimes(1);
+        expect(fakeUserPersistence.getUserById).toHaveBeenCalledWith('fake-id');
+      });
+      it('must return transformed user', async () => {
+        fakeUserPersistence.getUserById.mockResolvedValueOnce({ id: 'fake-id', email: 'fake@quizlord.net' });
+
+        const actual = await sut.getUser('fake-id');
+
+        expect(actual).toEqual({
+          id: 'fake-id',
+          email: 'fake@quizlord.net',
         });
       });
     });
