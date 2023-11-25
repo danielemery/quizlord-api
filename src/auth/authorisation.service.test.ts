@@ -1,4 +1,5 @@
 import { QuizlordContext } from '..';
+import { UnauthorisedError } from './authorisation.errors';
 import { AuthorisationService } from './authorisation.service';
 
 describe('authorisation', () => {
@@ -15,7 +16,7 @@ describe('authorisation', () => {
         const context = {
           roles: ['USER'],
         } as QuizlordContext;
-        expect(() => sut.requireUserRole(context, 'ADMIN')).toThrow('You are not authorised to perform this action');
+        expect(() => sut.requireUserRole(context, 'ADMIN')).toThrow(UnauthorisedError);
       });
     });
   });
