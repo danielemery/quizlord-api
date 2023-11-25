@@ -60,6 +60,8 @@ export class QuizService {
     const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
     });
+    // TODO look into modifying the upstream https://eslint.org/docs/latest/rules/no-unused-vars#ignorerestsiblings linting rule
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { images, completions, uploadedByUser, uploadedByUserId, ...quizFieldsThatDoNotRequireTransform } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
