@@ -46,7 +46,7 @@ describe('statistics', () => {
         const actual = await sut.getIndividualUserStatistics();
 
         expect(mockCache.getItem).toHaveBeenCalledTimes(1);
-        expect(mockCache.getItem).toHaveBeenCalledWith('invidual-user-statistics');
+        expect(mockCache.getItem).toHaveBeenCalledWith('individual-user-statistics');
 
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledTimes(1);
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledWith(
@@ -130,18 +130,8 @@ describe('statistics', () => {
         const actual = await sut.getIndividualUserStatistics();
 
         expect(mockUserService.getUsers).toHaveBeenCalledTimes(2);
-        expect(mockUserService.getUsers).toHaveBeenNthCalledWith(1, {
-          currentUserId: '1',
-          first: 100,
-          afterId: undefined,
-          sortedBy: 'EMAIL_ASC',
-        });
-        expect(mockUserService.getUsers).toHaveBeenNthCalledWith(2, {
-          currentUserId: '1',
-          first: 100,
-          afterId: '75',
-          sortedBy: 'EMAIL_ASC',
-        });
+        expect(mockUserService.getUsers).toHaveBeenNthCalledWith(1, 100, 'EMAIL_ASC', undefined);
+        expect(mockUserService.getUsers).toHaveBeenNthCalledWith(2, 100, 'EMAIL_ASC', '75');
 
         expect(mockGetStatisticsForUser).toHaveBeenCalledTimes(3);
         expect(mockGetStatisticsForUser).toHaveBeenNthCalledWith(1, 'userOne@quizlord.net');
@@ -150,6 +140,9 @@ describe('statistics', () => {
 
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledTimes(1);
         expect(mockSortIndividualUserStatistics).toHaveBeenCalledWith(expected, 'QUIZZES_COMPLETED_DESC');
+
+        expect(mockCache.setItem).toHaveBeenCalledTimes(1);
+        expect(mockCache.setItem).toHaveBeenCalledWith('individual-user-statistics', expected, 24 * 60 * 60 * 1000);
 
         expect(actual).toEqual(expected);
       });

@@ -1,10 +1,10 @@
 import { QuizService } from '../quiz/quiz.service';
-import { UserService } from '../user/user.service';
+import { GetUsersResult, UserService } from '../user/user.service';
 import { Cache } from '../util/cache';
 import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto';
 
-const INDIVIDUAL_STATISTICS_CACHE_KEY = 'invidual-user-statistics';
-const INDIVIDUAL_STATISTICS_CACHE_TTL = 60 * 60 * 1000; // 24 hours
+const INDIVIDUAL_STATISTICS_CACHE_KEY = 'individual-user-statistics';
+const INDIVIDUAL_STATISTICS_CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class StatisticsService {
   #userService: UserService;
@@ -35,12 +35,8 @@ export class StatisticsService {
     let hasMoreRows = true;
     let cursor: string | undefined = undefined;
     while (hasMoreRows) {
-      const { data, hasMoreRows: moreRows } = await this.#userService.getUsers({
-        currentUserId: '1', // Current user id isn't valid here and isn't used for sorting by EMAIL_ASC
-        first: 100,
-        afterId: cursor,
-        sortedBy: 'EMAIL_ASC',
-      });
+      const userPage: GetUsersResult = await this.#userService.getUsers(100, 'EMAIL_ASC', cursor);
+      const { data, hasMoreRows: moreRows } = userPage;
 
       for (const user of data) {
         const { totalQuizCompletions, averageScorePercentage } = await this.getStatisticsForUser(user.email);
@@ -56,7 +52,7 @@ export class StatisticsService {
       hasMoreRows = moreRows;
     }
 
-    await this.#cache.setItem(INDIVIDUAL_STATISTICS_CACHE_KEY, results, INDIVIDUAL_STATISTICS_CACHE_TTL);
+    await this.#cache.setItem(INDIVIDUAL_STATISTICS_CACHE_KEY, results, INDIVIDUAL_STATISTICS_CACHE_TTL_MILLIS);
     return this.sortIndividualUserStatistics(results, sortedBy);
   }
 

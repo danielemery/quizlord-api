@@ -15,7 +15,7 @@ import config from './config/config';
 const memoryCache = new MemoryCache();
 
 // auth
-export const authenticationService = new AuthenticationService();
+export const authenticationService = new AuthenticationService(config.AUTH0_DOMAIN, config.AUTH0_AUDIENCE);
 export const authorisationService = new AuthorisationService();
 
 // prisma
@@ -24,13 +24,13 @@ export const prismaService = new PrismaService();
 // file
 export const fileService = new S3FileService(config.AWS_REGION, config.AWS_BUCKET_NAME, config.FILE_ACCESS_BASE_URL);
 
-// quiz
-export const quizPersistence = new QuizPersistence(prismaService);
-export const quizService = new QuizService(quizPersistence, fileService);
-
 // user
 export const userPersistence = new UserPersistence(prismaService);
 export const userService = new UserService(userPersistence);
+
+// quiz
+export const quizPersistence = new QuizPersistence(prismaService);
+export const quizService = new QuizService(quizPersistence, fileService, userService);
 
 // queue
 export const queueService = new SQSQueueService(quizService);

@@ -1,8 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
-import { User as UserPersistenceModel } from '@prisma/client';
+import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
 
 import { Role, User, UserSortOption } from './user.dto';
 import { UserPersistence } from './user.persistence';
+import { UserNotFoundError } from './user.errors';
+
+export interface GetUsersResult {
+  data: User[];
+  hasMoreRows: boolean;
+}
 
 export class UserService {
   #persistence: UserPersistence;
@@ -10,6 +16,15 @@ export class UserService {
     this.#persistence = persistence;
   }
 
+  /**
+   * Load user details based on the provided email.
+   * If the user does not exist, create a new user.
+   * If the user's name has changed, it will be updated.
+   *
+   * @param email The email to load the user by.
+   * @param name Optionally the user's name.
+   * @returns The resulting user's roles and id.
+   */
   async loadUserDetailsAndUpdateIfNecessary(
     email: string,
     name: string | undefined,
@@ -34,30 +49,77 @@ export class UserService {
     return { roles: user.roles.map((r) => r.role), id: user.id };
   }
 
-  // TODO overload this function to only require the currentUserId parameter when the sortedBy parameter is
-  // NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC
-  async getUsers({
-    currentUserId,
-    first,
-    afterId,
-    sortedBy,
-  }: {
-    currentUserId: string;
-    first: number;
-    afterId?: string;
-    sortedBy: UserSortOption;
-  }) {
-    const { data, hasMoreRows } = await this.#persistence.getUsersWithRole({
-      role: 'USER',
-      afterId,
-      limit: first,
-      sortedBy,
-      currentUserId,
-    });
+  /**
+   * Get a page of users sorted by the given option.
+   * @param first The number of users to return.
+   * @param sortedBy The sorting option to use.
+   * @param currentUserId User id to use to compute the number of quizzes completed with.
+   * @param afterId Optional cursor to return users after.
+   */
+  async getUsers(
+    first: number,
+    sortedBy: 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC',
+    currentUserId: string,
+    afterId?: string,
+  ): Promise<GetUsersResult>;
+  /**
+   * Get a page of users sorted by the given option.
+   * @param first The number of users to return.
+   * @param sortedBy The sorting option to use.
+   * @param afterId Optional cursor to return users after.
+   */
+  async getUsers(
+    first: number,
+    sortedBy: Omit<UserSortOption, 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC'>,
+    afterId?: string,
+  ): Promise<GetUsersResult>;
+  async getUsers(
+    first: number,
+    sortedBy: UserSortOption,
+    afterIdOrCurrentUserId?: string,
+    maybeAfterId?: string,
+  ): Promise<GetUsersResult> {
+    let data: UserPersistenceModel[];
+    let hasMoreRows: boolean;
+
+    if (sortedBy === 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC' && afterIdOrCurrentUserId) {
+      const result = await this.#persistence.getUsersWithRoleSortedByNumberOfQuizzesCompletedWith({
+        role: RolePersistenceModel.USER,
+        afterId: maybeAfterId,
+        limit: first,
+        currentUserId: afterIdOrCurrentUserId,
+      });
+      data = result.data;
+      hasMoreRows = result.hasMoreRows;
+    } else {
+      const result = await this.#persistence.getUsersWithRole({
+        role: RolePersistenceModel.USER,
+        afterId: afterIdOrCurrentUserId,
+        limit: first,
+        sortedBy,
+      });
+      data = result.data;
+      hasMoreRows = result.hasMoreRows;
+    }
+
     return {
       data: data.map((user) => this.#userPersistenceToUser(user)),
       hasMoreRows,
     };
+  }
+
+  /**
+   * Get the user with the given id.
+   * @param userId The id to load the user for.
+   * @returns The user with the given id.
+   * @throws UserNotFoundError when no user exists with the given id.
+   */
+  async getUser(userId: string) {
+    const persistenceUser = await this.#persistence.getUserById(userId);
+    if (persistenceUser === null) {
+      throw new UserNotFoundError(`No user found with id ${userId}`);
+    }
+    return this.#userPersistenceToUser(persistenceUser);
   }
 
   #userPersistenceToUser(user: UserPersistenceModel): User {
