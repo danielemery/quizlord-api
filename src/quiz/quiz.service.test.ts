@@ -1,21 +1,43 @@
+import { v4 as uuidv4 } from 'uuid';
+
 import { QuizService } from './quiz.service';
 import { QuizPersistence } from './quiz.persistence';
 import { S3FileService } from '../file/s3.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { UserService } from '../user/user.service';
+import { MustProvideAtLeastOneFileError } from './quiz.errors';
 
+jest.mock('uuid');
+
+const mockedUUIDv4 = jest.mocked(uuidv4);
 const mockPersistence = {
+  createQuizWithImages: jest.fn(),
   getCompletionScoreWithQuizTypesForUser: jest.fn(),
   getQuizzesWithUserResults: jest.fn(),
   getQuizByIdWithResults: jest.fn(),
 };
-const mockFileService = {};
+const mockFileService = {
+  createKey: jest.fn(),
+  generateSignedUploadUrl: jest.fn(),
+};
+const mockUserService = {
+  getUser: jest.fn(),
+};
 
-const sut = new QuizService(mockPersistence as unknown as QuizPersistence, mockFileService as S3FileService);
+const sut = new QuizService(
+  mockPersistence as unknown as QuizPersistence,
+  mockFileService as unknown as S3FileService,
+  mockUserService as unknown as UserService,
+);
 
 describe('quiz', () => {
   describe('quiz.service', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       jest.restoreAllMocks();
+    });
+    afterEach(() => {
+      jest.useRealTimers();
     });
     describe('getQuizzesWithUserResults', () => {
       it('must call getQuizzesWithUserResults on persistence with correct arguments and transform the result', async () => {
@@ -211,6 +233,85 @@ describe('quiz', () => {
             email: 'master@quizlord.net',
             name: 'Master',
           },
+        });
+      });
+    });
+    describe('createQuiz', () => {
+      it('must throw if no files are provided', async () => {
+        await expect(() =>
+          sut.createQuiz('fake-user', { type: 'SHARK', date: new Date('2022-01-01'), files: [] }),
+        ).rejects.toThrow(MustProvideAtLeastOneFileError);
+      });
+      it('must create quiz with upload link for each image', async () => {
+        const fakeNow = new Date('2023-02-12');
+        jest.useFakeTimers();
+        jest.setSystemTime(fakeNow);
+
+        mockedUUIDv4.mockReturnValueOnce('fake-quiz-id');
+        mockUserService.getUser.mockResolvedValueOnce({
+          email: 'quizmaster@quizlord.net',
+        });
+        mockFileService.createKey.mockReturnValueOnce('key-one').mockReturnValueOnce('key-two');
+        mockFileService.generateSignedUploadUrl
+          .mockResolvedValueOnce('https://upload-one.net')
+          .mockResolvedValueOnce('https://upload-two.net');
+
+        const actual = await sut.createQuiz('fake-user-id', {
+          date: new Date('2022-01-01'),
+          type: 'SHARK',
+          files: [
+            {
+              fileName: 'questions.jpg',
+              type: 'QUESTION',
+            },
+            {
+              fileName: 'answers.jpg',
+              type: 'ANSWER',
+            },
+          ],
+        });
+
+        expect(mockedUUIDv4).toHaveBeenCalledTimes(1);
+        expect(mockFileService.createKey).toHaveBeenCalledTimes(2);
+        expect(mockFileService.createKey).toHaveBeenNthCalledWith(1, 'fake-quiz-id', 'questions.jpg');
+        expect(mockFileService.createKey).toHaveBeenNthCalledWith(2, 'fake-quiz-id', 'answers.jpg');
+        expect(mockFileService.generateSignedUploadUrl).toHaveBeenCalledTimes(2);
+        expect(mockFileService.generateSignedUploadUrl).toHaveBeenNthCalledWith(1, 'key-one');
+        expect(mockFileService.generateSignedUploadUrl).toHaveBeenNthCalledWith(2, 'key-two');
+        expect(mockPersistence.createQuizWithImages).toHaveBeenCalledTimes(1);
+        expect(mockPersistence.createQuizWithImages).toHaveBeenCalledWith(
+          {
+            date: new Date('2022-01-01'),
+            id: 'fake-quiz-id',
+            type: 'SHARK',
+            uploadedAt: new Date(fakeNow),
+            uploadedByUserId: 'fake-user-id',
+          },
+          [
+            { imageKey: 'key-one', state: 'PENDING_UPLOAD', type: 'QUESTION' },
+            { imageKey: 'key-two', state: 'PENDING_UPLOAD', type: 'ANSWER' },
+          ],
+        );
+
+        expect(actual).toEqual({
+          quiz: {
+            myCompletions: [],
+            uploadedBy: {
+              email: 'quizmaster@quizlord.net',
+              id: 'fake-user-id',
+              name: undefined,
+            },
+          },
+          uploadLinks: [
+            {
+              fileName: 'questions.jpg',
+              link: 'https://upload-one.net',
+            },
+            {
+              fileName: 'answers.jpg',
+              link: 'https://upload-two.net',
+            },
+          ],
         });
       });
     });

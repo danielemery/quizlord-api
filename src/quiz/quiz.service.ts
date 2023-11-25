@@ -12,16 +12,20 @@ import {
 import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { S3FileService } from '../file/s3.service';
 import { QuizPersistence } from './quiz.persistence';
+import { UserService } from '../user/user.service';
+import { MustProvideAtLeastOneFileError } from './quiz.errors';
 
 const MAXIMUM_QUIZ_PAGE_SIZE = 100;
 
 export class QuizService {
   #persistence: QuizPersistence;
   #fileService: S3FileService;
+  #userService: UserService;
 
-  constructor(persistence: QuizPersistence, fileService: S3FileService) {
+  constructor(persistence: QuizPersistence, fileService: S3FileService, userService: UserService) {
     this.#persistence = persistence;
     this.#fileService = fileService;
+    this.#userService = userService;
   }
 
   /**
@@ -69,21 +73,43 @@ export class QuizService {
     };
   }
 
-  async createQuiz({
-    userId,
-    email,
-    userName,
-    type,
-    date,
-    files,
-  }: {
-    userId: string;
-    email: string;
-    userName?: string;
-    type: QuizType;
-    date: Date;
-    files: { fileName: string; type: QuizImageType }[];
-  }) {
+  /**
+   * Create a quiz.
+   * The images are not provided directly here, but rather signed links
+   * are returned that can be used to upload.
+   *
+   * The quiz will only be marked as ready once the images have been uploaded.
+   *
+   * @param userId The id of the user creating the quiz.
+   * @param quizDetails The type, date and files for the quiz.
+   * @returns The created quiz and links that should be used for uploading the files.
+   */
+  async createQuiz(
+    userId: string,
+    {
+      type,
+      date,
+      files,
+    }: {
+      /** The type of quiz being created. */
+      type: QuizType;
+      /** The date the quiz was published. */
+      date: Date;
+      /** Images for the quiz. */
+      files: {
+        /** Name of the file. */
+        fileName: string;
+        /** What the image is of. */
+        type: QuizImageType;
+      }[];
+    },
+  ) {
+    if (files.length === 0) {
+      throw new MustProvideAtLeastOneFileError();
+    }
+
+    const user = await this.#userService.getUser(userId);
+
     const uuid = uuidv4();
     const filesWithKeys = files.map((file) => ({
       ...file,
@@ -112,8 +138,8 @@ export class QuizService {
         completions: [],
         uploadedByUser: {
           id: userId,
-          email: email,
-          name: userName ?? null,
+          email: user.email,
+          name: user.name ?? null,
         },
       }),
       uploadLinks: uploadLinks.map((ul) => ({ fileName: ul.fileName, link: ul.uploadLink })),

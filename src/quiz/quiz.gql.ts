@@ -37,13 +37,10 @@ async function createQuiz(
   context: QuizlordContext,
 ): Promise<CreateQuizResult> {
   authorisationService.requireUserRole(context, 'USER');
-  return quizService.createQuiz({
+  return quizService.createQuiz(context.userId, {
     type,
     date,
     files,
-    userId: context.userId,
-    email: context.email,
-    userName: context.userName,
   });
 }
 
