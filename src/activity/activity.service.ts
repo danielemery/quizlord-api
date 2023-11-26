@@ -1,6 +1,8 @@
+import { QuizService } from '../quiz/quiz.service';
 import { UnhandledError } from '../util/common.errors';
 
 export interface RecentActivityItem {
+  date: Date;
   text: string;
   action?: {
     name: string;
@@ -8,15 +10,72 @@ export interface RecentActivityItem {
   };
 }
 
+const quizDateFormatter = new Intl.DateTimeFormat('en', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+});
+
 export class ActivityService {
+  #quizService: QuizService;
+  constructor(quizService: QuizService) {
+    this.#quizService = quizService;
+  }
+
+  /**
+   * Get the most recent `first` activity items.
+   *
+   * These currently include quiz uploads and completions.
+   *
+   * @param first The number of activity items to return.
+   * @returns The most recent `first` activity items.
+   */
+  async getRecentActivity(first = 20) {
+    const [recentUploads, recentCompletions] = await Promise.all([
+      this.#quizService.getRecentQuizUploads(first),
+      this.#quizService.getRecentQuizCompletions(first),
+    ]);
+
+    const results: RecentActivityItem[] = [];
+
+    let uploadIndex = 0;
+    let completionIndex = 0;
+    const end = Math.min(first, recentUploads.length + recentCompletions.length);
+    while (uploadIndex + completionIndex < end) {
+      const upload = recentUploads[uploadIndex];
+      const completion = recentCompletions[completionIndex];
+
+      if (!completion || (upload && upload.uploadedAt > completion.completionDate)) {
+        results.push({
+          date: upload.uploadedAt,
+          text: `New ${upload.type} quiz from ${quizDateFormatter.format(
+            upload.date,
+          )} uploaded by ${this.userListToString([upload.uploadedBy])}`,
+        });
+        uploadIndex++;
+      } else {
+        results.push({
+          date: completion.completionDate,
+          text: `${this.userListToString(completion.completedBy)} scored ${completion.score} on the ${
+            completion.quizType
+          } quiz from ${quizDateFormatter.format(completion.quizDate)}`,
+        });
+        completionIndex++;
+      }
+    }
+
+    return results;
+  }
   /**
    * Get a formatted string list of users.
    * @param users List of userlike objects (contain and email and optionally a name)
    * @returns A formatted string list of users.
+   *
+   * // TODO move this to utils or to user service.
    */
   userListToString(
     users: {
-      name?: string;
+      name?: string | null;
       email: string;
     }[],
   ) {
