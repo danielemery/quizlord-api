@@ -213,6 +213,25 @@ export class QuizService {
     };
   }
 
+  /**
+   * Get the most recent `first` quiz completions along with their participants.
+   * @param first The number of completions to get. Defaults to 20.
+   * @returns The most recent `first` quiz completions along with their participants.
+   */
+  async getRecentQuizCompletions(first = 20) {
+    const recent = await this.#persistence.getRecentQuizCompletions({ limit: first });
+    return recent.map((completion) => ({
+      quizType: completion.quiz.type,
+      quizDate: completion.quiz.date,
+      completionDate: completion.completedAt,
+      score: completion.score.toNumber(),
+      participants: completion.completedBy.map((user) => ({
+        name: user.user.name,
+        email: user.user.email,
+      })),
+    }));
+  }
+
   async #populateFileWithUploadLink(file: { fileName: string; type: QuizImageType; imageKey: string }) {
     const uploadLink = await this.#fileService.generateSignedUploadUrl(file.imageKey);
     return {
