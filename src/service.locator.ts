@@ -1,3 +1,4 @@
+import { ActivityService } from './activity/activity.service';
 import { AuthenticationService } from './auth/authentication.service';
 import { AuthorisationService } from './auth/authorisation.service';
 import { PrismaService } from './database/prisma.service';
@@ -37,3 +38,6 @@ export const queueService = new SQSQueueService(quizService);
 
 // statistics
 export const statisticsService = new StatisticsService(userService, quizService, memoryCache);
+
+// activity
+export const activityService = new ActivityService(quizService);

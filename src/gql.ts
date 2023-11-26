@@ -139,6 +139,17 @@ const typeDefs = gql`
     ANYONE
   }
 
+  type RecentActivityAction {
+    name: String!
+    link: String!
+  }
+
+  type RecentActivityItem {
+    date: Date!
+    text: String!
+    action: RecentActivityAction
+  }
+
   "Available filters for the quizzes query"
   input QuizFilters {
     """
@@ -181,6 +192,11 @@ const typeDefs = gql`
       "The sorting option to use"
       sortedBy: IndividualUserStatisticsSortOption
     ): [IndividualUserStatistic]
+
+    """
+    Get the most recent activities.
+    """
+    activityFeed: [RecentActivityItem]
   }
 
   type Mutation {
