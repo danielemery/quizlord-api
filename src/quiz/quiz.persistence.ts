@@ -276,6 +276,7 @@ export class QuizPersistence {
         },
         quiz: {
           select: {
+            id: true,
             date: true,
             type: true,
           },

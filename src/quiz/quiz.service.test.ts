@@ -346,7 +346,7 @@ describe('quiz', () => {
           {
             completionDate: new Date('2023-01-01'),
             score: 12,
-            participants: [{ email: 'master@quizlord.net', name: 'Quiz Master' }],
+            completedBy: [{ email: 'master@quizlord.net', name: 'Quiz Master' }],
             quizDate: new Date('2022-12-12'),
             quizType: 'SHARK',
           },
