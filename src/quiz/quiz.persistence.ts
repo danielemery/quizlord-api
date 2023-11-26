@@ -233,4 +233,21 @@ export class QuizPersistence {
       },
     });
   }
+
+  getRecentQuizUploads({ limit }: { limit: number }) {
+    return this.#prisma.client().quiz.findMany({
+      take: limit,
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+      include: {
+        uploadedByUser: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
 }
