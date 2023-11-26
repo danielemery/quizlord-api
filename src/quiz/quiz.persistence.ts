@@ -256,4 +256,31 @@ export class QuizPersistence {
       },
     });
   }
+
+  async getRecentQuizCompletions({ limit }: { limit: number }) {
+    return this.#prisma.client().quizCompletion.findMany({
+      take: limit,
+      orderBy: {
+        completedAt: 'desc',
+      },
+      include: {
+        completedBy: {
+          select: {
+            user: {
+              select: {
+                email: true,
+                name: true,
+              },
+            },
+          },
+        },
+        quiz: {
+          select: {
+            date: true,
+            type: true,
+          },
+        },
+      },
+    });
+  }
 }
