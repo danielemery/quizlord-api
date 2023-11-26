@@ -221,11 +221,12 @@ export class QuizService {
   async getRecentQuizCompletions(first = 20) {
     const recent = await this.#persistence.getRecentQuizCompletions({ limit: first });
     return recent.map((completion) => ({
+      quizId: completion.quiz.id,
       quizType: completion.quiz.type,
       quizDate: completion.quiz.date,
       completionDate: completion.completedAt,
       score: completion.score.toNumber(),
-      participants: completion.completedBy.map((user) => ({
+      completedBy: completion.completedBy.map((user) => ({
         name: user.user.name,
         email: user.user.email,
       })),
