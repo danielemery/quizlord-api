@@ -16,6 +16,7 @@ const mockPersistence = {
   getQuizzesWithUserResults: jest.fn(),
   getQuizByIdWithResults: jest.fn(),
   getRecentQuizCompletions: jest.fn(),
+  getRecentQuizUploads: jest.fn(),
 };
 const mockFileService = {
   createKey: jest.fn(),
@@ -349,6 +350,40 @@ describe('quiz', () => {
             completedBy: [{ email: 'master@quizlord.net', name: 'Quiz Master' }],
             quizDate: new Date('2022-12-12'),
             quizType: 'SHARK',
+          },
+        ]);
+      });
+    });
+    describe('getRecentQuizUploads', () => {
+      it('must call getRecentQuizUploads on persistence with correct arguments and transform the result', async () => {
+        mockPersistence.getRecentQuizUploads.mockResolvedValueOnce([
+          {
+            id: 'fake-quiz-id',
+            type: 'SHARK',
+            date: new Date('2022-12-12'),
+            uploadedAt: new Date('2023-01-01'),
+            uploadedByUser: {
+              email: 'master@quizlord.net',
+              name: 'Quiz Master',
+            },
+          },
+        ]);
+
+        const actual = await sut.getRecentQuizUploads();
+
+        expect(mockPersistence.getRecentQuizUploads).toHaveBeenCalledTimes(1);
+        expect(mockPersistence.getRecentQuizUploads).toHaveBeenCalledWith({ limit: 20 });
+
+        expect(actual).toEqual([
+          {
+            id: 'fake-quiz-id',
+            type: 'SHARK',
+            date: new Date('2022-12-12'),
+            uploadedAt: new Date('2023-01-01'),
+            uploadedBy: {
+              email: 'master@quizlord.net',
+              name: 'Quiz Master',
+            },
           },
         ]);
       });

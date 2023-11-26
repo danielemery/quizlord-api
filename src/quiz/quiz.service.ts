@@ -233,6 +233,25 @@ export class QuizService {
     }));
   }
 
+  /**
+   * Get the most recent `first` quiz uploads.
+   * @param first The number of quizzes to get. Defaults to 20.
+   * @returns The most recent `first` quiz uploads.
+   */
+  async getRecentQuizUploads(first = 20) {
+    const recent = await this.#persistence.getRecentQuizUploads({ limit: first });
+    return recent.map((quiz) => ({
+      id: quiz.id,
+      type: quiz.type,
+      date: quiz.date,
+      uploadedAt: quiz.uploadedAt,
+      uploadedBy: {
+        name: quiz.uploadedByUser.name,
+        email: quiz.uploadedByUser.email,
+      },
+    }));
+  }
+
   async #populateFileWithUploadLink(file: { fileName: string; type: QuizImageType; imageKey: string }) {
     const uploadLink = await this.#fileService.generateSignedUploadUrl(file.imageKey);
     return {
