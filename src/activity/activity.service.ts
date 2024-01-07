@@ -1,8 +1,11 @@
 import { QuizService } from '../quiz/quiz.service';
 import { UnhandledError } from '../util/common.errors';
 
+// TODO later generate this from the gql schema.
 export interface RecentActivityItem {
   date: Date;
+  actionType: 'QUIZ_COMPLETED' | 'QUIZ_UPLOADED';
+  resourceId: string;
   text: string;
   action?: {
     name: string;
@@ -48,17 +51,19 @@ export class ActivityService {
       if (!completion || (upload && upload.uploadedAt > completion.completionDate)) {
         results.push({
           date: upload.uploadedAt,
-          text: `New ${upload.type} quiz from ${quizDateFormatter.format(
-            upload.date,
-          )} uploaded by ${this.userListToString([upload.uploadedBy])}`,
+          actionType: 'QUIZ_UPLOADED',
+          resourceId: upload.id,
+          text: `New ${upload.type} quiz from ${quizDateFormatter.format(upload.date)} uploaded`,
         });
         uploadIndex++;
       } else {
         results.push({
           date: completion.completionDate,
-          text: `${this.userListToString(completion.completedBy)} scored ${completion.score} on the ${
-            completion.quizType
-          } quiz from ${quizDateFormatter.format(completion.quizDate)}`,
+          actionType: 'QUIZ_COMPLETED',
+          resourceId: completion.id,
+          text: `${completion.quizType} quiz from ${quizDateFormatter.format(
+            completion.quizDate,
+          )} completed with score ${completion.score}`,
         });
         completionIndex++;
       }

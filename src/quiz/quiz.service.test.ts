@@ -321,6 +321,7 @@ describe('quiz', () => {
       it('must call getRecentQuizCompletions on persistence with correct arguments and transform the result', async () => {
         mockPersistence.getRecentQuizCompletions.mockResolvedValueOnce([
           {
+            id: 'fake-completion-id',
             completedAt: new Date('2023-01-01'),
             score: new Decimal(12),
             completedBy: [
@@ -332,6 +333,7 @@ describe('quiz', () => {
               },
             ],
             quiz: {
+              id: 'fake-quiz-id',
               type: 'SHARK',
               date: new Date('2022-12-12'),
             },
@@ -345,9 +347,10 @@ describe('quiz', () => {
 
         expect(actual).toEqual([
           {
+            id: 'fake-completion-id',
             completionDate: new Date('2023-01-01'),
             score: 12,
-            completedBy: [{ email: 'master@quizlord.net', name: 'Quiz Master' }],
+            quizId: 'fake-quiz-id',
             quizDate: new Date('2022-12-12'),
             quizType: 'SHARK',
           },
