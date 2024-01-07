@@ -193,4 +193,21 @@ export class UserPersistence {
       },
     });
   }
+
+  /**
+   * Get the user that uploaded the quiz with the given id.
+   * @param quizId The id of the quiz to get the upload user for.
+   * @returns The user that uploaded the quiz with the given id.
+   */
+  getUserForQuizUpload(quizId: string) {
+    return this.#prisma.client().user.findFirst({
+      where: {
+        uploadedQuizzes: {
+          some: {
+            id: quizId,
+          },
+        },
+      },
+    });
+  }
 }

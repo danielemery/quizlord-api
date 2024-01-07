@@ -13,6 +13,7 @@ const fakeUserPersistence = {
   getUserById: jest.fn(),
   updateUserName: jest.fn(),
   getUsersForQuizCompletion: jest.fn(),
+  getUserForQuizUpload: jest.fn(),
 };
 
 describe('user', () => {
@@ -127,8 +128,8 @@ describe('user', () => {
       });
     });
     describe('getUsersForActivity', () => {
-      it('must return empty list for unknown action type', () => {
-        const actual = sut.getUsersForActivity({
+      it('must return empty list for unknown action type', async () => {
+        const actual = await sut.getUsersForActivity({
           actionType: 'UNKNOWN' as 'QUIZ_UPLOADED',
           date: new Date(),
           resourceId: 'fake-id',
@@ -137,12 +138,12 @@ describe('user', () => {
 
         expect(actual).toEqual([]);
       });
-      it('must return users for quiz completion', () => {
+      it('must return users for quiz completion', async () => {
         const expected = [{ id: 'fake-user-id', email: 'fake-email@domain.com', name: 'fake-name' }];
 
-        fakeUserPersistence.getUsersForQuizCompletion.mockReturnValueOnce(expected);
+        fakeUserPersistence.getUsersForQuizCompletion.mockResolvedValueOnce(expected);
 
-        const actual = sut.getUsersForActivity({
+        const actual = await sut.getUsersForActivity({
           actionType: 'QUIZ_COMPLETED',
           date: new Date(),
           resourceId: 'fake-completion-id',
@@ -153,6 +154,23 @@ describe('user', () => {
         expect(fakeUserPersistence.getUsersForQuizCompletion).toHaveBeenCalledWith('fake-completion-id');
 
         expect(actual).toEqual(expected);
+      });
+      it('must return user for quiz upload', async () => {
+        const fakeUser = { id: 'fake-user-id', email: 'fake-email@domain.com', name: 'fake-name' };
+
+        fakeUserPersistence.getUserForQuizUpload.mockResolvedValueOnce(fakeUser);
+
+        const actual = await sut.getUsersForActivity({
+          actionType: 'QUIZ_UPLOADED',
+          date: new Date(),
+          resourceId: 'fake-quiz-id',
+          text: 'fake-text',
+        });
+
+        expect(fakeUserPersistence.getUserForQuizUpload).toHaveBeenCalledTimes(1);
+        expect(fakeUserPersistence.getUserForQuizUpload).toHaveBeenCalledWith('fake-quiz-id');
+
+        expect(actual).toEqual([fakeUser]);
       });
     });
   });
