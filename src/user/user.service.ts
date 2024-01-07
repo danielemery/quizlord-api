@@ -4,6 +4,7 @@ import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@pri
 import { Role, User, UserSortOption } from './user.dto';
 import { UserPersistence } from './user.persistence';
 import { UserNotFoundError } from './user.errors';
+import { RecentActivityItem } from '../activity/activity.service';
 
 export interface GetUsersResult {
   data: User[];
@@ -128,5 +129,19 @@ export class UserService {
       email: user.email,
       name: user.name ?? undefined,
     };
+  }
+
+  /**
+   * Get all users that participated in the given activity.
+   * @param parent The activity item to get users for.
+   */
+  getUsersForActivity(parent: RecentActivityItem) {
+    switch (parent.actionType) {
+      case 'QUIZ_COMPLETED':
+        return this.#persistence.getUsersForQuizCompletion(parent.resourceId);
+      case 'QUIZ_UPLOADED':
+      default:
+        return [];
+    }
   }
 }

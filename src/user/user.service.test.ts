@@ -12,6 +12,7 @@ const fakeUserPersistence = {
   getUserByEmail: jest.fn(),
   getUserById: jest.fn(),
   updateUserName: jest.fn(),
+  getUsersForQuizCompletion: jest.fn(),
 };
 
 describe('user', () => {
@@ -123,6 +124,35 @@ describe('user', () => {
           id: 'fake-id',
           email: 'fake@quizlord.net',
         });
+      });
+    });
+    describe('getUsersForActivity', () => {
+      it('must return empty list for unknown action type', () => {
+        const actual = sut.getUsersForActivity({
+          actionType: 'UNKNOWN' as 'QUIZ_UPLOADED',
+          date: new Date(),
+          resourceId: 'fake-id',
+          text: 'fake-text',
+        });
+
+        expect(actual).toEqual([]);
+      });
+      it('must return users for quiz completion', () => {
+        const expected = [{ id: 'fake-user-id', email: 'fake-email@domain.com', name: 'fake-name' }];
+
+        fakeUserPersistence.getUsersForQuizCompletion.mockReturnValueOnce(expected);
+
+        const actual = sut.getUsersForActivity({
+          actionType: 'QUIZ_COMPLETED',
+          date: new Date(),
+          resourceId: 'fake-completion-id',
+          text: 'fake-text',
+        });
+
+        expect(fakeUserPersistence.getUsersForQuizCompletion).toHaveBeenCalledTimes(1);
+        expect(fakeUserPersistence.getUsersForQuizCompletion).toHaveBeenCalledWith('fake-completion-id');
+
+        expect(actual).toEqual(expected);
       });
     });
   });
