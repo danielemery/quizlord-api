@@ -176,4 +176,21 @@ export class UserPersistence {
           `) as User[];
     return slicePagedResults(result, limit, afterId !== undefined);
   }
+
+  /**
+   * Get all the users that participated in the quiz completion with the given id.
+   * @param quizCompletionId The id of the quiz completion to get users for.
+   * @returns The users that participated in the quiz completion with the given id.
+   */
+  getUsersForQuizCompletion(quizCompletionId: string) {
+    return this.#prisma.client().user.findMany({
+      where: {
+        quizCompletions: {
+          some: {
+            quizCompletionId: quizCompletionId,
+          },
+        },
+      },
+    });
+  }
 }
