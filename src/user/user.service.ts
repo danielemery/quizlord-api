@@ -135,11 +135,14 @@ export class UserService {
    * Get all users that participated in the given activity.
    * @param parent The activity item to get users for.
    */
-  getUsersForActivity(parent: RecentActivityItem) {
+  async getUsersForActivity(parent: RecentActivityItem) {
     switch (parent.actionType) {
       case 'QUIZ_COMPLETED':
         return this.#persistence.getUsersForQuizCompletion(parent.resourceId);
-      case 'QUIZ_UPLOADED':
+      case 'QUIZ_UPLOADED': {
+        const uploadUser = await this.#persistence.getUserForQuizUpload(parent.resourceId);
+        return [uploadUser];
+      }
       default:
         return [];
     }
