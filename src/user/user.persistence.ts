@@ -20,6 +20,7 @@ export class UserPersistence {
   }
 
   async getUserByEmail(email: string) {
+    if (!email) return null;
     return this.#prisma.client().user.findFirst({
       include: {
         roles: {},
@@ -31,6 +32,7 @@ export class UserPersistence {
   }
 
   async getUserById(id: string) {
+    if (!id) return null;
     return this.#prisma.client().user.findFirst({
       where: {
         id,
