@@ -35,6 +35,11 @@ const typeDefs = gql`
     AVERAGE_SCORE_DESC
   }
 
+  enum ActivityActionType {
+    QUIZ_COMPLETED
+    QUIZ_UPLOADED
+  }
+
   type PageInfo {
     hasNextPage: Boolean
     startCursor: String
@@ -139,14 +144,27 @@ const typeDefs = gql`
     ANYONE
   }
 
+  "Optional action that can be taken when the activity is clicked"
   type RecentActivityAction {
+    "Name of the action to take when the activity is clicked"
     name: String!
+    "Link to the url to navigate to when the activity is clicked"
     link: String!
   }
 
+  "An item in the recent activity feed"
   type RecentActivityItem {
+    "The date the activity occurred"
     date: Date!
+    "The type of activity that occurred"
+    actionType: ActivityActionType!
+    "The id of the resource that the activity relates to"
+    resourceId: String!
+    "The text to display for the activity"
     text: String!
+    "The user who performed the activity"
+    users: [User]!
+    "Optional action to take when the activity is clicked"
     action: RecentActivityAction
   }
 
