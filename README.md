@@ -8,10 +8,10 @@ Follows the [GraphQL Cursor Connections Specification](https://relay.dev/graphql
 
 # Deployment
 
-The api is packaged in docker and deployed with github actions to the (github registry)[https://github.com/danielemery/quizlord-api/pkgs/container/quizlord-api].
+The api is packaged in docker and deployed with github actions to the [github registry](https://github.com/danielemery/quizlord-api/pkgs/container/quizlord-api).
 A helm template is also deployed with a github action to https://helm.demery.net.
 
-See (quizlord-stack)[https://github.com/danielemery/quizlord-stack] for further details about deployment and for the terraform module.
+See [quizlord-stack](https://github.com/danielemery/quizlord-stack) for further details about deployment and for the terraform module.
 
 # Local Development
 
