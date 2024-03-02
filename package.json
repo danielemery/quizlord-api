@@ -3,7 +3,7 @@
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "engines": {
-    "node": "v20.9.0"
+    "node": "v20.11.1"
   },
   "scripts": {
     "build": "tsc",
@@ -53,7 +53,7 @@
     "@tsconfig/node20": "^20.1.2",
     "@types/cors": "^2.8.13",
     "@types/jest": "^29.5.8",
-    "@types/node": "^20.9.0",
+    "@types/node": "^20.11.1",
     "@types/pg": "^8.6.5",
     "@types/uuid": "^9.0.0",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
