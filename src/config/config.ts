@@ -17,6 +17,7 @@ interface QuizlordConfig {
   QUIZLORD_VERSION: string;
   SENTRY_DSN: string;
   DOPPLER_CONFIG: string;
+  GOOGLE_AI_API_KEY: string;
 }
 
 const schema = Joi.object<QuizlordConfig>()
@@ -37,6 +38,7 @@ const schema = Joi.object<QuizlordConfig>()
     QUIZLORD_VERSION: Joi.string().default('development'),
     SENTRY_DSN: Joi.string().required().allow(''),
     DOPPLER_CONFIG: Joi.string().required(),
+    GOOGLE_AI_API_KEY: Joi.string().required(),
   })
   .required()
   .unknown(true);
