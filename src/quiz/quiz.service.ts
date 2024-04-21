@@ -7,8 +7,10 @@ import {
   QuizImageType,
   QuizType,
 } from '@prisma/client';
+import mime from 'mime';
 import { v4 as uuidv4 } from 'uuid';
 
+import { GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
 import { UserService } from '../user/user.service';
 import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
@@ -21,11 +23,18 @@ export class QuizService {
   #persistence: QuizPersistence;
   #fileService: S3FileService;
   #userService: UserService;
+  #geminiService: GeminiService;
 
-  constructor(persistence: QuizPersistence, fileService: S3FileService, userService: UserService) {
+  constructor(
+    persistence: QuizPersistence,
+    fileService: S3FileService,
+    userService: UserService,
+    geminiService: GeminiService,
+  ) {
     this.#persistence = persistence;
     this.#fileService = fileService;
     this.#userService = userService;
+    this.#geminiService = geminiService;
   }
 
   /**
@@ -171,6 +180,15 @@ export class QuizService {
       throw new Error(`Unable to find quizImage with key ${imageKey}`);
     }
     await this.#persistence.markQuizImageReady(imageKey);
+
+    // Test converting image to questions and answers
+    const imageUrl = this.#fileService.keyToUrl(imageKey);
+    const mimeType = mime.getType(imageKey);
+    if (mimeType) {
+      this.#geminiService.extractQuizQuestions(20, imageUrl, mimeType);
+    } else {
+      console.warn(`Unable to determine mime type for image at key ${imageKey}, not attempting question extraction`);
+    }
   }
 
   /**

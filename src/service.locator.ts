@@ -1,4 +1,5 @@
 import { ActivityService } from './activity/activity.service';
+import { GeminiService } from './ai/gemini.service';
 import { AuthenticationService } from './auth/authentication.service';
 import { AuthorisationService } from './auth/authorisation.service';
 import config from './config/config';
@@ -24,13 +25,16 @@ export const prismaService = new PrismaService();
 // file
 export const fileService = new S3FileService(config.AWS_REGION, config.AWS_BUCKET_NAME, config.FILE_ACCESS_BASE_URL);
 
+// ai
+export const geminiService = new GeminiService(config.GOOGLE_AI_API_KEY);
+
 // user
 export const userPersistence = new UserPersistence(prismaService);
 export const userService = new UserService(userPersistence);
 
 // quiz
 export const quizPersistence = new QuizPersistence(prismaService);
-export const quizService = new QuizService(quizPersistence, fileService, userService);
+export const quizService = new QuizService(quizPersistence, fileService, userService, geminiService);
 
 // queue
 export const queueService = new SQSQueueService(quizService);
