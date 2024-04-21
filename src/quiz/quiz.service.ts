@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import mime from 'mime';
 import {
   Quiz as QuizPersistenceModel,
   QuizCompletion as QuizCompletionPersistenceModel,
@@ -13,6 +14,7 @@ import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { S3FileService } from '../file/s3.service';
 import { QuizPersistence } from './quiz.persistence';
 import { UserService } from '../user/user.service';
+import { GeminiService } from '../ai/gemini.service';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
 
 const MAXIMUM_QUIZ_PAGE_SIZE = 100;
@@ -21,11 +23,18 @@ export class QuizService {
   #persistence: QuizPersistence;
   #fileService: S3FileService;
   #userService: UserService;
+  #geminiService: GeminiService;
 
-  constructor(persistence: QuizPersistence, fileService: S3FileService, userService: UserService) {
+  constructor(
+    persistence: QuizPersistence,
+    fileService: S3FileService,
+    userService: UserService,
+    geminiService: GeminiService,
+  ) {
     this.#persistence = persistence;
     this.#fileService = fileService;
     this.#userService = userService;
+    this.#geminiService = geminiService;
   }
 
   /**
@@ -173,6 +182,15 @@ export class QuizService {
       throw new Error(`Unable to find quizImage with key ${imageKey}`);
     }
     await this.#persistence.markQuizImageReady(imageKey);
+
+    // Test converting image to questions and answers
+    const imageUrl = this.#fileService.keyToUrl(imageKey);
+    const mimeType = mime.getType(imageKey);
+    if (mimeType) {
+      this.#geminiService.extractQuizQuestions(20, imageUrl, mimeType);
+    } else {
+      console.warn(`Unable to determine mime type for image at key ${imageKey}, not attempting question extraction`);
+    }
   }
 
   /**
