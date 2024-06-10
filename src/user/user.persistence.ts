@@ -20,6 +20,7 @@ export class UserPersistence {
   }
 
   async getUserByEmail(email: string) {
+    if (!email) return null;
     return this.#prisma.client().user.findFirst({
       include: {
         roles: {},
@@ -31,6 +32,7 @@ export class UserPersistence {
   }
 
   async getUserById(id: string) {
+    if (!id) return null;
     return this.#prisma.client().user.findFirst({
       where: {
         id,
@@ -173,5 +175,39 @@ export class UserPersistence {
   order by completions_with_current_user.completions desc;
           `) as User[];
     return slicePagedResults(result, limit, afterId !== undefined);
+  }
+
+  /**
+   * Get all the users that participated in the quiz completion with the given id.
+   * @param quizCompletionId The id of the quiz completion to get users for.
+   * @returns The users that participated in the quiz completion with the given id.
+   */
+  getUsersForQuizCompletion(quizCompletionId: string) {
+    return this.#prisma.client().user.findMany({
+      where: {
+        quizCompletions: {
+          some: {
+            quizCompletionId: quizCompletionId,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Get the user that uploaded the quiz with the given id.
+   * @param quizId The id of the quiz to get the upload user for.
+   * @returns The user that uploaded the quiz with the given id.
+   */
+  getUserForQuizUpload(quizId: string) {
+    return this.#prisma.client().user.findFirst({
+      where: {
+        uploadedQuizzes: {
+          some: {
+            id: quizId,
+          },
+        },
+      },
+    });
   }
 }
