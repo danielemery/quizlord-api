@@ -1,4 +1,5 @@
-import { Quiz, QuizImage } from '@prisma/client';
+import { Quiz, QuizImage, QuizNoteType } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
 import { QuizFilters } from './quiz.dto';
@@ -221,5 +222,38 @@ export class QuizPersistence {
       },
     });
     return slicePagedResults(result, limit, afterId !== undefined);
+  }
+
+  async addQuizNote({
+    quizId,
+    noteType,
+    userEmail,
+    submittedAt,
+  }: {
+    quizId: string;
+    noteType: QuizNoteType;
+    userEmail: string;
+    submittedAt: Date;
+  }) {
+    const user = await this.#prisma.client().user.findFirst({
+      where: {
+        email: userEmail,
+      },
+    });
+
+    if (!user) {
+      throw new Error(`Unable to find user with email ${userEmail}`);
+    }
+
+    const noteId = uuidv4();
+    await this.#prisma.client().quizNote.create({
+      data: {
+        id: noteId,
+        noteType,
+        quizId,
+        userId: user.id,
+        submittedAt,
+      },
+    });
   }
 }

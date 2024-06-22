@@ -276,4 +276,12 @@ export class QuizService {
       },
     };
   }
+  async markQuizIllegible(quizId: string, userEmail: string): Promise<void> {
+    await this.#persistence.addQuizNote({
+      quizId,
+      noteType: 'ILLEGIBLE',
+      submittedAt: new Date(),
+      userEmail,
+    });
+  }
 }

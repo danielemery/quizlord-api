@@ -186,6 +186,7 @@ const typeDefs = gql`
   type Mutation {
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
     completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
+    markQuizIllegible(quizId: String!): Boolean
   }
 `;
 

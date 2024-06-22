@@ -58,6 +58,16 @@ async function completeQuiz(
   });
 }
 
+async function markQuizIllegible(
+  _: unknown,
+  { quizId }: { quizId: string },
+  context: QuizlordContext,
+): Promise<boolean> {
+  authorisationService.requireUserRole(context, 'USER');
+  quizService.markQuizIllegible(quizId, context.email);
+  return true;
+}
+
 export const quizQueries = {
   quizzes,
   quiz,
@@ -65,4 +75,5 @@ export const quizQueries = {
 export const quizMutations = {
   createQuiz,
   completeQuiz,
+  markQuizIllegible,
 };
