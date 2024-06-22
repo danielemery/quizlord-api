@@ -128,6 +128,17 @@ const typeDefs = gql`
     averageScorePercentage: Float!
   }
 
+  enum ExcludeIllegibleOptions {
+    """
+    Exclude quizzes that have been marked as illegible by me.
+    """
+    ME
+    """
+    Exclude quizzes that have been marked as illegible by anyone.
+    """
+    ANYONE
+  }
+
   "Available filters for the quizzes query"
   input QuizFilters {
     """
@@ -135,6 +146,10 @@ const typeDefs = gql`
     If provided, only quizzes completed by none of these users will be included in the results.
     """
     excludeCompletedBy: [String]
+    """
+    Optional option to exclude quizzes that have been marked as illegible.
+    """
+    excludeIllegible: ExcludeIllegibleOptions
   }
 
   type Query {
@@ -171,6 +186,7 @@ const typeDefs = gql`
   type Mutation {
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
     completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
+    markQuizIllegible(quizId: String!): Boolean
   }
 `;
 

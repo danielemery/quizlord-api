@@ -30,6 +30,7 @@ model Quiz {
 
   completions    QuizCompletion[]
   images         QuizImage[]
+  notes          QuizNote[]
   uploadedByUser User             @relation(fields: [uploadedByUserId], references: [id])
 
   @@unique(fields: [date, type])
@@ -79,6 +80,19 @@ model QuizCompletionUser {
   @@map("quiz_completion_user")
 }
 
+model QuizNote {
+  id          String       @id
+  quizId      String       @map("quiz_id")
+  userId      String       @map("user_id")
+  noteType    QuizNoteType @map("note_type")
+  submittedAt DateTime     @map("submitted_at")
+
+  quiz Quiz @relation(fields: [quizId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("quiz_note")
+}
+
 model User {
   id    String  @id
   email String
@@ -86,9 +100,14 @@ model User {
 
   roles           UserRole[]
   quizCompletions QuizCompletionUser[]
+  quizNotes       QuizNote[]
   uploadedQuizzes Quiz[]
 
   @@map("user")
+}
+
+enum QuizNoteType {
+  ILLEGIBLE
 }
 
 enum Role {
