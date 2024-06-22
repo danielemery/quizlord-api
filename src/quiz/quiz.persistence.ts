@@ -70,6 +70,23 @@ export class QuizPersistence {
             },
           },
         }),
+        ...(filters.excludeIllegible === 'ME' && {
+          notes: {
+            none: {
+              noteType: 'ILLEGIBLE',
+              user: {
+                email: userEmail,
+              },
+            },
+          },
+        }),
+        ...(filters.excludeIllegible === 'ANYONE' && {
+          notes: {
+            none: {
+              noteType: 'ILLEGIBLE',
+            },
+          },
+        }),
       },
     });
 

@@ -37,6 +37,7 @@ export interface QuizDetails {
 
 export interface QuizFilters {
   excludeCompletedBy?: string[];
+  excludeIllegible?: 'ME' | 'ANYONE';
 }
 
 export interface CreateQuizResult {
