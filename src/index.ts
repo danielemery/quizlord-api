@@ -1,3 +1,4 @@
+import './instrument';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
@@ -78,25 +79,9 @@ async function initialise() {
     },
   });
 
-  Sentry.init({
-    dsn: config.SENTRY_DSN,
-    integrations: [
-      new Sentry.Integrations.Http({ tracing: true }),
-      new Sentry.Integrations.Express({ app }),
-      new Sentry.Integrations.Postgres(),
-      new Sentry.Integrations.Prisma({ client: prismaService.client() }),
-      new Sentry.Integrations.Apollo(),
-    ],
-    tracesSampleRate: 1.0,
-    profilesSampleRate: 1.0,
-    environment: config.DOPPLER_CONFIG,
-    release: config.QUIZLORD_VERSION,
-  });
-
   await server.start();
 
-  app.use(Sentry.Handlers.requestHandler());
-  app.use(Sentry.Handlers.tracingHandler());
+  Sentry.setupExpressErrorHandler(app);
 
   app.use(
     '/',
@@ -139,7 +124,6 @@ async function initialise() {
       },
     }),
   );
-  app.use(Sentry.Handlers.errorHandler());
 
   queueService.subscribeToFileUploads();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
