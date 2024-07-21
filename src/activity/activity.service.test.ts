@@ -30,7 +30,7 @@ describe('activity', () => {
             date: new Date('2021-01-01'),
             actionType: 'QUIZ_UPLOADED',
             resourceId: 'fake-quiz-id',
-            text: 'New SHARK quiz from June 7, 2020 uploaded',
+            text: 'Uploaded a SHARK from June 7, 2020',
           },
         ]);
       });
@@ -54,7 +54,7 @@ describe('activity', () => {
             date: new Date('2021-01-01'),
             actionType: 'QUIZ_COMPLETED',
             resourceId: 'fake-completion-id',
-            text: 'SHARK quiz from March 23, 2020 completed with score 12',
+            text: 'Scored 12 on the SHARK from March 23, 2020',
           },
         ]);
       });
@@ -116,31 +116,31 @@ describe('activity', () => {
             date: new Date('2021-01-31'),
             actionType: 'QUIZ_COMPLETED',
             resourceId: 'fake-completion-id-one',
-            text: 'BRAINWAVES quiz from March 23, 2020 completed with score 19',
+            text: 'Scored 19 on the BRAINWAVES from March 23, 2020',
           },
           {
             date: new Date('2021-01-21'),
             actionType: 'QUIZ_UPLOADED',
             resourceId: 'fake-quiz-id-one',
-            text: 'New BRAINWAVES quiz from June 7, 2020 uploaded',
+            text: 'Uploaded a BRAINWAVES from June 7, 2020',
           },
           {
             date: new Date('2021-01-11'),
             actionType: 'QUIZ_UPLOADED',
             resourceId: 'fake-quiz-id-two',
-            text: 'New SHARK quiz from August 8, 2020 uploaded',
+            text: 'Uploaded a SHARK from August 8, 2020',
           },
           {
             date: new Date('2021-01-05'),
             actionType: 'QUIZ_COMPLETED',
             resourceId: 'fake-completion-id-two',
-            text: 'SHARK quiz from March 23, 2020 completed with score 12',
+            text: 'Scored 12 on the SHARK from March 23, 2020',
           },
           {
             date: new Date('2021-01-02'),
             actionType: 'QUIZ_UPLOADED',
             resourceId: 'fake-quiz-id-three',
-            text: 'New SHARK quiz from October 11, 2020 uploaded',
+            text: 'Uploaded a SHARK from October 11, 2020',
           },
         ]);
       });

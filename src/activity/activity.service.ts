@@ -53,7 +53,7 @@ export class ActivityService {
           date: upload.uploadedAt,
           actionType: 'QUIZ_UPLOADED',
           resourceId: upload.id,
-          text: `New ${upload.type} quiz from ${quizDateFormatter.format(upload.date)} uploaded`,
+          text: `Uploaded a ${upload.type} from ${quizDateFormatter.format(upload.date)}`,
         });
         uploadIndex++;
       } else {
@@ -61,9 +61,9 @@ export class ActivityService {
           date: completion.completionDate,
           actionType: 'QUIZ_COMPLETED',
           resourceId: completion.id,
-          text: `${completion.quizType} quiz from ${quizDateFormatter.format(
+          text: `Scored ${completion.score} on the ${completion.quizType} from ${quizDateFormatter.format(
             completion.quizDate,
-          )} completed with score ${completion.score}`,
+          )}`,
         });
         completionIndex++;
       }
