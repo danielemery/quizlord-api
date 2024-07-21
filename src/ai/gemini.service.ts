@@ -8,7 +8,7 @@ export class GeminiService {
 
   constructor(googleAIApiKey: string) {
     this.#ai = new GoogleGenerativeAI(googleAIApiKey);
-    this.#model = this.#ai.getGenerativeModel({ model: 'gemini-pro-vision' });
+    this.#model = this.#ai.getGenerativeModel({ model: 'gemini-1.5-pro' });
   }
 
   async extractQuizQuestions(expectedQuestionCount: number, quizImageUrl: string, mimeType: string) {

@@ -1,9 +1,9 @@
-import { ClaudeService } from '../src/ai/claude.service';
+import { GeminiService } from "../src/ai/gemini.service";
 
-const claude = new ClaudeService(process.env.CLAUDE_AI_API_SECRET as unknown as string);
+const gemini = new GeminiService(process.env.GOOGLE_AI_API_KEY as unknown as string);
 
 async function main() {
-  await claude.extractQuizQuestions(
+  await gemini.extractQuizQuestions(
     20,
     'https://prod-uploads.quizlord.net/4794057e-cc19-45aa-a833-cc0622e5c2f5/IMG_20240514_133548.jpg',
     'image/jpeg',
