@@ -13,6 +13,7 @@ import { authenticationService, prismaService, queueService, userService } from 
 import config from './config/config';
 import typeDefs from './gql';
 import { userQueries } from './user/user.gql';
+import { activityQueries, activityChildren } from './activity/activity.gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 import { Role } from './user/user.dto';
 import { statisticsQueries } from './statistics/statistics.gql';
@@ -42,10 +43,12 @@ const resolvers = {
     ...quizQueries,
     ...userQueries,
     ...statisticsQueries,
+    ...activityQueries,
   },
   Mutation: {
     ...quizMutations,
   },
+  RecentActivityItem: activityChildren,
 };
 
 export interface QuizlordContext {

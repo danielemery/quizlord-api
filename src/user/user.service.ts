@@ -4,6 +4,7 @@ import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@pri
 import { Role, User, UserSortOption } from './user.dto';
 import { UserPersistence } from './user.persistence';
 import { UserNotFoundError } from './user.errors';
+import { RecentActivityItem } from '../activity/activity.service';
 
 export interface GetUsersResult {
   data: User[];
@@ -127,6 +128,54 @@ export class UserService {
       id: user.id,
       email: user.email,
       name: user.name ?? undefined,
+    };
+  }
+
+  /**
+   * Get all users that participated in the given activity.
+   * @param parent The activity item to get users for.
+   */
+  async getUsersForActivity(parent: RecentActivityItem) {
+    switch (parent.actionType) {
+      case 'QUIZ_COMPLETED':
+        return this.#persistence.getUsersForQuizCompletion(parent.resourceId);
+      case 'QUIZ_UPLOADED': {
+        const uploadUser = await this.#persistence.getUserForQuizUpload(parent.resourceId);
+        return [uploadUser];
+      }
+      default:
+        return [];
+    }
+  }
+
+  /**
+   * Get all the users that participated in the quiz completions and quiz uploads of the given activity items.
+   * @param activityItems The activity items to get users for.
+   * @returns A map from the activity id to the users that participated in the activity.
+   */
+  async getUsersForActivities(activityItems: readonly RecentActivityItem[]): Promise<Record<string, User[]>> {
+    const quizCompletionActivityItems = activityItems.filter(
+      (activityItem) => activityItem.actionType === 'QUIZ_COMPLETED',
+    );
+    const quizCompletionUserPersistenceMap =
+      await this.#persistence.getUsersForQuizCompletions(quizCompletionActivityItems);
+    const quizCompletionUserMap = Object.fromEntries(
+      Object.entries(quizCompletionUserPersistenceMap).map(([quizCompletionId, users]) => [
+        quizCompletionId,
+        users.map((user) => this.#userPersistenceToUser(user)),
+      ]),
+    );
+    const quizUploadActivityItems = activityItems.filter((activityItem) => activityItem.actionType === 'QUIZ_UPLOADED');
+    const quizUploadUserPersistenceMap = await this.#persistence.getUsersForQuizUploads(quizUploadActivityItems);
+    const quizUploadUserMap = Object.fromEntries(
+      Object.entries(quizUploadUserPersistenceMap).map(([quizId, user]) => [
+        quizId,
+        user.map((user) => this.#userPersistenceToUser(user)),
+      ]),
+    );
+    return {
+      ...quizCompletionUserMap,
+      ...quizUploadUserMap,
     };
   }
 }
