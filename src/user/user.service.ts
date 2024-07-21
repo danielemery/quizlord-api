@@ -147,4 +147,35 @@ export class UserService {
         return [];
     }
   }
+
+  /**
+   * Get all the users that participated in the quiz completions and quiz uploads of the given activity items.
+   * @param activityItems The activity items to get users for.
+   * @returns A map from the activity id to the users that participated in the activity.
+   */
+  async getUsersForActivities(activityItems: readonly RecentActivityItem[]): Promise<Record<string, User[]>> {
+    const quizCompletionActivityItems = activityItems.filter(
+      (activityItem) => activityItem.actionType === 'QUIZ_COMPLETED',
+    );
+    const quizCompletionUserPersistenceMap =
+      await this.#persistence.getUsersForQuizCompletions(quizCompletionActivityItems);
+    const quizCompletionUserMap = Object.fromEntries(
+      Object.entries(quizCompletionUserPersistenceMap).map(([quizCompletionId, users]) => [
+        quizCompletionId,
+        users.map((user) => this.#userPersistenceToUser(user)),
+      ]),
+    );
+    const quizUploadActivityItems = activityItems.filter((activityItem) => activityItem.actionType === 'QUIZ_UPLOADED');
+    const quizUploadUserPersistenceMap = await this.#persistence.getUsersForQuizUploads(quizUploadActivityItems);
+    const quizUploadUserMap = Object.fromEntries(
+      Object.entries(quizUploadUserPersistenceMap).map(([quizId, user]) => [
+        quizId,
+        user.map((user) => this.#userPersistenceToUser(user)),
+      ]),
+    );
+    return {
+      ...quizCompletionUserMap,
+      ...quizUploadUserMap,
+    };
+  }
 }

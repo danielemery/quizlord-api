@@ -3,6 +3,7 @@ import { Role, User } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { UserSortOption } from '../user/user.dto';
 import { getPagedQuery, slicePagedResults } from '../util/paging-helpers';
+import { RecentActivityItem } from '../activity/activity.service';
 
 export interface GetUsersWithRoleResult {
   data: {
@@ -209,5 +210,46 @@ export class UserPersistence {
         },
       },
     });
+  }
+
+  async getUsersForQuizUploads(quizUploadActivityItems: RecentActivityItem[]): Promise<Record<string, User[]>> {
+    const result = await this.#prisma.client().quiz.findMany({
+      where: {
+        id: {
+          in: quizUploadActivityItems.map((item) => item.resourceId),
+        },
+      },
+      include: {
+        uploadedByUser: true,
+      },
+    });
+    return result.reduce<Record<string, User[]>>((acc, quiz) => {
+      acc[quiz.id] = [quiz.uploadedByUser];
+      return acc;
+    }, {});
+  }
+
+  async getUsersForQuizCompletions(quizCompletionActivityItems: RecentActivityItem[]): Promise<Record<string, User[]>> {
+    const result = await this.#prisma.client().quizCompletion.findMany({
+      where: {
+        id: {
+          in: quizCompletionActivityItems.map((item) => item.resourceId),
+        },
+      },
+      include: {
+        completedBy: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+    return result.reduce<Record<string, User[]>>((acc, quizCompletion) => {
+      const users = quizCompletion.completedBy.map((cb) => cb.user);
+      return {
+        ...acc,
+        [quizCompletion.id]: users,
+      };
+    }, {});
   }
 }
