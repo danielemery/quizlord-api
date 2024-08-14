@@ -68,6 +68,16 @@ async function markQuizIllegible(
   return true;
 }
 
+async function deleteQuiz(
+  _: unknown,
+  { quizId, deletionReason }: { quizId: string; deletionReason: string },
+  context: QuizlordContext,
+): Promise<boolean> {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  quizService.deleteQuiz(quizId, deletionReason, context.email);
+  return true;
+}
+
 export const quizQueries = {
   quizzes,
   quiz,
@@ -75,5 +85,6 @@ export const quizQueries = {
 export const quizMutations = {
   createQuiz,
   completeQuiz,
+  deleteQuiz,
   markQuizIllegible,
 };

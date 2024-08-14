@@ -325,4 +325,8 @@ export class QuizService {
       userEmail,
     });
   }
+
+  async deleteQuiz(quizId: string, deletionReason: string, email: string) {
+    await this.#persistence.softDeleteQuiz(quizId, deletionReason, email);
+  }
 }
