@@ -23,16 +23,23 @@ enum QuizImageState {
 }
 
 model Quiz {
-  id               String   @id
+  id               String    @id
   type             QuizType
-  date             DateTime @db.Date
-  uploadedAt       DateTime @map("uploaded_at")
-  uploadedByUserId String   @map("uploaded_by_user_id")
+  date             DateTime  @db.Date
+  uploadedAt       DateTime  @map("uploaded_at")
+  uploadedByUserId String    @map("uploaded_by_user_id")
+  updatedAt        DateTime? @map("updated_at")
+  updatedByUserId  String?   @map("updated_by_user_id")
+  deletedAt        DateTime? @map("deleted_at")
+  deletedByUserId  String?   @map("deleted_by_user_id")
+  deletionReason   String?   @map("deletion_reason")
 
   completions    QuizCompletion[]
   images         QuizImage[]
   notes          QuizNote[]
-  uploadedByUser User             @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUser User             @relation(name: "uploadedByUser", fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  deletedByUser  User?            @relation(name: "deletedByUser", fields: [deletedByUserId], references: [id], onDelete: Restrict)
+  updatedByUser  User?            @relation(name: "updatedByUser", fields: [updatedByUserId], references: [id], onDelete: Restrict)
 
   @@unique(fields: [date, type])
   @@map("quiz")
@@ -102,7 +109,9 @@ model User {
   roles           UserRole[]
   quizCompletions QuizCompletionUser[]
   quizNotes       QuizNote[]
-  uploadedQuizzes Quiz[]
+  uploadedQuizzes Quiz[]               @relation(name: "uploadedByUser")
+  deletedQuizzes  Quiz[]               @relation(name: "deletedByUser")
+  updatedQuizzes  Quiz[]               @relation(name: "updatedByUser")
 
   @@map("user")
 }

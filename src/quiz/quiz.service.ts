@@ -125,6 +125,11 @@ export class QuizService {
           type,
           uploadedAt: new Date(),
           uploadedByUserId: userId,
+          updatedAt: null,
+          updatedByUserId: null,
+          deletedAt: null,
+          deletedByUserId: null,
+          deletionReason: null,
         },
         filesWithKeys.map((file) => ({
           imageKey: file.imageKey,

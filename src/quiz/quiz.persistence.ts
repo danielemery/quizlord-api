@@ -54,6 +54,11 @@ export class QuizPersistence {
         uploadedAt: true,
         uploadedByUserId: true,
         uploadedByUser: true,
+        updatedAt: true,
+        updatedByUserId: true,
+        deletedAt: true,
+        deletedByUserId: true,
+        deletionReason: true,
       },
       where: {
         ...(filters.excludeCompletedBy && {
