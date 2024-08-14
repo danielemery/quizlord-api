@@ -57,6 +57,11 @@ export class QuizPersistence {
         aiProcessingState: true,
         aiProcessingCertaintyPercent: true,
         aiProcessingModel: true,
+        updatedAt: true,
+        updatedByUserId: true,
+        deletedAt: true,
+        deletedByUserId: true,
+        deletionReason: true,
       },
       where: {
         ...(filters.excludeCompletedBy && {

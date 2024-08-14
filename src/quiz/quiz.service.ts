@@ -167,6 +167,11 @@ export class QuizService {
           aiProcessingState: 'NOT_QUEUED',
           aiProcessingCertaintyPercent: null,
           aiProcessingModel: null,
+          updatedAt: null,
+          updatedByUserId: null,
+          deletedAt: null,
+          deletedByUserId: null,
+          deletionReason: null,
         },
         filesWithKeys.map((file) => ({
           imageKey: file.imageKey,
