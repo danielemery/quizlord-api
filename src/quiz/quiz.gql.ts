@@ -95,6 +95,16 @@ async function aiProcessQuizImages(_: unknown, { quizId }: { quizId: string }, c
   return true;
 }
 
+async function deleteQuiz(
+  _: unknown,
+  { quizId, deletionReason }: { quizId: string; deletionReason: string },
+  context: QuizlordContext,
+): Promise<boolean> {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  await quizService.deleteQuiz(quizId, deletionReason, context.email);
+  return true;
+}
+
 export const quizQueries = {
   quizzes,
   quiz,
@@ -102,6 +112,7 @@ export const quizQueries = {
 export const quizMutations = {
   createQuiz,
   completeQuiz,
+  deleteQuiz,
   markQuizIllegible,
   markInaccurateOCR,
   aiProcessQuizImages,

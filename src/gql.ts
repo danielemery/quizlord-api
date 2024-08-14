@@ -299,6 +299,7 @@ const typeDefs = gql`
       """
       questionResults: [QuizCompletionQuestionResult]
     ): CompleteQuizResult
+    deleteQuiz(quizId: String!, deletionReason: String!): Boolean
     markQuizIllegible(quizId: String!): Boolean
     markInaccurateOCR(quizId: String!): Boolean
     aiProcessQuizImages(quizId: String!): Boolean

@@ -328,6 +328,29 @@ export class QuizPersistence {
     });
   }
 
+  async softDeleteQuiz(quizId: string, deletionReason: string, email: string) {
+    const user = await this.#prisma.client().user.findFirst({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      throw new Error(`Unable to find user with email ${email}`);
+    }
+
+    return this.#prisma.client().quiz.update({
+      data: {
+        deletedAt: new Date(),
+        deletedByUserId: user.id,
+        deletionReason,
+      },
+      where: {
+        id: quizId,
+      },
+    });
+  }
+
   async getRecentQuizCompletions({ limit }: { limit: number }) {
     return this.#prisma.client().quizCompletion.findMany({
       take: limit,
