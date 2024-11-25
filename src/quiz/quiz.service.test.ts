@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, Version4Options } from 'uuid';
 
 import { QuizService } from './quiz.service';
 import { QuizPersistence } from './quiz.persistence';
@@ -9,7 +9,8 @@ import { MustProvideAtLeastOneFileError } from './quiz.errors';
 
 jest.mock('uuid');
 
-const mockedUUIDv4 = jest.mocked(uuidv4);
+// We need to cast here to the specific overload on the uuidv4 we are using, otherwise typescript selects the wrong overload.
+const mockedUUIDv4 = jest.mocked(uuidv4 as (options?: Version4Options, buf?: undefined, offset?: number) => string);
 const mockPersistence = {
   createQuizWithImages: jest.fn(),
   getCompletionScoreWithQuizTypesForUser: jest.fn(),

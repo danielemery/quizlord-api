@@ -21,7 +21,7 @@
             nativeBuildInputs = [ pkgs.bashInteractive ];
             buildInputs = with pkgs; [
               doppler
-              nodejs_20
+              nodejs_22
 
               # See https://github.com/prisma/prisma/issues/3026#issuecomment-927258138 for all the details about running Prisma
               nodePackages.prisma
