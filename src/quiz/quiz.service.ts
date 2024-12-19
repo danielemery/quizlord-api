@@ -60,9 +60,7 @@ export class QuizService {
     const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
     });
-    // TODO look into modifying the upstream https://eslint.org/docs/latest/rules/no-unused-vars#ignorerestsiblings linting rule
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { images, completions, uploadedByUser, uploadedByUserId, ...quizFieldsThatDoNotRequireTransform } = quiz;
+    const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
       completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
@@ -299,9 +297,7 @@ export class QuizService {
       })[];
     },
   ): Quiz {
-    // TODO modify linting tules to allow unused vars in destructuring
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { completions, uploadedByUser, uploadedByUserId, ...quizWithoutImageKey } = quiz;
+    const { completions, uploadedByUser, ...quizWithoutImageKey } = quiz;
     return {
       ...quizWithoutImageKey,
       myCompletions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),

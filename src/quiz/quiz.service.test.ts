@@ -50,7 +50,6 @@ describe('quiz', () => {
             type: 'SHARK',
             date: new Date('2023-01-01'),
             uploadedAt: new Date('2023-01-02'),
-            uploadedByUserId: 'fake-user-id',
             completions: [],
             uploadedByUser: {
               id: 'fake-user-id',
@@ -63,7 +62,6 @@ describe('quiz', () => {
             type: 'BRAINWAVES',
             date: new Date('2023-02-01'),
             uploadedAt: new Date('2023-03-02'),
-            uploadedByUserId: 'fake-user-id',
             completions: [
               {
                 completedAt: new Date('2023-03-10'),
