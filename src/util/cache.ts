@@ -36,7 +36,6 @@ export interface Cache {
  * Will be replaced with a Redis implementation in the future.
  */
 export class MemoryCache implements Cache {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   #values: Map<string, { value: any; expiresAt?: Date }> = new Map();
   getItem<T>(key: string): Promise<T | undefined> {
     const record = this.#values.get(key);
