@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import {
   Quiz as QuizPersistenceModel,
   QuizCompletion as QuizCompletionPersistenceModel,
@@ -8,12 +7,13 @@ import {
   QuizImageType,
   QuizType,
 } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
-import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { S3FileService } from '../file/s3.service';
-import { QuizPersistence } from './quiz.persistence';
 import { UserService } from '../user/user.service';
+import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
+import { QuizPersistence } from './quiz.persistence';
 
 const MAXIMUM_QUIZ_PAGE_SIZE = 100;
 

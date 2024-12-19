@@ -1,4 +1,5 @@
 import { Role } from '@prisma/client';
+
 import { QuizlordContext } from '..';
 import { UnauthorisedError } from './authorisation.errors';
 

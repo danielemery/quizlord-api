@@ -1,6 +1,6 @@
 import { QuizlordContext } from '..';
-import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { authorisationService, userService } from '../service.locator';
+import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { User, UserDetails, UserSortOption } from './user.dto';
 import { GetUsersResult } from './user.service';
 

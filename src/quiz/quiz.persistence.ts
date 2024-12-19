@@ -2,8 +2,8 @@ import { Quiz, QuizImage, QuizNoteType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
-import { QuizFilters } from './quiz.dto';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
+import { QuizFilters } from './quiz.dto';
 
 export class QuizPersistence {
   #prisma: PrismaService;
