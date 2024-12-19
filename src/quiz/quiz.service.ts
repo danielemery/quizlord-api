@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import {
   Quiz as QuizPersistenceModel,
   QuizCompletion as QuizCompletionPersistenceModel,
@@ -8,12 +7,13 @@ import {
   QuizImageType,
   QuizType,
 } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
-import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { S3FileService } from '../file/s3.service';
-import { QuizPersistence } from './quiz.persistence';
 import { UserService } from '../user/user.service';
+import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
+import { QuizPersistence } from './quiz.persistence';
 
 const MAXIMUM_QUIZ_PAGE_SIZE = 100;
 
@@ -60,9 +60,7 @@ export class QuizService {
     const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
     });
-    // TODO look into modifying the upstream https://eslint.org/docs/latest/rules/no-unused-vars#ignorerestsiblings linting rule
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { images, completions, uploadedByUser, uploadedByUserId, ...quizFieldsThatDoNotRequireTransform } = quiz;
+    const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
       completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
@@ -299,9 +297,7 @@ export class QuizService {
       })[];
     },
   ): Quiz {
-    // TODO modify linting tules to allow unused vars in destructuring
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { completions, uploadedByUser, uploadedByUserId, ...quizWithoutImageKey } = quiz;
+    const { completions, uploadedByUser, ...quizWithoutImageKey } = quiz;
     return {
       ...quizWithoutImageKey,
       myCompletions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),

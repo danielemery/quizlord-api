@@ -1,10 +1,10 @@
-import { v4 as uuidv4 } from 'uuid';
 import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
-import { Role, User, UserSortOption } from './user.dto';
-import { UserPersistence } from './user.persistence';
-import { UserNotFoundError } from './user.errors';
 import { RecentActivityItem } from '../activity/activity.service';
+import { Role, User, UserSortOption } from './user.dto';
+import { UserNotFoundError } from './user.errors';
+import { UserPersistence } from './user.persistence';
 
 export interface GetUsersResult {
   data: User[];
