@@ -1,11 +1,11 @@
+import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
-import { QuizService } from './quiz.service';
-import { QuizPersistence } from './quiz.persistence';
 import { S3FileService } from '../file/s3.service';
-import { Decimal } from '@prisma/client/runtime/library';
 import { UserService } from '../user/user.service';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
+import { QuizPersistence } from './quiz.persistence';
+import { QuizService } from './quiz.service';
 
 jest.mock('uuid');
 

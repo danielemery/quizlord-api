@@ -1,8 +1,8 @@
-import { Cache } from '../util/cache';
 import { QuizService } from '../quiz/quiz.service';
 import { UserService } from '../user/user.service';
-import { StatisticsService } from './statistics.service';
+import { Cache } from '../util/cache';
 import { IndividualUserStatisticsSortOption } from './statistics.dto';
+import { StatisticsService } from './statistics.service';
 
 const mockUserService = {
   getUsers: jest.fn(),

@@ -1,5 +1,7 @@
 import * as Sentry from '@sentry/node';
+
 import config from './config/config';
+
 Sentry.init({
   dsn: config.SENTRY_DSN,
   integrations: [Sentry.prismaIntegration()],

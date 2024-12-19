@@ -1,8 +1,8 @@
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
+import { UserNotFoundError } from './user.errors';
 import { UserPersistence } from './user.persistence';
 import { UserService } from './user.service';
-import { UserNotFoundError } from './user.errors';
 
 jest.mock('uuid');
 

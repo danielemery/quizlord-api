@@ -1,6 +1,6 @@
 import { QuizlordContext } from '..';
-import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { authorisationService, quizService } from '../service.locator';
+import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { CreateQuizResult, Quiz, QuizCompletion, QuizDetails, QuizFilters, QuizImageType, QuizType } from './quiz.dto';
 
 async function quizzes(
