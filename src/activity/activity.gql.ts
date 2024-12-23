@@ -1,4 +1,5 @@
 import DataLoader from 'dataloader';
+
 import { QuizlordContext } from '..';
 import { authorisationService, activityService, userService } from '../service.locator';
 import { RecentActivityItem } from './activity.service';

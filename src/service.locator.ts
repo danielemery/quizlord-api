@@ -1,6 +1,7 @@
 import { ActivityService } from './activity/activity.service';
 import { AuthenticationService } from './auth/authentication.service';
 import { AuthorisationService } from './auth/authorisation.service';
+import config from './config/config';
 import { PrismaService } from './database/prisma.service';
 import { S3FileService } from './file/s3.service';
 import { SQSQueueService } from './queue/sqs.service';
@@ -10,8 +11,6 @@ import { StatisticsService } from './statistics/statistics.service';
 import { UserPersistence } from './user/user.persistence';
 import { UserService } from './user/user.service';
 import { MemoryCache } from './util/cache';
-
-import config from './config/config';
 
 const memoryCache = new MemoryCache();
 

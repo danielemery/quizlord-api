@@ -1,11 +1,11 @@
+import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
-import { QuizService } from './quiz.service';
-import { QuizPersistence } from './quiz.persistence';
 import { S3FileService } from '../file/s3.service';
-import { Decimal } from '@prisma/client/runtime/library';
 import { UserService } from '../user/user.service';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
+import { QuizPersistence } from './quiz.persistence';
+import { QuizService } from './quiz.service';
 
 jest.mock('uuid');
 
@@ -50,7 +50,6 @@ describe('quiz', () => {
             type: 'SHARK',
             date: new Date('2023-01-01'),
             uploadedAt: new Date('2023-01-02'),
-            uploadedByUserId: 'fake-user-id',
             completions: [],
             uploadedByUser: {
               id: 'fake-user-id',
@@ -63,7 +62,6 @@ describe('quiz', () => {
             type: 'BRAINWAVES',
             date: new Date('2023-02-01'),
             uploadedAt: new Date('2023-03-02'),
-            uploadedByUserId: 'fake-user-id',
             completions: [
               {
                 completedAt: new Date('2023-03-10'),

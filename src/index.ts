@@ -1,22 +1,22 @@
-import './instrument';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import * as Sentry from '@sentry/node';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
-import * as Sentry from '@sentry/node';
 
-import { authenticationService, prismaService, queueService, userService } from './service.locator';
+import { activityQueries, activityChildren } from './activity/activity.gql';
 import config from './config/config';
 import typeDefs from './gql';
-import { userQueries } from './user/user.gql';
-import { activityQueries, activityChildren } from './activity/activity.gql';
+import './instrument';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
-import { Role } from './user/user.dto';
+import { authenticationService, prismaService, queueService, userService } from './service.locator';
 import { statisticsQueries } from './statistics/statistics.gql';
+import { Role } from './user/user.dto';
+import { userQueries } from './user/user.gql';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -109,10 +109,8 @@ async function initialise() {
 
         const jwt = await authenticationService.verifyToken(sanitisedToken);
 
-        /* eslint-disable @typescript-eslint/no-explicit-any */
         const email = (jwt as any)[`${config.CLIENT_URL}/email`] as string;
         const name = (jwt as any)[`${config.CLIENT_URL}/name`] as string | undefined;
-        /* eslint-enable @typescript-eslint/no-explicit-any */
 
         const { roles, id } = await userService.loadUserDetailsAndUpdateIfNecessary(email, name);
 
