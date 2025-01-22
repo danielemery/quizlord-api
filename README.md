@@ -70,9 +70,9 @@ npm run build
 # Build a local image tagged with local
 docker build -t quizlord-api:local .
 # Run local build using the env file
-docker run -p 4000:80 --env-file <(doppler secrets download --no-file --format docker) --name=quizlord-api quizlord-api:local
+docker run -p 4000:80 --rm --env-file <(doppler secrets download --no-file --format docker) -e QUIZLORD_VERSION=local --name=quizlord-api quizlord-api:local
 # Cleanup
-docker rm quizlord-api && docker image rm quizlord-api:local
+docker image rm quizlord-api:local
 ```
 
 ## Test Helm Locally
