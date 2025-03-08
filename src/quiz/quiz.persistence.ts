@@ -111,7 +111,11 @@ export class QuizPersistence {
         },
         images: true,
         uploadedByUser: true,
-        questions: true,
+        questions: {
+          orderBy: {
+            questionNum: 'asc',
+          },
+        },
       },
     });
   }
