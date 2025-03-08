@@ -66,7 +66,7 @@ jobs:
           prefix: 'v'
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v4.1.9
         with:
           name: build-artifacts
 
@@ -108,7 +108,7 @@ jobs:
           prefix: 'v'
 
       - name: Download chart definition
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v4.1.9
         with:
           name: helm-chart
           path: helm
@@ -144,7 +144,7 @@ jobs:
         uses: actions/checkout@v4.2.2
 
       - name: Download build artifacts with sourcemaps
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v4.1.9
         with:
           name: build-artifacts
 
