@@ -111,6 +111,7 @@ export class QuizPersistence {
         },
         images: true,
         uploadedByUser: true,
+        questions: true,
       },
     });
   }

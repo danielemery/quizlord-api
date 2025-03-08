@@ -61,6 +61,13 @@ const typeDefs = gql`
     type: QuizImageType!
   }
 
+  type QuizQuestion {
+    id: String!
+    questionNum: Int!
+    question: String!
+    answer: String!
+  }
+
   type QuizDetails {
     id: String!
     type: QuizType!
@@ -69,6 +76,10 @@ const typeDefs = gql`
     uploadedBy: User!
     completions: [QuizCompletion]
     images: [QuizImage]
+    """
+    If the quiz has been successfully parsed, this will be a list of questions and answers.
+    """
+    questions: [QuizQuestion]
   }
 
   type QuizEdge {
