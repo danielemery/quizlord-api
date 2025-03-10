@@ -25,6 +25,13 @@ export interface QuizImage {
   type: QuizImageType;
 }
 
+export interface QuizQuestion {
+  id: string;
+  questionNum: number;
+  question: string;
+  answer: string;
+}
+
 export interface QuizDetails {
   id: string;
   type: QuizType;
@@ -33,6 +40,7 @@ export interface QuizDetails {
   uploadedAt: Date;
   uploadedBy: User;
   completions: QuizCompletion[];
+  questions?: QuizQuestion[];
 }
 
 export interface QuizFilters {
