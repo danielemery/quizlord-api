@@ -330,6 +330,58 @@ describe('quiz', () => {
         });
       });
     });
+    describe('computeScore', () => {
+      it('must throw if neither a score not individual question results are provided', async () => {
+        await expect(() => sut.computeScore(undefined, undefined)).rejects.toThrow(
+          'Must provide either a score or individual question results',
+        );
+      });
+      it('must add up the score if individual question results are provided', async () => {
+        const actual = await sut.computeScore(undefined, [
+          {
+            questionId: '1',
+            score: 'CORRECT',
+          },
+          {
+            questionId: '2',
+            score: 'HALF_CORRECT',
+          },
+          {
+            questionId: '3',
+            score: 'CORRECT',
+          },
+          {
+            questionId: '4',
+            score: 'CORRECT',
+          },
+          {
+            questionId: '5',
+            score: 'INCORRECT',
+          },
+        ]);
+
+        expect(actual).toEqual(3.5);
+      });
+      it('must return the score if a score is provided', async () => {
+        const actual = await sut.computeScore(10, undefined);
+
+        expect(actual).toEqual(10);
+      });
+      it("must throw if a score and individual question results are provided and they don't match", async () => {
+        await expect(() =>
+          sut.computeScore(10, [
+            {
+              questionId: '1',
+              score: 'CORRECT',
+            },
+            {
+              questionId: '2',
+              score: 'HALF_CORRECT',
+            },
+          ]),
+        ).rejects.toThrow('Provided score does not match individual question results');
+      });
+    });
     describe('getRecentQuizCompletions', () => {
       it('must call getRecentQuizCompletions on persistence with correct arguments and transform the result', async () => {
         mockPersistence.getRecentQuizCompletions.mockResolvedValueOnce([
