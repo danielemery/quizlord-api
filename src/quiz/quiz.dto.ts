@@ -6,6 +6,11 @@ export interface QuizCompletion {
   score: number;
 }
 
+export interface QuizCompletionQuestionResult {
+  questionId: string;
+  correct: boolean;
+}
+
 export type QuizType = 'BRAINWAVES' | 'SHARK';
 
 export interface Quiz {

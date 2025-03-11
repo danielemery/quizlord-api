@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
-import { QuizFilters } from './quiz.dto';
+import { QuizCompletionQuestionResult, QuizFilters } from './quiz.dto';
 
 export class QuizPersistence {
   #prisma: PrismaService;
@@ -158,6 +158,7 @@ export class QuizPersistence {
     completedAt: Date,
     completedBy: string[],
     score: number,
+    questionResults?: QuizCompletionQuestionResult[],
   ) {
     const users = await this.#prisma.client().user.findMany({
       where: {
@@ -183,6 +184,17 @@ export class QuizPersistence {
           }),
         },
         quizId,
+        ...(questionResults
+          ? {
+              questionResults: {
+                create: questionResults.map((qr) => ({
+                  id: uuidv4(),
+                  correct: qr.correct,
+                  questionId: qr.questionId,
+                })),
+              },
+            }
+          : {}),
       },
       include: {
         completedBy: {

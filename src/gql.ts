@@ -127,6 +127,11 @@ const typeDefs = gql`
     uploadLinks: [CreateQuizFileNameToUploadLink]!
   }
 
+  type QuizCompletionQuestionResult {
+    questionNum: Int!
+    correct: Boolean!
+  }
+
   type QuizCompletion {
     completedAt: Date!
     completedBy: [User]!
@@ -230,7 +235,20 @@ const typeDefs = gql`
 
   type Mutation {
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
-    completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
+    completeQuiz(
+      quizId: String!
+      completedBy: [String]!
+      """
+      Optionally provide the total score of the quiz.
+      If not provided the individual question results will be used to calculate the score.
+      """
+      score: Float
+      """
+      Optionally provide the results of each question in the quiz.
+      If provided, the score will be calculated using these results, otherwise the score argument will be used.
+      """
+      questionResults: [QuizCompletionQuestionResult]
+    ): CompleteQuizResult
     markQuizIllegible(quizId: String!): Boolean
   }
 `;
