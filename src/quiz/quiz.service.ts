@@ -15,7 +15,7 @@ import { GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
-import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
+import { Quiz, QuizCompletion, QuizCompletionQuestionResult, QuizFilters, QuizImage } from './quiz.dto';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
 import { QuizPersistence } from './quiz.persistence';
 
@@ -176,18 +176,53 @@ export class QuizService {
     quizId,
     completedBy,
     score,
+    questionResults,
   }: {
     email: string;
     quizId: string;
     completedBy: string[];
-    score: number;
+    score?: number;
+    questionResults?: QuizCompletionQuestionResult[];
   }) {
     if (!completedBy.includes(email)) {
       throw new Error('Can only enter quiz completions which you participate in.');
     }
     const uuid = uuidv4();
-    const completion = await this.#persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
+    const computedScore = await this.computeScore(score, questionResults);
+    const completion = await this.#persistence.createQuizCompletion(
+      quizId,
+      uuid,
+      new Date(),
+      completedBy,
+      computedScore,
+      questionResults,
+    );
     return { completion: this.#quizCompletionPersistenceToQuizCompletion(completion) };
+  }
+
+  async computeScore(score?: number, questionResults?: QuizCompletionQuestionResult[]) {
+    if (score === undefined && (questionResults === undefined || questionResults.length === 0)) {
+      throw new Error('Must provide either a score or individual question results to compute a score');
+    }
+    if (questionResults !== undefined && questionResults.length > 0) {
+      const individualScore = questionResults.reduce((acc, result) => {
+        switch (result.score) {
+          case 'CORRECT':
+            return acc + 1;
+          case 'HALF_CORRECT':
+            return acc + 0.5;
+          case 'INCORRECT':
+            return acc;
+          default:
+            throw new Error(`Unknown score ${result.score}`);
+        }
+      }, 0);
+      if (score !== undefined && score !== individualScore) {
+        throw new Error('Provided score does not match individual question results');
+      }
+      return individualScore;
+    }
+    return score as number;
   }
 
   async markQuizImageReady(imageKey: string) {

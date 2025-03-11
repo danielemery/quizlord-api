@@ -6,6 +6,13 @@ export interface QuizCompletion {
   score: number;
 }
 
+export type QuizCompletionQuestionResultScore = 'CORRECT' | 'INCORRECT' | 'HALF_CORRECT';
+
+export interface QuizCompletionQuestionResult {
+  questionNum: number;
+  score: QuizCompletionQuestionResultScore;
+}
+
 export type QuizType = 'BRAINWAVES' | 'SHARK';
 
 export interface Quiz {

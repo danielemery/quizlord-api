@@ -146,6 +146,26 @@ const typeDefs = gql`
     uploadLinks: [CreateQuizFileNameToUploadLink]!
   }
 
+  enum QuizCompletionQuestionResultScore {
+    """
+    The question was answered correctly.
+    """
+    CORRECT
+    """
+    The question was answered incorrectly.
+    """
+    INCORRECT
+    """
+    The question was answered and gauged as half correct.
+    """
+    HALF_CORRECT
+  }
+
+  input QuizCompletionQuestionResult {
+    questionNum: Int!
+    score: QuizCompletionQuestionResultScore!
+  }
+
   type QuizCompletion {
     completedAt: Date!
     completedBy: [User]!
@@ -249,7 +269,20 @@ const typeDefs = gql`
 
   type Mutation {
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
-    completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
+    completeQuiz(
+      quizId: String!
+      completedBy: [String]!
+      """
+      Optionally provide the total score of the quiz.
+      If not provided the individual question results will be used to calculate the score.
+      """
+      score: Float
+      """
+      Optionally provide the results of each question in the quiz.
+      If provided, the score will be calculated using these results, otherwise the score argument will be used.
+      """
+      questionResults: [QuizCompletionQuestionResult]
+    ): CompleteQuizResult
     markQuizIllegible(quizId: String!): Boolean
     markInaccurateOCR(quizId: String!): Boolean
     aiProcessQuizImages(quizId: String!): Boolean

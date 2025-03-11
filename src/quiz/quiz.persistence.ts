@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
-import { QuizFilters, QuizQuestion } from './quiz.dto';
+import { QuizCompletionQuestionResult, QuizFilters, QuizQuestion } from './quiz.dto';
 
 export class QuizPersistence {
   #prisma: PrismaService;
@@ -177,6 +177,7 @@ export class QuizPersistence {
     completedAt: Date,
     completedBy: string[],
     score: number,
+    questionResults?: QuizCompletionQuestionResult[],
   ) {
     const users = await this.#prisma.client().user.findMany({
       where: {
@@ -185,6 +186,19 @@ export class QuizPersistence {
         },
       },
     });
+
+    const questions = questionResults?.length
+      ? await this.#prisma.client().quizQuestion.findMany({
+          select: {
+            questionNum: true,
+            id: true,
+          },
+          where: {
+            quizId,
+          },
+        })
+      : [];
+
     const result = await this.#prisma.client().quizCompletion.create({
       data: {
         completedAt,
@@ -202,6 +216,25 @@ export class QuizPersistence {
           }),
         },
         quizId,
+        ...(questionResults && questionResults.length > 0
+          ? {
+              questionResults: {
+                create: questionResults
+                  .filter((qr) => {
+                    const question = questions.find((q) => q.questionNum === qr.questionNum);
+                    return !!question;
+                  })
+                  .map((qr) => {
+                    const question = questions.find((q) => q.questionNum === qr.questionNum);
+                    return {
+                      id: uuidv4(),
+                      score: qr.score,
+                      questionId: question!.id,
+                    };
+                  }),
+              },
+            }
+          : {}),
       },
       include: {
         completedBy: {
