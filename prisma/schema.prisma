@@ -32,6 +32,7 @@ model Quiz {
   completions    QuizCompletion[]
   images         QuizImage[]
   notes          QuizNote[]
+  questions      QuizQuestion[]
   uploadedByUser User             @relation(fields: [uploadedByUserId], references: [id])
 
   @@unique(fields: [date, type])
@@ -92,6 +93,19 @@ model QuizNote {
   user User @relation(fields: [userId], references: [id])
 
   @@map("quiz_note")
+}
+
+model QuizQuestion {
+  id          String @id
+  quizId      String @map("quiz_id")
+  question    String
+  answer      String
+  questionNum Int @map("question_num")
+
+  quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@unique([quizId, questionNum])
+  @@map("quiz_question")
 }
 
 model User {
