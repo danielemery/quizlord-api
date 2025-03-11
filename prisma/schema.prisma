@@ -104,6 +104,7 @@ model QuizQuestion {
 
   quiz Quiz @relation(fields: [quizId], references: [id])
 
+  @@unique([quizId, questionNum])
   @@map("quiz_question")
 }
 
