@@ -13,6 +13,13 @@ const typeDefs = gql`
     READY
   }
 
+  enum QuizAIProcessingState {
+    NOT_QUEUED
+    QUEUED
+    COMPLETED
+    ERRORED
+  }
+
   enum UserRole {
     USER
     ADMIN
@@ -80,6 +87,14 @@ const typeDefs = gql`
     If the quiz has been successfully parsed, this will be a list of questions and answers.
     """
     questions: [QuizQuestion]
+    """
+    The current state of the AI processing for this quiz.
+    """
+    aiProcessingState: QuizAIProcessingState!
+    """
+    The certainty, as reported by the ai, that the quiz was processed correctly.
+    """
+    aiProcessingCertaintyPercent: Float
   }
 
   type QuizEdge {

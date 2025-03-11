@@ -132,6 +132,8 @@ export class QuizService {
           type,
           uploadedAt: new Date(),
           uploadedByUserId: userId,
+          aiProcessingState: 'NOT_QUEUED',
+          aiProcessingCertaintyPercent: null,
         },
         filesWithKeys.map((file) => ({
           imageKey: file.imageKey,
