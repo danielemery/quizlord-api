@@ -32,6 +32,8 @@ export interface QuizQuestion {
   answer: string;
 }
 
+export type QuizAIProcessingState = 'NOT_QUEUED' | 'QUEUED' | 'COMPLETED' | 'ERRORED';
+
 export interface QuizDetails {
   id: string;
   type: QuizType;
@@ -41,6 +43,8 @@ export interface QuizDetails {
   uploadedBy: User;
   completions: QuizCompletion[];
   questions?: QuizQuestion[];
+  aiProcessingState: QuizAIProcessingState;
+  aiProcessingPercent: number;
 }
 
 export interface QuizFilters {
