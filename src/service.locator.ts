@@ -1,10 +1,12 @@
 import { ActivityService } from './activity/activity.service';
+import { GeminiService } from './ai/gemini.service';
 import { AuthenticationService } from './auth/authentication.service';
 import { AuthorisationService } from './auth/authorisation.service';
 import config from './config/config';
 import { PrismaService } from './database/prisma.service';
 import { S3FileService } from './file/s3.service';
-import { SQSQueueService } from './queue/sqs.service';
+import { SQSQueueListenerService as SQSListenerService } from './queue/sqs-listener.service';
+import { SQSQueuePublisherService } from './queue/sqs-publisher.service';
 import { QuizPersistence } from './quiz/quiz.persistence';
 import { QuizService } from './quiz/quiz.service';
 import { StatisticsService } from './statistics/statistics.service';
@@ -24,16 +26,28 @@ export const prismaService = new PrismaService();
 // file
 export const fileService = new S3FileService(config.AWS_REGION, config.AWS_BUCKET_NAME, config.FILE_ACCESS_BASE_URL);
 
+// ai
+export const geminiService = new GeminiService(config.GOOGLE_AI_API_KEY);
+
 // user
 export const userPersistence = new UserPersistence(prismaService);
 export const userService = new UserService(userPersistence);
 
+// queue publisher
+export const queuePublisherService = new SQSQueuePublisherService();
+
 // quiz
 export const quizPersistence = new QuizPersistence(prismaService);
-export const quizService = new QuizService(quizPersistence, fileService, userService);
+export const quizService = new QuizService(
+  quizPersistence,
+  fileService,
+  userService,
+  geminiService,
+  queuePublisherService,
+);
 
-// queue
-export const queueService = new SQSQueueService(quizService);
+// queue listener
+export const queueService = new SQSListenerService(quizService);
 
 // statistics
 export const statisticsService = new StatisticsService(userService, quizService, memoryCache);
