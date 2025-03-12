@@ -1,6 +1,7 @@
 import { Quiz, QuizImage, QuizNoteType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
+import { ExpectedAIExtractAnswersResult } from '../ai/ai-results.schema';
 import { PrismaService } from '../database/prisma.service';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
 import { QuizFilters } from './quiz.dto';
@@ -139,6 +140,22 @@ export class QuizPersistence {
         imageKey,
       },
     });
+  }
+
+  async allQuizImagesAreReady(quizId: string) {
+    /*
+     * Once an exists function is implemented for prisma, it should be used instead.
+     * https://github.com/prisma/prisma/issues/5022
+     */
+    const incompleteImage = await this.#prisma.client().quizImage.findFirst({
+      where: {
+        quizId,
+        state: {
+          not: 'READY',
+        },
+      },
+    });
+    return !incompleteImage;
   }
 
   async createQuizWithImages(quiz: Quiz, images: Omit<QuizImage, 'quizId'>[]): Promise<Quiz> {
@@ -305,6 +322,48 @@ export class QuizPersistence {
             name: true,
           },
         },
+      },
+    });
+  }
+
+  markQuizAIExtractionFailed(quizId: string) {
+    return this.#prisma.client().quiz.update({
+      data: {
+        aiProcessingState: 'ERRORED',
+      },
+      where: {
+        id: quizId,
+      },
+    });
+  }
+
+  async markQuizAIExtractionCompleted(quizId: string, extractionResult: ExpectedAIExtractAnswersResult) {
+    // Remove any existing questions
+    await this.#prisma.client().quizQuestion.deleteMany({
+      where: {
+        quizId,
+      },
+    });
+
+    // Insert questions and answers
+    await this.#prisma.client().quizQuestion.createMany({
+      data: extractionResult.questions.map((question) => ({
+        id: uuidv4(),
+        quizId,
+        questionNum: question.questionNumber,
+        question: question.question,
+        answer: question.answer,
+      })),
+    });
+
+    // Update quiz state
+    return this.#prisma.client().quiz.update({
+      data: {
+        aiProcessingState: 'COMPLETED',
+        aiProcessingCertaintyPercent: extractionResult.confidence,
+      },
+      where: {
+        id: quizId,
       },
     });
   }

@@ -1,7 +1,9 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
+import { GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
+import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
 import { QuizPersistence } from './quiz.persistence';
@@ -26,11 +28,15 @@ const mockFileService = {
 const mockUserService = {
   getUser: jest.fn(),
 };
+const mockGeminiService = {};
+const mockSQSQueuePublisherService = {};
 
 const sut = new QuizService(
   mockPersistence as unknown as QuizPersistence,
   mockFileService as unknown as S3FileService,
   mockUserService as unknown as UserService,
+  mockGeminiService as unknown as GeminiService,
+  mockSQSQueuePublisherService as unknown as SQSQueuePublisherService,
 );
 
 describe('quiz', () => {
@@ -287,6 +293,8 @@ describe('quiz', () => {
             type: 'SHARK',
             uploadedAt: new Date(fakeNow),
             uploadedByUserId: 'fake-user-id',
+            aiProcessingCertaintyPercent: null,
+            aiProcessingState: 'NOT_QUEUED',
           },
           [
             { imageKey: 'key-one', state: 'PENDING_UPLOAD', type: 'QUESTION' },

@@ -44,7 +44,7 @@ export interface QuizDetails {
   completions: QuizCompletion[];
   questions?: QuizQuestion[];
   aiProcessingState: QuizAIProcessingState;
-  aiProcessingPercent: number;
+  aiProcessingCertaintyPercent?: number;
 }
 
 export interface QuizFilters {
