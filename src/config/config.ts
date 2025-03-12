@@ -13,6 +13,7 @@ interface QuizlordConfig {
   AWS_REGION: string;
   AWS_BUCKET_NAME: string;
   AWS_FILE_UPLOADED_SQS_QUEUE_URL: string;
+  AWS_AI_PROCESSING_SQS_QUEUE_URL: string;
   FILE_ACCESS_BASE_URL: string;
   QUIZLORD_VERSION: string;
   SENTRY_DSN: string;
@@ -34,6 +35,7 @@ const schema = Joi.object<QuizlordConfig>()
     AWS_REGION: Joi.string().required(),
     AWS_BUCKET_NAME: Joi.string().required(),
     AWS_FILE_UPLOADED_SQS_QUEUE_URL: Joi.string().required(),
+    AWS_AI_PROCESSING_SQS_QUEUE_URL: Joi.string().required(),
     FILE_ACCESS_BASE_URL: Joi.string().required(),
     QUIZLORD_VERSION: Joi.string().default('development'),
     SENTRY_DSN: Joi.string().required().allow(''),
