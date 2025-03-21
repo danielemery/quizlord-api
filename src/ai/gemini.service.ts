@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import axios from 'axios';
 
 import { QuizImageType } from '../quiz/quiz.dto';
-import { expectedResultFormat } from './ai-results.schema';
+import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema';
 
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
 
@@ -41,7 +41,17 @@ export class GeminiService {
       throw new Error(validatedResult.error.message);
     }
     console.log('Response conforms to expected schema');
-    return validatedResult.value;
+    return this.#sanitizeGeminiParsedResult(validatedResult.value);
+  }
+
+  #sanitizeGeminiParsedResult(result: ExpectedAIExtractAnswersResult): ExpectedAIExtractAnswersResult {
+    return {
+      ...result,
+      questions: result.questions.map((question) => ({
+        ...question,
+        answer: question.answer.replace(/^\d+\.\s*/, ''),
+      })),
+    };
   }
 
   #sanitizeGeminiResponse(response: string) {
