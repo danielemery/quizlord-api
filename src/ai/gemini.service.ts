@@ -60,7 +60,7 @@ export class GeminiService {
 
   async #fileToGenerativePart(fileUrl: string, mimeType: string) {
     const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data, 'utf-8');
+    const buffer = Buffer.from(response.data);
     return {
       inlineData: {
         data: buffer.toString('base64'),
