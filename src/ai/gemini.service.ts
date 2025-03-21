@@ -86,7 +86,7 @@ export class GeminiService {
          - questions: An array containing objects with the fields 'questionNumber', 'question' and 'answer'. In cases where the questions could not be read, this should be set to null. The number does not need to be repeated in the questions and answers text.
          - confidence: A number between 1 and 100 indicating the confidence level of reading the questions. This should be based on the quality of the image.
          - notes: Any additional notes or comments you have about parsing of the quiz, in most cases this can be set to null. An example of a useful note is when an answer was not found for a question or when the image did not contain the expected data.
-        The quiz is expected to contain ${expectedQuestionCount} questions based on it's type.
+        The quiz is expected to contain ${expectedQuestionCount} questions based on its type.
         `;
       case 'SEPARATE_QUESTION_AND_ANSWER':
         return `
@@ -96,7 +96,7 @@ export class GeminiService {
          - questions: An array containing objects with the fields 'questionNumber', 'question' and 'answer'. In cases where the questions could not be read, this should be set to null. The number does not need to be repeated in the questions and answers text.
          - confidence: A number between 1 and 100 indicating the confidence level of reading the questions. This should be based on the quality of the images.
          - notes: Any additional notes or comments you have about parsing of the quiz, in most cases this can be set to null. An example of a useful note is when an answer was not found for a question or when the image did not contain the expected data.
-        The quiz is expected to contain ${expectedQuestionCount} questions based on it's type.
+        The quiz is expected to contain ${expectedQuestionCount} questions based on its type.
         `;
     }
   }
