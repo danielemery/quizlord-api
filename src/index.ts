@@ -1,3 +1,6 @@
+// sort-imports-ignore (Sentry instrumentation must be the first import)
+import './instrument';
+
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
@@ -11,7 +14,6 @@ import http from 'http';
 import { activityQueries, activityChildren } from './activity/activity.gql';
 import config from './config/config';
 import typeDefs from './gql';
-import './instrument';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 import { authenticationService, prismaService, queueService, userService } from './service.locator';
 import { statisticsQueries } from './statistics/statistics.gql';
