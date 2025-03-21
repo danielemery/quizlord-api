@@ -199,8 +199,13 @@ export class QuizService {
 
     // If all pending images are now ready, we can send them to the AI for processing
     if (await this.#persistence.allQuizImagesAreReady(quizImage.quizId)) {
-      await this.#queuePublisherService.queueAiProcessing(quizImage.quizId);
+      await this.queueQuizForAIProcessing(quizImage.quizId);
     }
+  }
+
+  async queueQuizForAIProcessing(quizId: string) {
+    await this.#queuePublisherService.queueAiProcessing(quizId);
+    await this.#persistence.markQuizAIExtractionQueued(quizId);
   }
 
   /**

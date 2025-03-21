@@ -368,4 +368,15 @@ export class QuizPersistence {
       },
     });
   }
+
+  async markQuizAIExtractionQueued(quizId: string) {
+    return this.#prisma.client().quiz.update({
+      data: {
+        aiProcessingState: 'QUEUED',
+      },
+      where: {
+        id: quizId,
+      },
+    });
+  }
 }

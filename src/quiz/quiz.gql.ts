@@ -1,5 +1,5 @@
 import { QuizlordContext } from '..';
-import { authorisationService, quizService, queuePublisherService } from '../service.locator';
+import { authorisationService, quizService } from '../service.locator';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { CreateQuizResult, Quiz, QuizCompletion, QuizDetails, QuizFilters, QuizImageType, QuizType } from './quiz.dto';
 
@@ -76,7 +76,7 @@ async function markInaccurateOCR(_: unknown, { quizId }: { quizId: string }, con
 
 async function aiProcessQuizImages(_: unknown, { quizId }: { quizId: string }, context: QuizlordContext) {
   authorisationService.requireUserRole(context, 'ADMIN');
-  await queuePublisherService.queueAiProcessing(quizId);
+  quizService.queueQuizForAIProcessing(quizId);
   return true;
 }
 
