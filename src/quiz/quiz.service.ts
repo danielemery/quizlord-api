@@ -7,9 +7,13 @@ import {
   QuizImageType,
   QuizType,
 } from '@prisma/client';
+import mime from 'mime';
 import { v4 as uuidv4 } from 'uuid';
 
+import { ExpectedAIExtractAnswersResult } from '../ai/ai-results.schema';
+import { GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
+import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
 import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
@@ -21,11 +25,21 @@ export class QuizService {
   #persistence: QuizPersistence;
   #fileService: S3FileService;
   #userService: UserService;
+  #geminiService: GeminiService;
+  #queuePublisherService: SQSQueuePublisherService;
 
-  constructor(persistence: QuizPersistence, fileService: S3FileService, userService: UserService) {
+  constructor(
+    persistence: QuizPersistence,
+    fileService: S3FileService,
+    userService: UserService,
+    geminiService: GeminiService,
+    queuePublisherService: SQSQueuePublisherService,
+  ) {
     this.#persistence = persistence;
     this.#fileService = fileService;
     this.#userService = userService;
+    this.#geminiService = geminiService;
+    this.#queuePublisherService = queuePublisherService;
   }
 
   /**
@@ -60,7 +74,14 @@ export class QuizService {
     const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
     });
-    const { images, completions, uploadedByUser, ...quizFieldsThatDoNotRequireTransform } = quiz;
+    const {
+      images,
+      completions,
+      uploadedByUser,
+      aiProcessingCertaintyPercent,
+      notes,
+      ...quizFieldsThatDoNotRequireTransform
+    } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
       completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
@@ -70,6 +91,8 @@ export class QuizService {
         email: uploadedByUser.email,
         name: uploadedByUser.name ?? undefined,
       },
+      aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? aiProcessingCertaintyPercent.toNumber() : undefined,
+      reportedInaccurateOCR: notes.some((note) => note.noteType === 'INACCURATE_OCR'),
     };
   }
 
@@ -123,6 +146,8 @@ export class QuizService {
           type,
           uploadedAt: new Date(),
           uploadedByUserId: userId,
+          aiProcessingState: 'NOT_QUEUED',
+          aiProcessingCertaintyPercent: null,
         },
         filesWithKeys.map((file) => ({
           imageKey: file.imageKey,
@@ -171,6 +196,16 @@ export class QuizService {
       throw new Error(`Unable to find quizImage with key ${imageKey}`);
     }
     await this.#persistence.markQuizImageReady(imageKey);
+
+    // If all pending images are now ready, we can send them to the AI for processing
+    if (await this.#persistence.allQuizImagesAreReady(quizImage.quizId)) {
+      await this.queueQuizForAIProcessing(quizImage.quizId);
+    }
+  }
+
+  async queueQuizForAIProcessing(quizId: string) {
+    await this.#queuePublisherService.queueAiProcessing(quizId);
+    await this.#persistence.markQuizAIExtractionQueued(quizId);
   }
 
   /**
@@ -308,6 +343,7 @@ export class QuizService {
       },
     };
   }
+
   async markQuizIllegible(quizId: string, userEmail: string): Promise<void> {
     await this.#persistence.addQuizNote({
       quizId,
@@ -315,5 +351,59 @@ export class QuizService {
       submittedAt: new Date(),
       userEmail,
     });
+  }
+
+  async markInaccurateOCR(quizId: string, userEmail: string): Promise<void> {
+    await this.#persistence.addQuizNote({
+      quizId,
+      noteType: 'INACCURATE_OCR',
+      submittedAt: new Date(),
+      userEmail,
+    });
+  }
+
+  async aiProcessQuiz(quizId: string) {
+    const quiz = await this.#persistence.getQuizByIdWithResults({ id: quizId });
+    const imageMetadata = quiz.images.map((image) => ({
+      quizImageUrl: this.#fileService.keyToUrl(image.imageKey),
+      mimeType: mime.getType(image.imageKey),
+      type: image.type,
+    }));
+    if (this.#imageMetadataIsValid(imageMetadata)) {
+      const questionCount = this.getMaxScoreForQuizType(quiz.type);
+      let extractionResult: ExpectedAIExtractAnswersResult | undefined;
+      try {
+        extractionResult = await this.#geminiService.extractQuizQuestions(questionCount, imageMetadata);
+      } catch (err) {
+        console.error(`Error extracting questions for quiz ${quizId}`, err);
+      }
+
+      console.log(`Final extraction result: ${JSON.stringify(extractionResult)}`);
+      if (extractionResult && extractionResult.questions) {
+        console.log(`Successfully extracted questions for quiz ${quizId}`);
+        await this.#persistence.markQuizAIExtractionCompleted(
+          quizId,
+          extractionResult.questions.map(({ questionNumber, ...rest }) => ({
+            ...rest,
+            questionNum: questionNumber,
+          })),
+          extractionResult.confidence,
+        );
+      } else {
+        await this.#persistence.markQuizAIExtractionFailed(quizId);
+      }
+    }
+  }
+
+  #imageMetadataIsValid(
+    imageMetadata: { quizImageUrl: string | null; mimeType: string | null; type: QuizImageType }[],
+  ): imageMetadata is { quizImageUrl: string; mimeType: string; type: QuizImageType }[] {
+    if (imageMetadata.some((image) => !image.mimeType)) {
+      throw new Error(`Unable to determine mime type for some images in quiz, not attempting question extraction`);
+    }
+    if (imageMetadata.some((image) => !image.quizImageUrl)) {
+      throw new Error(`Unable to determine url for some images in quiz, not attempting question extraction`);
+    }
+    return true;
   }
 }

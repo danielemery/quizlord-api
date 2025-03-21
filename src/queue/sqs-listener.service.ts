@@ -18,7 +18,7 @@ interface S3MessageContentRecord {
   };
 }
 
-export class SQSQueueService {
+export class SQSQueueListenerService {
   #client: SQSClient;
   #quizService: QuizService;
 
@@ -40,6 +40,23 @@ export class SQSQueueService {
       );
       if (result.Messages) {
         await Promise.all(result.Messages.map((message) => this.processMessage(message)));
+      }
+    }
+  }
+
+  async subscribeToAiProcessing() {
+    // todo exit this loop when app entering shutdown state.
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
+      const result = await this.#client.send(
+        new ReceiveMessageCommand({
+          QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
+          WaitTimeSeconds: 10,
+        }),
+      );
+      if (result.Messages) {
+        await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
       }
     }
   }
@@ -78,5 +95,27 @@ export class SQSQueueService {
     } catch (err) {
       console.error(`Error marking quiz image ready at key: ${key}`, err);
     }
+  }
+
+  async processAiProcessingMessage(message: Message) {
+    if (message.Body) {
+      const messageBody = JSON.parse(message.Body);
+      if (messageBody.quizId) {
+        try {
+          await this.#quizService.aiProcessQuiz(messageBody.quizId);
+        } catch (err) {
+          console.error(`Error processing quiz id: ${messageBody.quizId}`, err);
+        }
+      } else {
+        console.warn(`Unexpected message body`, message);
+      }
+    }
+
+    await this.#client.send(
+      new DeleteMessageCommand({
+        QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
+        ReceiptHandle: message.ReceiptHandle,
+      }),
+    );
   }
 }

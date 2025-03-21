@@ -13,6 +13,13 @@ const typeDefs = gql`
     READY
   }
 
+  enum QuizAIProcessingState {
+    NOT_QUEUED
+    QUEUED
+    COMPLETED
+    ERRORED
+  }
+
   enum UserRole {
     USER
     ADMIN
@@ -80,6 +87,18 @@ const typeDefs = gql`
     If the quiz has been successfully parsed, this will be a list of questions and answers.
     """
     questions: [QuizQuestion]
+    """
+    The current state of the AI processing for this quiz.
+    """
+    aiProcessingState: QuizAIProcessingState!
+    """
+    The certainty, as reported by the ai, that the quiz was processed correctly.
+    """
+    aiProcessingCertaintyPercent: Float
+    """
+    True if a user has marked the OCR for this quiz as inaccurate.
+    """
+    reportedInaccurateOCR: Boolean
   }
 
   type QuizEdge {
@@ -232,6 +251,8 @@ const typeDefs = gql`
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
     completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
     markQuizIllegible(quizId: String!): Boolean
+    markInaccurateOCR(quizId: String!): Boolean
+    aiProcessQuizImages(quizId: String!): Boolean
   }
 `;
 

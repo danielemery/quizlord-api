@@ -22,12 +22,23 @@ enum QuizImageState {
   @@map("quiz_image_state")
 }
 
+enum QuizAIProcessingState {
+  NOT_QUEUED
+  QUEUED
+  COMPLETED
+  ERRORED
+
+  @@map("quiz_ai_processing_state")
+}
+
 model Quiz {
   id               String   @id
   type             QuizType
   date             DateTime @db.Date
   uploadedAt       DateTime @map("uploaded_at")
   uploadedByUserId String   @map("uploaded_by_user_id")
+  aiProcessingState QuizAIProcessingState @map("ai_processing_state") @default(NOT_QUEUED)
+  aiProcessingCertaintyPercent Decimal? @map("ai_processing_certainty_percent")
 
   completions    QuizCompletion[]
   images         QuizImage[]
@@ -123,6 +134,7 @@ model User {
 
 enum QuizNoteType {
   ILLEGIBLE
+  INACCURATE_OCR
 }
 
 enum Role {

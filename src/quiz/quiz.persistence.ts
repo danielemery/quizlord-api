@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
-import { QuizFilters } from './quiz.dto';
+import { QuizFilters, QuizQuestion } from './quiz.dto';
 
 export class QuizPersistence {
   #prisma: PrismaService;
@@ -54,6 +54,8 @@ export class QuizPersistence {
         uploadedAt: true,
         uploadedByUserId: true,
         uploadedByUser: true,
+        aiProcessingState: true,
+        aiProcessingCertaintyPercent: true,
       },
       where: {
         ...(filters.excludeCompletedBy && {
@@ -116,6 +118,7 @@ export class QuizPersistence {
             questionNum: 'asc',
           },
         },
+        notes: true,
       },
     });
   }
@@ -137,6 +140,22 @@ export class QuizPersistence {
         imageKey,
       },
     });
+  }
+
+  async allQuizImagesAreReady(quizId: string) {
+    /*
+     * Once an exists function is implemented for prisma, it should be used instead.
+     * https://github.com/prisma/prisma/issues/5022
+     */
+    const incompleteImage = await this.#prisma.client().quizImage.findFirst({
+      where: {
+        quizId,
+        state: {
+          not: 'READY',
+        },
+      },
+    });
+    return !incompleteImage;
   }
 
   async createQuizWithImages(quiz: Quiz, images: Omit<QuizImage, 'quizId'>[]): Promise<Quiz> {
@@ -303,6 +322,69 @@ export class QuizPersistence {
             name: true,
           },
         },
+      },
+    });
+  }
+
+  markQuizAIExtractionFailed(quizId: string) {
+    return this.#prisma.client().quiz.update({
+      data: {
+        aiProcessingState: 'ERRORED',
+      },
+      where: {
+        id: quizId,
+      },
+    });
+  }
+
+  async markQuizAIExtractionCompleted(quizId: string, questions: Omit<QuizQuestion, 'id'>[], confidence: number) {
+    return this.#prisma.client().$transaction(async (prisma) => {
+      // Remove any existing questions
+      await prisma.quizQuestion.deleteMany({
+        where: {
+          quizId,
+        },
+      });
+
+      // Remove any existing inaccurate OCR notes
+      await prisma.quizNote.deleteMany({
+        where: {
+          quizId,
+          noteType: 'INACCURATE_OCR',
+        },
+      });
+
+      // Insert questions and answers
+      await prisma.quizQuestion.createMany({
+        data: questions.map((question) => ({
+          id: uuidv4(),
+          quizId,
+          questionNum: question.questionNum,
+          question: question.question,
+          answer: question.answer,
+        })),
+      });
+
+      // Update quiz state
+      return prisma.quiz.update({
+        data: {
+          aiProcessingState: 'COMPLETED',
+          aiProcessingCertaintyPercent: confidence,
+        },
+        where: {
+          id: quizId,
+        },
+      });
+    });
+  }
+
+  async markQuizAIExtractionQueued(quizId: string) {
+    return this.#prisma.client().quiz.update({
+      data: {
+        aiProcessingState: 'QUEUED',
+      },
+      where: {
+        id: quizId,
       },
     });
   }
