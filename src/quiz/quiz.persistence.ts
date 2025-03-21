@@ -346,6 +346,14 @@ export class QuizPersistence {
       },
     });
 
+    // Remove any existing inaccurate OCR notes
+    await this.#prisma.client().quizNote.deleteMany({
+      where: {
+        quizId,
+        noteType: 'INACCURATE_OCR',
+      },
+    });
+
     // Insert questions and answers
     await this.#prisma.client().quizQuestion.createMany({
       data: extractionResult.questions.map((question) => ({
