@@ -95,6 +95,10 @@ const typeDefs = gql`
     The certainty, as reported by the ai, that the quiz was processed correctly.
     """
     aiProcessingCertaintyPercent: Float
+    """
+    True if a user has marked the OCR for this quiz as inaccurate.
+    """
+    reportedInaccurateOCR: Boolean
   }
 
   type QuizEdge {
@@ -247,6 +251,7 @@ const typeDefs = gql`
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
     completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
     markQuizIllegible(quizId: String!): Boolean
+    markInaccurateOCR(quizId: String!): Boolean
     aiProcessQuizImages(quizId: String!): Boolean
   }
 `;

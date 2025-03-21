@@ -45,6 +45,7 @@ export interface QuizDetails {
   questions?: QuizQuestion[];
   aiProcessingState: QuizAIProcessingState;
   aiProcessingCertaintyPercent?: number;
+  reportedInaccurateOCR: boolean;
 }
 
 export interface QuizFilters {

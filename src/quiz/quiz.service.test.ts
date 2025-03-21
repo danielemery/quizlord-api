@@ -224,6 +224,11 @@ describe('quiz', () => {
             email: 'master@quizlord.net',
             name: 'Master',
           },
+          notes: [
+            {
+              noteType: 'INACCURATE_OCR',
+            },
+          ],
         });
 
         const actual = await sut.getQuizDetails('fake-quiz-id');
@@ -240,6 +245,7 @@ describe('quiz', () => {
             email: 'master@quizlord.net',
             name: 'Master',
           },
+          reportedInaccurateOCR: true,
         });
       });
     });

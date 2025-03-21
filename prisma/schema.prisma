@@ -134,6 +134,7 @@ model User {
 
 enum QuizNoteType {
   ILLEGIBLE
+  INACCURATE_OCR
 }
 
 enum Role {

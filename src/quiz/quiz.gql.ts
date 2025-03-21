@@ -68,6 +68,12 @@ async function markQuizIllegible(
   return true;
 }
 
+async function markInaccurateOCR(_: unknown, { quizId }: { quizId: string }, context: QuizlordContext) {
+  authorisationService.requireUserRole(context, 'USER');
+  quizService.markInaccurateOCR(quizId, context.email);
+  return true;
+}
+
 async function aiProcessQuizImages(_: unknown, { quizId }: { quizId: string }, context: QuizlordContext) {
   authorisationService.requireUserRole(context, 'ADMIN');
   await queuePublisherService.queueAiProcessing(quizId);
@@ -82,5 +88,6 @@ export const quizMutations = {
   createQuiz,
   completeQuiz,
   markQuizIllegible,
+  markInaccurateOCR,
   aiProcessQuizImages,
 };

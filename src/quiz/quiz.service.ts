@@ -79,6 +79,7 @@ export class QuizService {
       completions,
       uploadedByUser,
       aiProcessingCertaintyPercent,
+      notes,
       ...quizFieldsThatDoNotRequireTransform
     } = quiz;
     return {
@@ -91,6 +92,7 @@ export class QuizService {
         name: uploadedByUser.name ?? undefined,
       },
       aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? aiProcessingCertaintyPercent.toNumber() : undefined,
+      reportedInaccurateOCR: notes.some((note) => note.noteType === 'INACCURATE_OCR'),
     };
   }
 
@@ -341,6 +343,15 @@ export class QuizService {
     await this.#persistence.addQuizNote({
       quizId,
       noteType: 'ILLEGIBLE',
+      submittedAt: new Date(),
+      userEmail,
+    });
+  }
+
+  async markInaccurateOCR(quizId: string, userEmail: string): Promise<void> {
+    await this.#persistence.addQuizNote({
+      quizId,
+      noteType: 'INACCURATE_OCR',
       submittedAt: new Date(),
       userEmail,
     });

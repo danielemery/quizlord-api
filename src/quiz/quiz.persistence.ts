@@ -119,6 +119,7 @@ export class QuizPersistence {
             questionNum: 'asc',
           },
         },
+        notes: true,
       },
     });
   }
