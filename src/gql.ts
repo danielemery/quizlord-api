@@ -247,6 +247,7 @@ const typeDefs = gql`
     createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
     completeQuiz(quizId: String!, completedBy: [String]!, score: Float!): CompleteQuizResult
     markQuizIllegible(quizId: String!): Boolean
+    aiProcessQuizImages(quizId: String!): Boolean
   }
 `;
 

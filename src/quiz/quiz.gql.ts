@@ -1,5 +1,5 @@
 import { QuizlordContext } from '..';
-import { authorisationService, quizService } from '../service.locator';
+import { authorisationService, quizService, queuePublisherService } from '../service.locator';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
 import { CreateQuizResult, Quiz, QuizCompletion, QuizDetails, QuizFilters, QuizImageType, QuizType } from './quiz.dto';
 
@@ -68,6 +68,12 @@ async function markQuizIllegible(
   return true;
 }
 
+async function aiProcessQuizImages(_: unknown, { quizId }: { quizId: string }, context: QuizlordContext) {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  await queuePublisherService.queueAiProcessing(quizId);
+  return true;
+}
+
 export const quizQueries = {
   quizzes,
   quiz,
@@ -76,4 +82,5 @@ export const quizMutations = {
   createQuiz,
   completeQuiz,
   markQuizIllegible,
+  aiProcessQuizImages,
 };
