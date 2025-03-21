@@ -381,7 +381,14 @@ export class QuizService {
       console.log(`Final extraction result: ${JSON.stringify(extractionResult)}`);
       if (extractionResult && extractionResult.questions) {
         console.log(`Successfully extracted questions for quiz ${quizId}`);
-        await this.#persistence.markQuizAIExtractionCompleted(quizId, extractionResult);
+        await this.#persistence.markQuizAIExtractionCompleted(
+          quizId,
+          extractionResult.questions.map(({ questionNumber, ...rest }) => ({
+            ...rest,
+            questionNum: questionNumber,
+          })),
+          extractionResult.confidence,
+        );
       } else {
         await this.#persistence.markQuizAIExtractionFailed(quizId);
       }

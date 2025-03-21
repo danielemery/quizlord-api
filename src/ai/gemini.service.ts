@@ -47,10 +47,12 @@ export class GeminiService {
   #sanitizeGeminiParsedResult(result: ExpectedAIExtractAnswersResult): ExpectedAIExtractAnswersResult {
     return {
       ...result,
-      questions: result.questions.map((question) => ({
-        ...question,
-        answer: question.answer.replace(/^\d+\.\s*/, ''),
-      })),
+      questions: result.questions
+        ? result.questions.map((question) => ({
+            ...question,
+            answer: question.answer.replace(/^\d+\.\s*/, ''),
+          }))
+        : null,
     };
   }
 

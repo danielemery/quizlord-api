@@ -1,11 +1,13 @@
 import Joi from 'joi';
 
 export interface ExpectedAIExtractAnswersResult {
-  questions: {
-    questionNumber: number;
-    question: string;
-    answer: string;
-  }[];
+  questions:
+    | {
+        questionNumber: number;
+        question: string;
+        answer: string;
+      }[]
+    | null;
   confidence: number;
   notes: string | null;
 }

@@ -1,10 +1,9 @@
 import { Quiz, QuizImage, QuizNoteType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ExpectedAIExtractAnswersResult } from '../ai/ai-results.schema';
 import { PrismaService } from '../database/prisma.service';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
-import { QuizFilters } from './quiz.dto';
+import { QuizFilters, QuizQuestion } from './quiz.dto';
 
 export class QuizPersistence {
   #prisma: PrismaService;
@@ -338,7 +337,7 @@ export class QuizPersistence {
     });
   }
 
-  async markQuizAIExtractionCompleted(quizId: string, extractionResult: ExpectedAIExtractAnswersResult) {
+  async markQuizAIExtractionCompleted(quizId: string, questions: Omit<QuizQuestion, 'id'>[], confidence: number) {
     return this.#prisma.client().$transaction(async (prisma) => {
       // Remove any existing questions
       await prisma.quizQuestion.deleteMany({
@@ -357,10 +356,10 @@ export class QuizPersistence {
 
       // Insert questions and answers
       await prisma.quizQuestion.createMany({
-        data: extractionResult.questions.map((question) => ({
+        data: questions.map((question) => ({
           id: uuidv4(),
           quizId,
-          questionNum: question.questionNumber,
+          questionNum: question.questionNum,
           question: question.question,
           answer: question.answer,
         })),
@@ -370,7 +369,7 @@ export class QuizPersistence {
       return prisma.quiz.update({
         data: {
           aiProcessingState: 'COMPLETED',
-          aiProcessingCertaintyPercent: extractionResult.confidence,
+          aiProcessingCertaintyPercent: confidence,
         },
         where: {
           id: quizId,
