@@ -64,19 +64,19 @@ async function markQuizIllegible(
   context: QuizlordContext,
 ): Promise<boolean> {
   authorisationService.requireUserRole(context, 'USER');
-  quizService.markQuizIllegible(quizId, context.email);
+  await quizService.markQuizIllegible(quizId, context.email);
   return true;
 }
 
 async function markInaccurateOCR(_: unknown, { quizId }: { quizId: string }, context: QuizlordContext) {
   authorisationService.requireUserRole(context, 'USER');
-  quizService.markInaccurateOCR(quizId, context.email);
+  await quizService.markInaccurateOCR(quizId, context.email);
   return true;
 }
 
 async function aiProcessQuizImages(_: unknown, { quizId }: { quizId: string }, context: QuizlordContext) {
   authorisationService.requireUserRole(context, 'ADMIN');
-  quizService.queueQuizForAIProcessing(quizId);
+  await quizService.queueQuizForAIProcessing(quizId);
   return true;
 }
 
