@@ -339,41 +339,43 @@ export class QuizPersistence {
   }
 
   async markQuizAIExtractionCompleted(quizId: string, extractionResult: ExpectedAIExtractAnswersResult) {
-    // Remove any existing questions
-    await this.#prisma.client().quizQuestion.deleteMany({
-      where: {
-        quizId,
-      },
-    });
+    return this.#prisma.client().$transaction(async (prisma) => {
+      // Remove any existing questions
+      await prisma.quizQuestion.deleteMany({
+        where: {
+          quizId,
+        },
+      });
 
-    // Remove any existing inaccurate OCR notes
-    await this.#prisma.client().quizNote.deleteMany({
-      where: {
-        quizId,
-        noteType: 'INACCURATE_OCR',
-      },
-    });
+      // Remove any existing inaccurate OCR notes
+      await prisma.quizNote.deleteMany({
+        where: {
+          quizId,
+          noteType: 'INACCURATE_OCR',
+        },
+      });
 
-    // Insert questions and answers
-    await this.#prisma.client().quizQuestion.createMany({
-      data: extractionResult.questions.map((question) => ({
-        id: uuidv4(),
-        quizId,
-        questionNum: question.questionNumber,
-        question: question.question,
-        answer: question.answer,
-      })),
-    });
+      // Insert questions and answers
+      await prisma.quizQuestion.createMany({
+        data: extractionResult.questions.map((question) => ({
+          id: uuidv4(),
+          quizId,
+          questionNum: question.questionNumber,
+          question: question.question,
+          answer: question.answer,
+        })),
+      });
 
-    // Update quiz state
-    return this.#prisma.client().quiz.update({
-      data: {
-        aiProcessingState: 'COMPLETED',
-        aiProcessingCertaintyPercent: extractionResult.confidence,
-      },
-      where: {
-        id: quizId,
-      },
+      // Update quiz state
+      return prisma.quiz.update({
+        data: {
+          aiProcessingState: 'COMPLETED',
+          aiProcessingCertaintyPercent: extractionResult.confidence,
+        },
+        where: {
+          id: quizId,
+        },
+      });
     });
   }
 
