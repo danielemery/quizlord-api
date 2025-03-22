@@ -23,7 +23,7 @@ spec:
           resources:
             limits:
               cpu: 50m
-              memory: 80Mi
+              memory: 120Mi
           ports:
             - name: http-web
               containerPort: 80
