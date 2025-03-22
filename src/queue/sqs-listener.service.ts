@@ -103,6 +103,12 @@ export class SQSQueueListenerService {
       if (messageBody.quizId) {
         try {
           await this.#quizService.aiProcessQuiz(messageBody.quizId);
+          await this.#client.send(
+            new DeleteMessageCommand({
+              QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
+              ReceiptHandle: message.ReceiptHandle,
+            }),
+          );
         } catch (err) {
           console.error(`Error processing quiz id: ${messageBody.quizId}`, err);
         }
@@ -110,12 +116,5 @@ export class SQSQueueListenerService {
         console.warn(`Unexpected message body`, message);
       }
     }
-
-    await this.#client.send(
-      new DeleteMessageCommand({
-        QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
-        ReceiptHandle: message.ReceiptHandle,
-      }),
-    );
   }
 }
