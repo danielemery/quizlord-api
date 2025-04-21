@@ -37,7 +37,7 @@
     "@sentry/node": "^9.7.0",
     "@sentry/profiling-node": "^9.7.0",
     "axios": "^1.7.4",
-    "body-parser": "^1.20.3",
+    "body-parser": "^2.0.0",
     "cors": "^2.8.5",
     "dataloader": "^2.2.2",
     "express": "^4.21.1",
