@@ -86,7 +86,7 @@ jobs:
             latest=${{ steps.version.outputs.is_stable == 'true' && 'true' || 'false' }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v6.15.0
+        uses: docker/build-push-action@v6.16.0
         with:
           context: .
           push: true
