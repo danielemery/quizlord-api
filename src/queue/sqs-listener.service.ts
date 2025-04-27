@@ -3,6 +3,13 @@ import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from 
 import config from '../config/config';
 import { QuizService } from '../quiz/quiz.service';
 
+/** The number of seconds for sqs to wait until a message is available. */
+const SQS_LONG_POLLING_TIMEOUT_SECONDS = 10;
+/** The number of seconds to wait between polling for file upload events. */
+const FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS = 0;
+/** The number of seconds to wait between polling for AI processing events. */
+const AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS = 60;
+
 interface S3MessageContent {
   Records?: S3MessageContentRecord[];
 }
@@ -35,12 +42,13 @@ export class SQSQueueListenerService {
       const result = await this.#client.send(
         new ReceiveMessageCommand({
           QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
-          WaitTimeSeconds: 10,
+          WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
         }),
       );
       if (result.Messages) {
         await Promise.all(result.Messages.map((message) => this.processMessage(message)));
       }
+      await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS);
     }
   }
 
@@ -52,12 +60,13 @@ export class SQSQueueListenerService {
       const result = await this.#client.send(
         new ReceiveMessageCommand({
           QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
-          WaitTimeSeconds: 10,
+          WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
         }),
       );
       if (result.Messages) {
         await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
       }
+      await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS);
     }
   }
 
@@ -117,4 +126,10 @@ export class SQSQueueListenerService {
       }
     }
   }
+}
+
+async function sleep(seconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, seconds * 1000);
+  });
 }
