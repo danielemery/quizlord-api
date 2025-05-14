@@ -37,6 +37,7 @@ export interface QuizQuestion {
   questionNum: number;
   question: string;
   answer: string;
+  myScore?: QuizCompletionQuestionResultScore | null;
 }
 
 export type QuizAIProcessingState = 'NOT_QUEUED' | 'QUEUED' | 'COMPLETED' | 'ERRORED';

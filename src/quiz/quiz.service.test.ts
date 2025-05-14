@@ -231,7 +231,7 @@ describe('quiz', () => {
           ],
         });
 
-        const actual = await sut.getQuizDetails('fake-quiz-id');
+        const actual = await sut.getQuizDetails('fake-quiz-id', 'fake-user-id');
 
         expect(actual).toEqual({
           id: 'fake-quiz-id',

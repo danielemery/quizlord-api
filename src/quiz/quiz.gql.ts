@@ -37,7 +37,7 @@ async function quizzes(
 
 async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext): Promise<QuizDetails> {
   authorisationService.requireUserRole(context, 'USER');
-  return quizService.getQuizDetails(id);
+  return quizService.getQuizDetails(id, context.userId);
 }
 
 async function createQuiz(

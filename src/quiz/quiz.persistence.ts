@@ -96,8 +96,8 @@ export class QuizPersistence {
     return slicePagedResults(result, limit, afterId !== undefined);
   }
 
-  async getQuizByIdWithResults({ id }: { id: string }) {
-    return this.#prisma.client().quiz.findFirstOrThrow({
+  async getQuizByIdWithResults({ id, userId }: { id: string; userId?: string }) {
+    const quizDetails = await this.#prisma.client().quiz.findFirstOrThrow({
       where: {
         id,
       },
@@ -121,6 +121,35 @@ export class QuizPersistence {
         notes: true,
       },
     });
+    const quizQuestionResults = userId
+      ? await this.#prisma.client().quizCompletion.findFirst({
+          where: {
+            quizId: id,
+            completedBy: {
+              some: {
+                userId,
+              },
+            },
+          },
+          include: {
+            questionResults: true,
+          },
+        })
+      : undefined;
+    return {
+      ...quizDetails,
+      questions: userId
+        ? quizDetails.questions.map((question) => {
+            const matchingResult = quizQuestionResults?.questionResults.find(
+              (result) => result.questionId === question.id,
+            );
+            return {
+              ...question,
+              myScore: matchingResult?.score ?? null,
+            };
+          })
+        : quizDetails.questions,
+    };
   }
 
   async getQuizImage(imageKey: string) {
@@ -358,7 +387,11 @@ export class QuizPersistence {
     });
   }
 
-  async markQuizAIExtractionCompleted(quizId: string, questions: Omit<QuizQuestion, 'id'>[], confidence: number) {
+  async markQuizAIExtractionCompleted(
+    quizId: string,
+    questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    confidence: number,
+  ) {
     return this.#prisma.client().$transaction(async (prisma) => {
       // Remove any existing questions
       await prisma.quizQuestion.deleteMany({

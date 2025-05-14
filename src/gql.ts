@@ -73,6 +73,10 @@ const typeDefs = gql`
     questionNum: Int!
     question: String!
     answer: String!
+    """
+    If the current authenticated user has completed the quiz, this will be the score they recorded for this question.
+    """
+    myScore: QuizCompletionQuestionResultScore
   }
 
   type QuizDetails {

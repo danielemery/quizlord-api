@@ -70,9 +70,10 @@ export class QuizService {
    * @param id Id of the quiz to get details for.
    * @returns The quiz and its completions.
    */
-  async getQuizDetails(id: string) {
+  async getQuizDetails(id: string, userId: string) {
     const quiz = await this.#persistence.getQuizByIdWithResults({
       id,
+      userId,
     });
     const {
       images,
