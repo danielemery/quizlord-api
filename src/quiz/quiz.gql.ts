@@ -1,7 +1,16 @@
 import { QuizlordContext } from '..';
 import { authorisationService, quizService } from '../service.locator';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
-import { CreateQuizResult, Quiz, QuizCompletion, QuizDetails, QuizFilters, QuizImageType, QuizType } from './quiz.dto';
+import {
+  CreateQuizResult,
+  Quiz,
+  QuizCompletion,
+  QuizCompletionQuestionResult,
+  QuizDetails,
+  QuizFilters,
+  QuizImageType,
+  QuizType,
+} from './quiz.dto';
 
 async function quizzes(
   _: unknown,
@@ -28,7 +37,7 @@ async function quizzes(
 
 async function quiz(_: unknown, { id }: { id: string }, context: QuizlordContext): Promise<QuizDetails> {
   authorisationService.requireUserRole(context, 'USER');
-  return quizService.getQuizDetails(id);
+  return quizService.getQuizDetails(id, context.userId);
 }
 
 async function createQuiz(
@@ -46,7 +55,12 @@ async function createQuiz(
 
 async function completeQuiz(
   _: unknown,
-  { quizId, completedBy, score }: { quizId: string; completedBy: string[]; score: number },
+  {
+    quizId,
+    completedBy,
+    score,
+    questionResults,
+  }: { quizId: string; completedBy: string[]; score?: number; questionResults: QuizCompletionQuestionResult[] },
   context: QuizlordContext,
 ): Promise<{ completion: QuizCompletion }> {
   authorisationService.requireUserRole(context, 'USER');
@@ -55,6 +69,7 @@ async function completeQuiz(
     quizId,
     completedBy,
     score,
+    questionResults,
   });
 }
 

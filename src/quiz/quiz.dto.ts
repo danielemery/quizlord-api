@@ -6,6 +6,13 @@ export interface QuizCompletion {
   score: number;
 }
 
+export type QuizCompletionQuestionResultScore = 'CORRECT' | 'INCORRECT' | 'HALF_CORRECT';
+
+export interface QuizCompletionQuestionResult {
+  questionNum: number;
+  score: QuizCompletionQuestionResultScore;
+}
+
 export type QuizType = 'BRAINWAVES' | 'SHARK';
 
 export interface Quiz {
@@ -30,6 +37,7 @@ export interface QuizQuestion {
   questionNum: number;
   question: string;
   answer: string;
+  myScore?: QuizCompletionQuestionResultScore | null;
 }
 
 export type QuizAIProcessingState = 'NOT_QUEUED' | 'QUEUED' | 'COMPLETED' | 'ERRORED';

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers';
-import { QuizFilters, QuizQuestion } from './quiz.dto';
+import { QuizCompletionQuestionResult, QuizFilters, QuizQuestion } from './quiz.dto';
 
 export class QuizPersistence {
   #prisma: PrismaService;
@@ -96,8 +96,8 @@ export class QuizPersistence {
     return slicePagedResults(result, limit, afterId !== undefined);
   }
 
-  async getQuizByIdWithResults({ id }: { id: string }) {
-    return this.#prisma.client().quiz.findFirstOrThrow({
+  async getQuizByIdWithResults({ id, userId }: { id: string; userId?: string }) {
+    const quizDetails = await this.#prisma.client().quiz.findFirstOrThrow({
       where: {
         id,
       },
@@ -121,6 +121,35 @@ export class QuizPersistence {
         notes: true,
       },
     });
+    const quizQuestionResults = userId
+      ? await this.#prisma.client().quizCompletion.findFirst({
+          where: {
+            quizId: id,
+            completedBy: {
+              some: {
+                userId,
+              },
+            },
+          },
+          include: {
+            questionResults: true,
+          },
+        })
+      : undefined;
+    return {
+      ...quizDetails,
+      questions: userId
+        ? quizDetails.questions.map((question) => {
+            const matchingResult = quizQuestionResults?.questionResults.find(
+              (result) => result.questionId === question.id,
+            );
+            return {
+              ...question,
+              myScore: matchingResult?.score ?? null,
+            };
+          })
+        : quizDetails.questions,
+    };
   }
 
   async getQuizImage(imageKey: string) {
@@ -177,12 +206,22 @@ export class QuizPersistence {
     completedAt: Date,
     completedBy: string[],
     score: number,
+    questionResults?: QuizCompletionQuestionResult[],
   ) {
     const users = await this.#prisma.client().user.findMany({
       where: {
         email: {
           in: completedBy,
         },
+      },
+    });
+    const questions = await this.#prisma.client().quizQuestion.findMany({
+      select: {
+        questionNum: true,
+        id: true,
+      },
+      where: {
+        quizId,
       },
     });
     const result = await this.#prisma.client().quizCompletion.create({
@@ -202,6 +241,17 @@ export class QuizPersistence {
           }),
         },
         quizId,
+        ...(questionResults
+          ? {
+              questionResults: {
+                create: questionResults.map((qr) => ({
+                  id: uuidv4(),
+                  score: qr.score,
+                  question: { connect: { id: questions.find((q) => q.questionNum === qr.questionNum)?.id } },
+                })),
+              },
+            }
+          : {}),
       },
       include: {
         completedBy: {
@@ -337,7 +387,11 @@ export class QuizPersistence {
     });
   }
 
-  async markQuizAIExtractionCompleted(quizId: string, questions: Omit<QuizQuestion, 'id'>[], confidence: number) {
+  async markQuizAIExtractionCompleted(
+    quizId: string,
+    questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    confidence: number,
+  ) {
     return this.#prisma.client().$transaction(async (prisma) => {
       // Remove any existing questions
       await prisma.quizQuestion.deleteMany({
