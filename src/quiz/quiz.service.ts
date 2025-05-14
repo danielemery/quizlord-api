@@ -2,6 +2,7 @@ import {
   Quiz as QuizPersistenceModel,
   QuizCompletion as QuizCompletionPersistenceModel,
   QuizCompletionUser as QuizCompletionUserPersistenceModel,
+  QuizCompletionQuestionResult as QuizCompletionQuestionResultPersistenceModel,
   QuizImage as QuizImagePersistenceModel,
   User as UserPersistenceModel,
   QuizImageType,
@@ -15,7 +16,14 @@ import { GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
-import { Quiz, QuizCompletion, QuizCompletionQuestionResult, QuizFilters, QuizImage } from './quiz.dto';
+import {
+  Quiz,
+  QuizCompletion,
+  QuizCompletionQuestionResult,
+  QuizCompletionWithQuestionResults,
+  QuizFilters,
+  QuizImage,
+} from './quiz.dto';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
 import { QuizPersistence } from './quiz.persistence';
 
@@ -84,7 +92,9 @@ export class QuizService {
     } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
-      completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
+      completions: completions.map((entry) =>
+        this.#quizCompletionPersistenceWithQuestionResultsToQuizCompletion(entry),
+      ),
       images: images.map((entry) => this.#quizImagePersistenceToQuizImage(entry)),
       uploadedBy: {
         id: uploadedByUser.id,
@@ -376,6 +386,32 @@ export class QuizService {
         email: uploadedByUser.email,
         name: uploadedByUser.name ?? undefined,
       },
+    };
+  }
+
+  #quizCompletionPersistenceWithQuestionResultsToQuizCompletion(
+    quizCompletion: Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
+      completedBy: (QuizCompletionUserPersistenceModel & {
+        user: UserPersistenceModel | null;
+      })[];
+      questionResults: Pick<QuizCompletionQuestionResultPersistenceModel, 'questionId' | 'score'>[];
+    },
+  ): QuizCompletionWithQuestionResults {
+    const { completedBy, questionResults, score, ...otherFields } = quizCompletion;
+    return {
+      ...otherFields,
+      completedBy: completedBy.map((user) => {
+        if (user.user === null) {
+          throw new Error('Persistence incorrectly retrieved non-matching quizCompletion');
+        }
+        return {
+          id: user.user.id,
+          email: user.user.email,
+          name: user.user.name ?? undefined,
+        };
+      }),
+      score: score.toNumber(),
+      questionResults,
     };
   }
 

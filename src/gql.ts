@@ -81,7 +81,7 @@ const typeDefs = gql`
     date: Date!
     uploadedAt: Date!
     uploadedBy: User!
-    completions: [QuizCompletion]
+    completions: [QuizCompletionWithQuestionResults]
     images: [QuizImage]
     """
     If the quiz has been successfully parsed, this will be a list of questions and answers.
@@ -170,6 +170,18 @@ const typeDefs = gql`
     completedAt: Date!
     completedBy: [User]!
     score: Float!
+  }
+
+  type QuizCompletionWithQuestionResultsQuestionResult {
+    questionId: String!
+    score: QuizCompletionQuestionResultScore!
+  }
+
+  type QuizCompletionWithQuestionResults {
+    completedAt: Date!
+    completedBy: [User]!
+    score: Float!
+    questionResults: [QuizCompletionWithQuestionResultsQuestionResult]
   }
 
   type CompleteQuizResult {
