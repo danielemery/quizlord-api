@@ -198,6 +198,7 @@ export class QuizService {
       throw new Error('Can only enter quiz completions which you participate in.');
     }
     const uuid = uuidv4();
+    this.validateQuestionResults(questionResults);
     const computedScore = await this.computeScore(score, questionResults);
     const completion = await this.#persistence.createQuizCompletion(
       quizId,
@@ -210,7 +211,40 @@ export class QuizService {
     return { completion: this.#quizCompletionPersistenceToQuizCompletion(completion) };
   }
 
-  async computeScore(score?: number, questionResults?: QuizCompletionQuestionResult[]) {
+  /**
+   * Checks that the provided question results are valid.
+   * This means:
+   * - There are no duplicate numbers
+   * - The numbers are in the range of 1 to the number of questions in the quiz
+   * @param questionResults The question results to validate.
+   */
+  validateQuestionResults(questionResults?: QuizCompletionQuestionResult[]) {
+    if (!questionResults || questionResults.length === 0) {
+      return;
+    }
+    const questionNumbers = questionResults.map((result) => result.questionNum);
+    const uniqueQuestionNumbers = new Set(questionNumbers);
+    if (uniqueQuestionNumbers.size !== questionNumbers.length) {
+      throw new Error('Duplicate question numbers found in question results');
+    }
+    const maxQuestionNumber = Math.max(...questionNumbers);
+    if (maxQuestionNumber > questionResults.length) {
+      throw new Error(
+        `Question numbers must be less than or equal to the number of questions (${questionResults.length})`,
+      );
+    }
+  }
+
+  /**
+   * Compute the score to be used for a quiz completion.
+   * If a score is provided, it will be used directly.
+   * If question results are provided, they will be used to compute the score.
+   * If both are provided, they must match.
+   * @param score The provided total score for the quiz.
+   * @param questionResults The individual question results for the quiz.
+   * @returns The computed score for the quiz.
+   */
+  computeScore(score?: number, questionResults?: QuizCompletionQuestionResult[]) {
     if (score === undefined && (questionResults === undefined || questionResults.length === 0)) {
       throw new Error('Must provide either a score or individual question results to compute a score');
     }

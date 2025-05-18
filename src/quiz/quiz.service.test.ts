@@ -332,12 +332,12 @@ describe('quiz', () => {
     });
     describe('computeScore', () => {
       it('must throw if neither a score not individual question results are provided', async () => {
-        await expect(() => sut.computeScore(undefined, undefined)).rejects.toThrow(
+        expect(() => sut.computeScore(undefined, undefined)).toThrow(
           'Must provide either a score or individual question results',
         );
       });
       it('must add up the score if individual question results are provided', async () => {
-        const actual = await sut.computeScore(undefined, [
+        const actual = sut.computeScore(undefined, [
           {
             questionNum: 1,
             score: 'CORRECT',
@@ -363,12 +363,12 @@ describe('quiz', () => {
         expect(actual).toEqual(3.5);
       });
       it('must return the score if a score is provided', async () => {
-        const actual = await sut.computeScore(10, undefined);
+        const actual = sut.computeScore(10, undefined);
 
         expect(actual).toEqual(10);
       });
       it("must throw if a score and individual question results are provided and they don't match", async () => {
-        await expect(() =>
+        expect(() =>
           sut.computeScore(10, [
             {
               questionNum: 1,
@@ -379,7 +379,51 @@ describe('quiz', () => {
               score: 'HALF_CORRECT',
             },
           ]),
-        ).rejects.toThrow('Provided score does not match individual question results');
+        ).toThrow('Provided score does not match individual question results');
+      });
+    });
+    describe('validateQuestionResults', () => {
+      it('must throw if two question results with the same question number are provided', () => {
+        expect(() =>
+          sut.validateQuestionResults([
+            {
+              questionNum: 1,
+              score: 'CORRECT',
+            },
+            {
+              questionNum: 1,
+              score: 'INCORRECT',
+            },
+          ]),
+        ).toThrow('Duplicate question numbers found in question results');
+      });
+      it('must throw if a question result is skipped', () => {
+        expect(() =>
+          sut.validateQuestionResults([
+            {
+              questionNum: 1,
+              score: 'CORRECT',
+            },
+            {
+              questionNum: 3,
+              score: 'INCORRECT',
+            },
+          ]),
+        ).toThrow('Question numbers must be less than or equal to the number of questions (2)');
+      });
+      it('must not throw if all question results are valid', () => {
+        expect(() =>
+          sut.validateQuestionResults([
+            {
+              questionNum: 1,
+              score: 'CORRECT',
+            },
+            {
+              questionNum: 2,
+              score: 'INCORRECT',
+            },
+          ]),
+        ).not.toThrow();
       });
     });
     describe('getRecentQuizCompletions', () => {
