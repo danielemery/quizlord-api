@@ -10,6 +10,7 @@
     "start": "prisma generate && doppler run -- nodemon src/index.ts",
     "debug": "prisma generate && doppler run -- nodemon --exec \"node --inspect --require ts-node/register src/index.ts\"",
     "test": "jest src",
+    "test:watch": "jest src --watch",
     "test:ci": "jest src --coverage=true --collectCoverageFrom='src/**/*.ts'",
     "lint": "eslint ./src",
     "db:generate": "prisma generate",

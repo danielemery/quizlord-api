@@ -76,6 +76,7 @@ model QuizCompletion {
   score       Decimal
 
   quiz        Quiz                 @relation(fields: [quizId], references: [id])
+  questionResults QuizCompletionQuestionResult[]
   completedBy QuizCompletionUser[]
 
   @@map("quiz_completion")
@@ -91,6 +92,26 @@ model QuizCompletionUser {
 
   @@id([quizCompletionId, userId])
   @@map("quiz_completion_user")
+}
+
+enum QuizCompletionQuestionResultScore {
+  CORRECT
+  INCORRECT
+  HALF_CORRECT
+
+  @@map("quiz_completion_question_result_score")
+}
+
+model QuizCompletionQuestionResult {
+  id                 String @id
+  quizCompletionId   String @map("quiz_completion_id")
+  questionId         String @map("question_id")
+  score              QuizCompletionQuestionResultScore
+
+  quizCompletion QuizCompletion @relation(fields: [quizCompletionId], references: [id])
+  question       QuizQuestion   @relation(fields: [questionId], references: [id])
+
+  @@map("quiz_completion_question_result")
 }
 
 model QuizNote {
@@ -113,6 +134,7 @@ model QuizQuestion {
   answer      String
   questionNum Int @map("question_num")
 
+  results QuizCompletionQuestionResult[]
   quiz Quiz @relation(fields: [quizId], references: [id])
 
   @@unique([quizId, questionNum])

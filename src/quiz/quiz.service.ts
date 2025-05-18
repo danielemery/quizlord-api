@@ -2,6 +2,7 @@ import {
   Quiz as QuizPersistenceModel,
   QuizCompletion as QuizCompletionPersistenceModel,
   QuizCompletionUser as QuizCompletionUserPersistenceModel,
+  QuizCompletionQuestionResult as QuizCompletionQuestionResultPersistenceModel,
   QuizImage as QuizImagePersistenceModel,
   User as UserPersistenceModel,
   QuizImageType,
@@ -15,7 +16,14 @@ import { GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
-import { Quiz, QuizCompletion, QuizFilters, QuizImage } from './quiz.dto';
+import {
+  Quiz,
+  QuizCompletion,
+  QuizCompletionQuestionResult,
+  QuizCompletionWithQuestionResults,
+  QuizFilters,
+  QuizImage,
+} from './quiz.dto';
 import { MustProvideAtLeastOneFileError } from './quiz.errors';
 import { QuizPersistence } from './quiz.persistence';
 
@@ -84,7 +92,9 @@ export class QuizService {
     } = quiz;
     return {
       ...quizFieldsThatDoNotRequireTransform,
-      completions: completions.map((entry) => this.#quizCompletionPersistenceToQuizCompletion(entry)),
+      completions: completions.map((entry) =>
+        this.#quizCompletionPersistenceWithQuestionResultsToQuizCompletion(entry),
+      ),
       images: images.map((entry) => this.#quizImagePersistenceToQuizImage(entry)),
       uploadedBy: {
         id: uploadedByUser.id,
@@ -176,18 +186,87 @@ export class QuizService {
     quizId,
     completedBy,
     score,
+    questionResults,
   }: {
     email: string;
     quizId: string;
     completedBy: string[];
-    score: number;
+    score?: number;
+    questionResults?: QuizCompletionQuestionResult[];
   }) {
     if (!completedBy.includes(email)) {
       throw new Error('Can only enter quiz completions which you participate in.');
     }
     const uuid = uuidv4();
-    const completion = await this.#persistence.createQuizCompletion(quizId, uuid, new Date(), completedBy, score);
+    this.validateQuestionResults(questionResults);
+    const computedScore = await this.computeScore(score, questionResults);
+    const completion = await this.#persistence.createQuizCompletion(
+      quizId,
+      uuid,
+      new Date(),
+      completedBy,
+      computedScore,
+      questionResults,
+    );
     return { completion: this.#quizCompletionPersistenceToQuizCompletion(completion) };
+  }
+
+  /**
+   * Checks that the provided question results are valid.
+   * This means:
+   * - There are no duplicate numbers
+   * - The numbers are in the range of 1 to the number of questions in the quiz
+   * @param questionResults The question results to validate.
+   */
+  validateQuestionResults(questionResults?: QuizCompletionQuestionResult[]) {
+    if (!questionResults || questionResults.length === 0) {
+      return;
+    }
+    const questionNumbers = questionResults.map((result) => result.questionNum);
+    const uniqueQuestionNumbers = new Set(questionNumbers);
+    if (uniqueQuestionNumbers.size !== questionNumbers.length) {
+      throw new Error('Duplicate question numbers found in question results');
+    }
+    const maxQuestionNumber = Math.max(...questionNumbers);
+    if (maxQuestionNumber > questionResults.length) {
+      throw new Error(
+        `Question numbers must be less than or equal to the number of questions (${questionResults.length})`,
+      );
+    }
+  }
+
+  /**
+   * Compute the score to be used for a quiz completion.
+   * If a score is provided, it will be used directly.
+   * If question results are provided, they will be used to compute the score.
+   * If both are provided, they must match.
+   * @param score The provided total score for the quiz.
+   * @param questionResults The individual question results for the quiz.
+   * @returns The computed score for the quiz.
+   */
+  computeScore(score?: number, questionResults?: QuizCompletionQuestionResult[]) {
+    if (score === undefined && (questionResults === undefined || questionResults.length === 0)) {
+      throw new Error('Must provide either a score or individual question results to compute a score');
+    }
+    if (questionResults !== undefined && questionResults.length > 0) {
+      const individualScore = questionResults.reduce((acc, result) => {
+        switch (result.score) {
+          case 'CORRECT':
+            return acc + 1;
+          case 'HALF_CORRECT':
+            return acc + 0.5;
+          case 'INCORRECT':
+            return acc;
+          default:
+            throw new Error(`Unknown score ${result.score}`);
+        }
+      }, 0);
+      if (score !== undefined && score !== individualScore) {
+        throw new Error('Provided score does not match individual question results');
+      }
+      return individualScore;
+    }
+    return score as number;
   }
 
   async markQuizImageReady(imageKey: string) {
@@ -341,6 +420,32 @@ export class QuizService {
         email: uploadedByUser.email,
         name: uploadedByUser.name ?? undefined,
       },
+    };
+  }
+
+  #quizCompletionPersistenceWithQuestionResultsToQuizCompletion(
+    quizCompletion: Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
+      completedBy: (QuizCompletionUserPersistenceModel & {
+        user: UserPersistenceModel | null;
+      })[];
+      questionResults: Pick<QuizCompletionQuestionResultPersistenceModel, 'questionId' | 'score'>[];
+    },
+  ): QuizCompletionWithQuestionResults {
+    const { completedBy, questionResults, score, ...otherFields } = quizCompletion;
+    return {
+      ...otherFields,
+      completedBy: completedBy.map((user) => {
+        if (user.user === null) {
+          throw new Error('Persistence incorrectly retrieved non-matching quizCompletion');
+        }
+        return {
+          id: user.user.id,
+          email: user.user.email,
+          name: user.user.name ?? undefined,
+        };
+      }),
+      score: score.toNumber(),
+      questionResults,
     };
   }
 
