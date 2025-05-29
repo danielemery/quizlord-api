@@ -1,0 +1,27 @@
+type UserDetails {
+  email: String!
+  roles: [UserRole]!
+}
+
+type User {
+  email: String!
+  name: String
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type UserConnection {
+  edges: [UserEdge]!
+  pageInfo: PageInfo!
+}
+
+extend type Query {
+  """
+  Get a paged list of users.
+  """
+  users(first: Int, after: String, sortedBy: UserSortOption): UserConnection
+  me: UserDetails
+}

@@ -1,0 +1,19 @@
+type IndividualUserStatistic {
+  name: String
+  email: String!
+  totalQuizCompletions: Int!
+  averageScorePercentage: Float!
+}
+
+extend type Query {
+  """
+  Get statistics for every user.
+  Optionally sort using the sortedBy parameter.
+
+  Results from this endpoint may be delayed by up to 24 hours.
+  """
+  individualUserStatistics(
+    "The sorting option to use"
+    sortedBy: IndividualUserStatisticsSortOption
+  ): [IndividualUserStatistic]
+}
