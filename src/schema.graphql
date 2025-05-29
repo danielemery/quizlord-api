@@ -1,0 +1,81 @@
+scalar Date
+
+enum QuizType {
+  SHARK
+  BRAINWAVES
+}
+
+enum QuizImageState {
+  PENDING_UPLOAD
+  READY
+}
+
+enum QuizAIProcessingState {
+  NOT_QUEUED
+  QUEUED
+  COMPLETED
+  ERRORED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum QuizImageType {
+  QUESTION
+  ANSWER
+  QUESTION_AND_ANSWER
+}
+
+enum UserSortOption {
+  EMAIL_ASC
+  NAME_ASC
+  NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC
+}
+
+enum IndividualUserStatisticsSortOption {
+  QUIZZES_COMPLETED_DESC
+  AVERAGE_SCORE_DESC
+}
+
+enum ActivityActionType {
+  QUIZ_COMPLETED
+  QUIZ_UPLOADED
+}
+
+enum QuizCompletionQuestionResultScore {
+  """
+  The question was answered correctly.
+  """
+  CORRECT
+  """
+  The question was answered incorrectly.
+  """
+  INCORRECT
+  """
+  The question was answered and gauged as half correct.
+  """
+  HALF_CORRECT
+}
+
+enum ExcludeIllegibleOptions {
+  """
+  Exclude quizzes that have been marked as illegible by me.
+  """
+  ME
+  """
+  Exclude quizzes that have been marked as illegible by anyone.
+  """
+  ANYONE
+}
+
+type PageInfo {
+  hasNextPage: Boolean
+  startCursor: String
+  endCursor: String
+}
+
+type Query {}
+
+type Mutation {}

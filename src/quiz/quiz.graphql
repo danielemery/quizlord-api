@@ -1,0 +1,149 @@
+type Quiz {
+  id: String!
+  type: QuizType!
+  date: Date!
+  uploadedAt: Date!
+  uploadedBy: User!
+  myCompletions: [QuizCompletion]
+}
+
+type QuizImage {
+  imageLink: String!
+  state: QuizImageState!
+  type: QuizImageType!
+}
+
+type QuizQuestion {
+  id: String!
+  questionNum: Int!
+  question: String!
+  answer: String!
+}
+
+type QuizDetails {
+  id: String!
+  type: QuizType!
+  date: Date!
+  uploadedAt: Date!
+  uploadedBy: User!
+  completions: [QuizCompletionWithQuestionResults]
+  images: [QuizImage]
+  """
+  If the quiz has been successfully parsed, this will be a list of questions and answers.
+  """
+  questions: [QuizQuestion]
+  """
+  The current state of the AI processing for this quiz.
+  """
+  aiProcessingState: QuizAIProcessingState!
+  """
+  The certainty, as reported by the ai, that the quiz was processed correctly.
+  """
+  aiProcessingCertaintyPercent: Float
+  """
+  True if a user has marked the OCR for this quiz as inaccurate.
+  """
+  reportedInaccurateOCR: Boolean
+}
+
+type QuizEdge {
+  node: Quiz!
+  cursor: String!
+}
+
+type QuizConnection {
+  edges: [QuizEdge]!
+  pageInfo: PageInfo!
+}
+
+input CreateQuizFile {
+  fileName: String!
+  type: QuizImageType!
+}
+
+type CreateQuizFileNameToUploadLink {
+  fileName: String!
+  link: String!
+}
+
+type CreateQuizResult {
+  quiz: Quiz!
+  uploadLinks: [CreateQuizFileNameToUploadLink]!
+}
+
+input QuizCompletionQuestionResult {
+  questionNum: Int!
+  score: QuizCompletionQuestionResultScore!
+}
+
+type QuizCompletion {
+  completedAt: Date!
+  completedBy: [User]!
+  score: Float!
+}
+
+type QuizCompletionWithQuestionResultsQuestionResult {
+  questionId: String!
+  score: QuizCompletionQuestionResultScore!
+}
+
+type QuizCompletionWithQuestionResults {
+  completedAt: Date!
+  completedBy: [User]!
+  score: Float!
+  questionResults: [QuizCompletionWithQuestionResultsQuestionResult]
+}
+
+type CompleteQuizResult {
+  completion: QuizCompletion
+}
+
+"Available filters for the quizzes query"
+input QuizFilters {
+  """
+  Optional list of user emails.
+  If provided, only quizzes completed by none of these users will be included in the results.
+  """
+  excludeCompletedBy: [String]
+  """
+  Optional option to exclude quizzes that have been marked as illegible.
+  """
+  excludeIllegible: ExcludeIllegibleOptions
+}
+
+extend type Query {
+  """
+  Get a paged list of quizzes.
+  Optionally filter using the filters parameter.
+  """
+  quizzes(
+    "The number of results to return, capped at 100"
+    first: Int
+    "The cursor to start returning results from, for pagination"
+    after: String
+    "The filters to apply to the query"
+    filters: QuizFilters
+  ): QuizConnection
+  quiz(id: String!): QuizDetails
+}
+
+extend type Mutation {
+  createQuiz(type: QuizType!, date: Date!, files: [CreateQuizFile]): CreateQuizResult
+  completeQuiz(
+    quizId: String!
+    completedBy: [String]!
+    """
+    Optionally provide the total score of the quiz.
+    If not provided the individual question results will be used to calculate the score.
+    """
+    score: Float
+    """
+    Optionally provide the results of each question in the quiz.
+    If provided, the score will be calculated using these results, otherwise the score argument will be used.
+    """
+    questionResults: [QuizCompletionQuestionResult]
+  ): CompleteQuizResult
+  markQuizIllegible(quizId: String!): Boolean
+  markInaccurateOCR(quizId: String!): Boolean
+  aiProcessQuizImages(quizId: String!): Boolean
+}

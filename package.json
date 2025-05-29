@@ -34,6 +34,8 @@
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "@aws-sdk/util-create-request": "^3.341.0",
     "@google/generative-ai": "^0.24.0",
+    "@graphql-tools/load-files": "^7.0.1",
+    "@graphql-tools/merge": "^9.0.24",
     "@prisma/client": "^6.5.0",
     "@sentry/node": "^9.7.0",
     "@sentry/profiling-node": "^9.7.0",
