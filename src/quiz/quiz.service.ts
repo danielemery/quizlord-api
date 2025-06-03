@@ -88,6 +88,7 @@ export class QuizService {
       uploadedByUser,
       aiProcessingCertaintyPercent,
       notes,
+      questions,
       ...quizFieldsThatDoNotRequireTransform
     } = quiz;
     return {
@@ -103,6 +104,12 @@ export class QuizService {
       },
       aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? aiProcessingCertaintyPercent.toNumber() : undefined,
       reportedInaccurateOCR: notes.some((note) => note.noteType === 'INACCURATE_OCR'),
+      questions: questions?.map((question) => ({
+        id: question.id,
+        questionNum: question.questionNum,
+        question: question.question ?? undefined,
+        answer: question.answer ?? undefined,
+      })),
     };
   }
 
@@ -486,16 +493,26 @@ export class QuizService {
       console.log(`Final extraction result: ${JSON.stringify(extractionResult)}`);
       if (extractionResult && extractionResult.questions) {
         console.log(`Successfully extracted questions for quiz ${quizId}`);
-        await this.#persistence.markQuizAIExtractionCompleted(
+        await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
           quizId,
           extractionResult.questions.map(({ questionNumber, ...rest }) => ({
             ...rest,
             questionNum: questionNumber,
           })),
+          'COMPLETED',
           extractionResult.confidence,
         );
       } else {
-        await this.#persistence.markQuizAIExtractionFailed(quizId);
+        await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
+          quizId,
+          [
+            // Generate empty questions for the quiz
+            ...Array.from({ length: questionCount }, (_, i) => ({
+              questionNum: i + 1,
+            })),
+          ],
+          'ERRORED',
+        );
       }
     }
   }

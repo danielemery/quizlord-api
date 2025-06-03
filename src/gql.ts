@@ -71,8 +71,8 @@ const typeDefs = gql`
   type QuizQuestion {
     id: String!
     questionNum: Int!
-    question: String!
-    answer: String!
+    question: String
+    answer: String
   }
 
   type QuizDetails {

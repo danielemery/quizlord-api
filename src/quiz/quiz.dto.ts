@@ -45,8 +45,8 @@ export interface QuizImage {
 export interface QuizQuestion {
   id: string;
   questionNum: number;
-  question: string;
-  answer: string;
+  question?: string;
+  answer?: string;
 }
 
 export type QuizAIProcessingState = 'NOT_QUEUED' | 'QUEUED' | 'COMPLETED' | 'ERRORED';

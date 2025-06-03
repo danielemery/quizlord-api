@@ -1,4 +1,4 @@
-import { Quiz, QuizImage, QuizNoteType } from '@prisma/client';
+import { Quiz, QuizAIProcessingState, QuizImage, QuizNoteType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
@@ -367,31 +367,25 @@ export class QuizPersistence {
     });
   }
 
-  markQuizAIExtractionFailed(quizId: string) {
-    return this.#prisma.client().quiz.update({
-      data: {
-        aiProcessingState: 'ERRORED',
-      },
-      where: {
-        id: quizId,
-      },
-    });
-  }
-
-  async markQuizAIExtractionCompleted(
+  async upsertQuizQuestionsAfterAIExtraction(
     quizId: string,
     questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    result: 'ERRORED',
+  ): Promise<void>;
+  async upsertQuizQuestionsAfterAIExtraction(
+    quizId: string,
+    questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    result: 'COMPLETED',
     confidence: number,
+  ): Promise<void>;
+  async upsertQuizQuestionsAfterAIExtraction(
+    quizId: string,
+    questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    result: QuizAIProcessingState,
+    confidence?: number,
   ) {
     return this.#prisma.client().$transaction(async (prisma) => {
-      // Remove any existing questions
-      await prisma.quizQuestion.deleteMany({
-        where: {
-          quizId,
-        },
-      });
-
-      // Remove any existing inaccurate OCR notes
+      // Remove any existing inaccurate OCR notes (since we are replacing the questions)
       await prisma.quizNote.deleteMany({
         where: {
           quizId,
@@ -399,21 +393,46 @@ export class QuizPersistence {
         },
       });
 
-      // Insert questions and answers
-      await prisma.quizQuestion.createMany({
-        data: questions.map((question) => ({
-          id: uuidv4(),
+      // First check if there are existing questions for the quiz (if there are we want to update them)
+      // We do this instead of deleting and re-creating them to avoid losing any existing scores or relationships
+      const existingQuestions = await prisma.quizQuestion.findMany({
+        where: {
           quizId,
-          questionNum: question.questionNum,
-          question: question.question,
-          answer: question.answer,
-        })),
+        },
       });
+      if (existingQuestions.length > 0) {
+        // Update existing questions
+        for (const question of questions) {
+          await prisma.quizQuestion.update({
+            where: {
+              quizId_questionNum: {
+                quizId,
+                questionNum: question.questionNum,
+              },
+            },
+            data: {
+              question: question.question ?? null,
+              answer: question.answer ?? null,
+            },
+          });
+        }
+      } else {
+        // If there are no existing questions, we just insert the new ones
+        await prisma.quizQuestion.createMany({
+          data: questions.map((question) => ({
+            id: uuidv4(),
+            quizId,
+            questionNum: question.questionNum,
+            question: question.question,
+            answer: question.answer,
+          })),
+        });
+      }
 
       // Update quiz state
-      return prisma.quiz.update({
+      await prisma.quiz.update({
         data: {
-          aiProcessingState: 'COMPLETED',
+          aiProcessingState: result,
           aiProcessingCertaintyPercent: confidence,
         },
         where: {
