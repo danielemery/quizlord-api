@@ -486,7 +486,7 @@ export class QuizService {
       console.log(`Final extraction result: ${JSON.stringify(extractionResult)}`);
       if (extractionResult && extractionResult.questions) {
         console.log(`Successfully extracted questions for quiz ${quizId}`);
-        await this.#persistence.markQuizAIExtractionCompleted(
+        await this.#persistence.upsertQuizQuestionsWithSuccessfulAIExtraction(
           quizId,
           extractionResult.questions.map(({ questionNumber, ...rest }) => ({
             ...rest,

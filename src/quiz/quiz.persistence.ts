@@ -378,20 +378,13 @@ export class QuizPersistence {
     });
   }
 
-  async markQuizAIExtractionCompleted(
+  async upsertQuizQuestionsWithSuccessfulAIExtraction(
     quizId: string,
     questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
     confidence: number,
   ) {
     return this.#prisma.client().$transaction(async (prisma) => {
-      // Remove any existing questions
-      await prisma.quizQuestion.deleteMany({
-        where: {
-          quizId,
-        },
-      });
-
-      // Remove any existing inaccurate OCR notes
+      // Remove any existing inaccurate OCR notes (since we are replacing the questions)
       await prisma.quizNote.deleteMany({
         where: {
           quizId,
@@ -399,16 +392,41 @@ export class QuizPersistence {
         },
       });
 
-      // Insert questions and answers
-      await prisma.quizQuestion.createMany({
-        data: questions.map((question) => ({
-          id: uuidv4(),
+      // First check if there are existing questions for the quiz (if there are we want to update them)
+      // We do this instead of deleting and re-creating them to avoid losing any existing scores or relationships
+      const existingQuestions = await prisma.quizQuestion.findMany({
+        where: {
           quizId,
-          questionNum: question.questionNum,
-          question: question.question,
-          answer: question.answer,
-        })),
+        },
       });
+      if (existingQuestions.length > 0) {
+        // Update existing questions
+        for (const question of questions) {
+          await prisma.quizQuestion.update({
+            where: {
+              quizId_questionNum: {
+                quizId,
+                questionNum: question.questionNum,
+              },
+            },
+            data: {
+              question: question.question,
+              answer: question.answer,
+            },
+          });
+        }
+      } else {
+        // If there are no existing questions, we just insert the new ones
+        await prisma.quizQuestion.createMany({
+          data: questions.map((question) => ({
+            id: uuidv4(),
+            quizId,
+            questionNum: question.questionNum,
+            question: question.question,
+            answer: question.answer,
+          })),
+        });
+      }
 
       // Update quiz state
       return prisma.quiz.update({
