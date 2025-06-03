@@ -88,6 +88,7 @@ export class QuizService {
       uploadedByUser,
       aiProcessingCertaintyPercent,
       notes,
+      questions,
       ...quizFieldsThatDoNotRequireTransform
     } = quiz;
     return {
@@ -103,6 +104,12 @@ export class QuizService {
       },
       aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? aiProcessingCertaintyPercent.toNumber() : undefined,
       reportedInaccurateOCR: notes.some((note) => note.noteType === 'INACCURATE_OCR'),
+      questions: questions?.map((question) => ({
+        id: question.id,
+        questionNum: question.questionNum,
+        question: question.question ?? undefined,
+        answer: question.answer ?? undefined,
+      })),
     };
   }
 

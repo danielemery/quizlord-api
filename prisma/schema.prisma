@@ -130,8 +130,8 @@ model QuizNote {
 model QuizQuestion {
   id          String @id
   quizId      String @map("quiz_id")
-  question    String
-  answer      String
+  question    String?
+  answer      String?
   questionNum Int @map("question_num")
 
   results QuizCompletionQuestionResult[]
