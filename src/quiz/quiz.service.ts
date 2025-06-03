@@ -493,16 +493,26 @@ export class QuizService {
       console.log(`Final extraction result: ${JSON.stringify(extractionResult)}`);
       if (extractionResult && extractionResult.questions) {
         console.log(`Successfully extracted questions for quiz ${quizId}`);
-        await this.#persistence.upsertQuizQuestionsWithSuccessfulAIExtraction(
+        await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
           quizId,
           extractionResult.questions.map(({ questionNumber, ...rest }) => ({
             ...rest,
             questionNum: questionNumber,
           })),
+          'COMPLETED',
           extractionResult.confidence,
         );
       } else {
-        await this.#persistence.markQuizAIExtractionFailed(quizId);
+        await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
+          quizId,
+          [
+            // Generate empty questions for the quiz
+            ...Array.from({ length: questionCount }, (_, i) => ({
+              questionNum: i + 1,
+            })),
+          ],
+          'ERRORED',
+        );
       }
     }
   }

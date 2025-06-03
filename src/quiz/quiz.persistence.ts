@@ -1,4 +1,4 @@
-import { Quiz, QuizImage, QuizNoteType } from '@prisma/client';
+import { Quiz, QuizAIProcessingState, QuizImage, QuizNoteType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service';
@@ -367,21 +367,22 @@ export class QuizPersistence {
     });
   }
 
-  markQuizAIExtractionFailed(quizId: string) {
-    return this.#prisma.client().quiz.update({
-      data: {
-        aiProcessingState: 'ERRORED',
-      },
-      where: {
-        id: quizId,
-      },
-    });
-  }
-
-  async upsertQuizQuestionsWithSuccessfulAIExtraction(
+  async upsertQuizQuestionsAfterAIExtraction(
     quizId: string,
     questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    result: 'ERRORED',
+  ): Promise<void>;
+  async upsertQuizQuestionsAfterAIExtraction(
+    quizId: string,
+    questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    result: 'COMPLETED',
     confidence: number,
+  ): Promise<void>;
+  async upsertQuizQuestionsAfterAIExtraction(
+    quizId: string,
+    questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
+    result: QuizAIProcessingState,
+    confidence?: number,
   ) {
     return this.#prisma.client().$transaction(async (prisma) => {
       // Remove any existing inaccurate OCR notes (since we are replacing the questions)
@@ -429,9 +430,9 @@ export class QuizPersistence {
       }
 
       // Update quiz state
-      return prisma.quiz.update({
+      await prisma.quiz.update({
         data: {
-          aiProcessingState: 'COMPLETED',
+          aiProcessingState: result,
           aiProcessingCertaintyPercent: confidence,
         },
         where: {
