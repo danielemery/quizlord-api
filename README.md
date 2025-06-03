@@ -62,6 +62,14 @@ npm run db:dev:migrate
 npm start
 ```
 
+## Create Migrations
+
+Prisma migrations can be created with the following command:
+
+```sh
+npm run db:dev:migrate
+```
+
 ## Test Docker Image Locally
 
 ```sh
