@@ -411,8 +411,8 @@ export class QuizPersistence {
               },
             },
             data: {
-              question: question.question,
-              answer: question.answer,
+              question: question.question ?? null,
+              answer: question.answer ?? null,
             },
           });
         }
