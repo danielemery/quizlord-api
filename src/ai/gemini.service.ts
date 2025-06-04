@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 
 import { QuizImageType } from '../quiz/quiz.dto';
@@ -7,32 +7,35 @@ import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-resul
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
 
 export class GeminiService {
-  #ai: GoogleGenerativeAI;
-  #model: GenerativeModel;
+  #ai: GoogleGenAI;
 
   constructor(googleAIApiKey: string) {
-    this.#ai = new GoogleGenerativeAI(googleAIApiKey);
-    this.#model = this.#ai.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+    this.#ai = new GoogleGenAI({ apiKey: googleAIApiKey });
   }
 
   async extractQuizQuestions(
     expectedQuestionCount: number,
     quizImages: { quizImageUrl: string; mimeType: string; type: QuizImageType }[],
   ) {
-    const prompt = this.#generatePrompt({
+    const promptText = this.#generatePrompt({
       expectedQuestionCount,
       quizImageTypes: quizImages.map(({ type }) => type),
     });
-    console.log(`Calling generative model with prompt: ${prompt}`);
+    console.log(`Calling generative model with prompt: ${promptText}`);
     const quizImageParts = await Promise.all(
       quizImages.map(async ({ quizImageUrl, mimeType }) => {
         return await this.#fileToGenerativePart(quizImageUrl, mimeType);
       }),
     );
 
-    const result = await this.#model.generateContent([prompt, ...quizImageParts]);
-    const response = await result.response;
-    const text = response.text();
+    // Construct the contents array: first part is text, subsequent parts are images
+    const contents = [{ text: promptText }, ...quizImageParts];
+
+    const generationResult = await this.#ai
+      .getGenerativeModel({ model: 'models/gemini-1.5-flash' })
+      .generateContent({ contents }); // Pass contents as an object { contents: ... }
+    // result is of type GenerateContentResponse, which has a text() method.
+    const text = generationResult.response.text(); // Corrected based on SDK structure: GenerateContentResponse.text()
     console.log(`Raw response from model: ${text}`);
     const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(text));
     console.log('Successfully parsed response to JSON');
