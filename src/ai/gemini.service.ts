@@ -1,5 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-import axios from 'axios';
+import { GoogleGenAI } from '@google/genai';
 
 import { QuizImageType } from '../quiz/quiz.dto';
 import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema';
@@ -12,12 +11,10 @@ export interface ExtractQuizQuestionsResult extends ExpectedAIExtractAnswersResu
 }
 
 export class GeminiService {
-  #ai: GoogleGenerativeAI;
-  #model: GenerativeModel;
+  #ai: GoogleGenAI;
 
   constructor(googleAIApiKey: string) {
-    this.#ai = new GoogleGenerativeAI(googleAIApiKey);
-    this.#model = this.#ai.getGenerativeModel({ model: MODEL_NAME });
+    this.#ai = new GoogleGenAI({ apiKey: googleAIApiKey });
   }
 
   async extractQuizQuestions(
@@ -35,11 +32,22 @@ export class GeminiService {
       }),
     );
 
-    const result = await this.#model.generateContent([prompt, ...quizImageParts]);
-    const response = await result.response;
-    const text = response.text();
-    console.log(`Raw response from model: ${text}`);
-    const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(text));
+    const result = await this.#ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: [
+        {
+          text: prompt,
+        },
+        ...quizImageParts,
+      ],
+    });
+
+    if (!result?.text) {
+      throw new Error('No text response received from the model');
+    }
+
+    console.log(`Raw response from model: ${result.text}`);
+    const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(result.text));
     console.log('Successfully parsed response to JSON');
     const validatedResult = expectedResultFormat.validate(jsonParsed);
     if (validatedResult.error) {
@@ -70,11 +78,12 @@ export class GeminiService {
   }
 
   async #fileToGenerativePart(fileUrl: string, mimeType: string) {
-    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data);
+    const response = await fetch(fileUrl);
+    const imageArrayBuffer = await response.arrayBuffer();
+    const base64ImageData = Buffer.from(imageArrayBuffer).toString('base64');
     return {
       inlineData: {
-        data: buffer.toString('base64'),
+        data: base64ImageData,
         mimeType,
       },
     };

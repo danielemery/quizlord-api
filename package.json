@@ -33,7 +33,7 @@
     "@aws-sdk/client-sqs": "^3.658.1",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
     "@aws-sdk/util-create-request": "^3.341.0",
-    "@google/generative-ai": "^0.24.0",
+    "@google/genai": "^1.4.0",
     "@prisma/client": "^6.5.0",
     "@sentry/node": "^9.7.0",
     "@sentry/profiling-node": "^9.7.0",
