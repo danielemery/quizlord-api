@@ -96,6 +96,10 @@ const typeDefs = gql`
     """
     aiProcessingCertaintyPercent: Float
     """
+    The model used to process the quiz images.
+    """
+    aiProcessingModel: String
+    """
     True if a user has marked the OCR for this quiz as inaccurate.
     """
     reportedInaccurateOCR: Boolean

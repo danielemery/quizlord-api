@@ -1,18 +1,17 @@
 import {
-  Quiz as QuizPersistenceModel,
   QuizCompletion as QuizCompletionPersistenceModel,
-  QuizCompletionUser as QuizCompletionUserPersistenceModel,
   QuizCompletionQuestionResult as QuizCompletionQuestionResultPersistenceModel,
+  QuizCompletionUser as QuizCompletionUserPersistenceModel,
   QuizImage as QuizImagePersistenceModel,
-  User as UserPersistenceModel,
   QuizImageType,
+  Quiz as QuizPersistenceModel,
   QuizType,
+  User as UserPersistenceModel,
 } from '@prisma/client';
 import mime from 'mime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ExpectedAIExtractAnswersResult } from '../ai/ai-results.schema';
-import { GeminiService } from '../ai/gemini.service';
+import { ExtractQuizQuestionsResult, GeminiService } from '../ai/gemini.service';
 import { S3FileService } from '../file/s3.service';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
@@ -87,6 +86,7 @@ export class QuizService {
       completions,
       uploadedByUser,
       aiProcessingCertaintyPercent,
+      aiProcessingModel,
       notes,
       questions,
       ...quizFieldsThatDoNotRequireTransform
@@ -103,6 +103,7 @@ export class QuizService {
         name: uploadedByUser.name ?? undefined,
       },
       aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? aiProcessingCertaintyPercent.toNumber() : undefined,
+      aiProcessingModel: aiProcessingModel ?? undefined,
       reportedInaccurateOCR: notes.some((note) => note.noteType === 'INACCURATE_OCR'),
       questions: questions?.map((question) => ({
         id: question.id,
@@ -165,6 +166,7 @@ export class QuizService {
           uploadedByUserId: userId,
           aiProcessingState: 'NOT_QUEUED',
           aiProcessingCertaintyPercent: null,
+          aiProcessingModel: null,
         },
         filesWithKeys.map((file) => ({
           imageKey: file.imageKey,
@@ -483,7 +485,7 @@ export class QuizService {
     }));
     if (this.#imageMetadataIsValid(imageMetadata)) {
       const questionCount = this.getMaxScoreForQuizType(quiz.type);
-      let extractionResult: ExpectedAIExtractAnswersResult | undefined;
+      let extractionResult: ExtractQuizQuestionsResult | undefined;
       try {
         extractionResult = await this.#geminiService.extractQuizQuestions(questionCount, imageMetadata);
       } catch (err) {
@@ -500,6 +502,7 @@ export class QuizService {
             questionNum: questionNumber,
           })),
           'COMPLETED',
+          extractionResult.model,
           extractionResult.confidence,
         );
       } else {
@@ -512,6 +515,7 @@ export class QuizService {
             })),
           ],
           'ERRORED',
+          extractionResult?.model ?? null,
         );
       }
     }

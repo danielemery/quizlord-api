@@ -62,6 +62,7 @@ export interface QuizDetails {
   questions?: QuizQuestion[];
   aiProcessingState: QuizAIProcessingState;
   aiProcessingCertaintyPercent?: number;
+  aiProcessingModel?: string;
   reportedInaccurateOCR: boolean;
 }
 

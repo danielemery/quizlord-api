@@ -301,6 +301,7 @@ describe('quiz', () => {
             uploadedByUserId: 'fake-user-id',
             aiProcessingCertaintyPercent: null,
             aiProcessingState: 'NOT_QUEUED',
+            aiProcessingModel: null,
           },
           [
             { imageKey: 'key-one', state: 'PENDING_UPLOAD', type: 'QUESTION' },
