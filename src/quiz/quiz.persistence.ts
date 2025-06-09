@@ -56,6 +56,7 @@ export class QuizPersistence {
         uploadedByUser: true,
         aiProcessingState: true,
         aiProcessingCertaintyPercent: true,
+        aiProcessingModel: true,
       },
       where: {
         ...(filters.excludeCompletedBy && {
@@ -371,17 +372,20 @@ export class QuizPersistence {
     quizId: string,
     questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
     result: 'ERRORED',
+    model: string | null,
   ): Promise<void>;
   async upsertQuizQuestionsAfterAIExtraction(
     quizId: string,
     questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
     result: 'COMPLETED',
+    model: string | null,
     confidence: number,
   ): Promise<void>;
   async upsertQuizQuestionsAfterAIExtraction(
     quizId: string,
     questions: Omit<QuizQuestion, 'id' | 'myScore'>[],
     result: QuizAIProcessingState,
+    model: string | null,
     confidence?: number,
   ) {
     return this.#prisma.client().$transaction(async (prisma) => {
@@ -434,6 +438,7 @@ export class QuizPersistence {
         data: {
           aiProcessingState: result,
           aiProcessingCertaintyPercent: confidence,
+          aiProcessingModel: model,
         },
         where: {
           id: quizId,

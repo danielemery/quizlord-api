@@ -39,6 +39,7 @@ model Quiz {
   uploadedByUserId String   @map("uploaded_by_user_id")
   aiProcessingState QuizAIProcessingState @map("ai_processing_state") @default(NOT_QUEUED)
   aiProcessingCertaintyPercent Decimal? @map("ai_processing_certainty_percent")
+  aiProcessingModel String? @map("ai_processing_model")
 
   completions    QuizCompletion[]
   images         QuizImage[]

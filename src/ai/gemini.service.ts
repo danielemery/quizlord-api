@@ -5,6 +5,11 @@ import { QuizImageType } from '../quiz/quiz.dto';
 import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema';
 
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
+const MODEL_NAME = 'gemini-2.0-flash-lite';
+
+export interface ExtractQuizQuestionsResult extends ExpectedAIExtractAnswersResult {
+  model: string;
+}
 
 export class GeminiService {
   #ai: GoogleGenerativeAI;
@@ -12,13 +17,13 @@ export class GeminiService {
 
   constructor(googleAIApiKey: string) {
     this.#ai = new GoogleGenerativeAI(googleAIApiKey);
-    this.#model = this.#ai.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+    this.#model = this.#ai.getGenerativeModel({ model: MODEL_NAME });
   }
 
   async extractQuizQuestions(
     expectedQuestionCount: number,
     quizImages: { quizImageUrl: string; mimeType: string; type: QuizImageType }[],
-  ) {
+  ): Promise<ExtractQuizQuestionsResult> {
     const prompt = this.#generatePrompt({
       expectedQuestionCount,
       quizImageTypes: quizImages.map(({ type }) => type),
@@ -41,7 +46,11 @@ export class GeminiService {
       throw new Error(validatedResult.error.message);
     }
     console.log('Response conforms to expected schema');
-    return this.#sanitizeGeminiParsedResult(validatedResult.value);
+    const sanitized = this.#sanitizeGeminiParsedResult(validatedResult.value);
+    return {
+      ...sanitized,
+      model: MODEL_NAME,
+    };
   }
 
   #sanitizeGeminiParsedResult(result: ExpectedAIExtractAnswersResult): ExpectedAIExtractAnswersResult {
