@@ -1,4 +1,4 @@
-FROM node:22.16.0-alpine
+FROM node:22.17.1-alpine
 
 # Since alpine 3.21 the location of openssl has moved. This is a workaround to allow prisma access
 # openssl at it's previous location. It should be able to be removed once prisma is updated.
