@@ -54,7 +54,7 @@ model Quiz {
   deletedByUser  User?            @relation(name: "deletedByUser", fields: [deletedByUserId], references: [id], onDelete: Restrict)
   updatedByUser  User?            @relation(name: "updatedByUser", fields: [updatedByUserId], references: [id], onDelete: Restrict)
 
-  @@unique(fields: [date, type])
+  @@unique(fields: [date, type, deletedAt])
   @@map("quiz")
 }
 
