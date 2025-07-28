@@ -64,6 +64,7 @@ export class QuizPersistence {
         deletionReason: true,
       },
       where: {
+        deletedAt: null,
         ...(filters.excludeCompletedBy && {
           completions: {
             none: {
@@ -106,6 +107,7 @@ export class QuizPersistence {
     const quizDetails = await this.#prisma.client().quiz.findFirstOrThrow({
       where: {
         id,
+        deletedAt: null,
       },
       include: {
         completions: {
@@ -384,6 +386,9 @@ export class QuizPersistence {
       take: limit,
       orderBy: {
         uploadedAt: 'desc',
+      },
+      where: {
+        deletedAt: null,
       },
       include: {
         uploadedByUser: {

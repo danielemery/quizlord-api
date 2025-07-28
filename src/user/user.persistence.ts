@@ -218,6 +218,7 @@ export class UserPersistence {
         id: {
           in: quizUploadActivityItems.map((item) => item.resourceId),
         },
+        deletedAt: null,
       },
       include: {
         uploadedByUser: true,
