@@ -3,8 +3,15 @@ const config = require('@dtdot/eslint-config');
 module.exports = [
   ...config.eslint.configs.recommended,
   {
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
+      },
+    },
     rules: {
-      // Place any rule overrides in here
+      // Overriding/updating/adding rules over the base provided by @dtdot/eslint-config
+      '@typescript-eslint/no-floating-promises': 'error',
     }
   },
   {
