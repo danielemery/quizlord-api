@@ -20,6 +20,8 @@ const mockPersistence = {
   getQuizByIdWithResults: jest.fn(),
   getRecentQuizCompletions: jest.fn(),
   getRecentQuizUploads: jest.fn(),
+  hasQuizCompletions: jest.fn(),
+  softDeleteQuiz: jest.fn(),
 };
 const mockFileService = {
   createKey: jest.fn(),
@@ -504,6 +506,30 @@ describe('quiz', () => {
             },
           },
         ]);
+      });
+    });
+
+    describe('deleteQuiz', () => {
+      it('should throw error when quiz has completions', async () => {
+        mockPersistence.hasQuizCompletions = jest.fn().mockResolvedValue(true);
+        mockPersistence.softDeleteQuiz = jest.fn();
+
+        await expect(sut.deleteQuiz('quiz-1', 'test reason', 'test@example.com')).rejects.toThrow(
+          'Cannot delete a quiz that has completions',
+        );
+
+        expect(mockPersistence.hasQuizCompletions).toHaveBeenCalledWith('quiz-1');
+        expect(mockPersistence.softDeleteQuiz).not.toHaveBeenCalled();
+      });
+
+      it('should delete quiz when it has no completions', async () => {
+        mockPersistence.hasQuizCompletions = jest.fn().mockResolvedValue(false);
+        mockPersistence.softDeleteQuiz = jest.fn();
+
+        await sut.deleteQuiz('quiz-1', 'test reason', 'test@example.com');
+
+        expect(mockPersistence.hasQuizCompletions).toHaveBeenCalledWith('quiz-1');
+        expect(mockPersistence.softDeleteQuiz).toHaveBeenCalledWith('quiz-1', 'test reason', 'test@example.com');
       });
     });
   });

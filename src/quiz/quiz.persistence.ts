@@ -353,6 +353,15 @@ export class QuizPersistence {
     });
   }
 
+  async hasQuizCompletions(quizId: string): Promise<boolean> {
+    const completion = await this.#prisma.client().quizCompletion.findFirst({
+      where: {
+        quizId,
+      },
+    });
+    return completion !== null;
+  }
+
   async getRecentQuizCompletions({ limit }: { limit: number }) {
     return this.#prisma.client().quizCompletion.findMany({
       take: limit,

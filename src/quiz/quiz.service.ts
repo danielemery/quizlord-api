@@ -23,7 +23,7 @@ import {
   QuizFilters,
   QuizImage,
 } from './quiz.dto';
-import { MustProvideAtLeastOneFileError } from './quiz.errors';
+import { CannotDeleteQuizWithCompletionsError, MustProvideAtLeastOneFileError } from './quiz.errors';
 import { QuizPersistence } from './quiz.persistence';
 
 const MAXIMUM_QUIZ_PAGE_SIZE = 100;
@@ -539,6 +539,11 @@ export class QuizService {
   }
 
   async deleteQuiz(quizId: string, deletionReason: string, email: string) {
+    const hasCompletions = await this.#persistence.hasQuizCompletions(quizId);
+    if (hasCompletions) {
+      throw new CannotDeleteQuizWithCompletionsError('Cannot delete a quiz that has completions');
+    }
+
     await this.#persistence.softDeleteQuiz(quizId, deletionReason, email);
   }
 }
