@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: nowsprinting/check-version-format-action@v4.0.6
+      - uses: nowsprinting/check-version-format-action@v4.0.7
         id: version
         with:
           prefix: 'v'
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: nowsprinting/check-version-format-action@v4.0.6
+      - uses: nowsprinting/check-version-format-action@v4.0.7
         id: version
         with:
           prefix: 'v'
@@ -135,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: nowsprinting/check-version-format-action@v4.0.6
+      - uses: nowsprinting/check-version-format-action@v4.0.7
         id: version
         with:
           prefix: 'v'
