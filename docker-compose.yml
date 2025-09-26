@@ -1,7 +1,7 @@
 services:
   postgres:
     container_name: quizlord-postgres
-    image: postgres:15
+    image: postgres:18
     ports:
       - 15432:5432
     environment:
