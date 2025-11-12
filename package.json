@@ -3,7 +3,7 @@
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "main": "index.js",
   "engines": {
-    "node": "22.17.1"
+    "node": "24.11.1"
   },
   "scripts": {
     "build": "tsc",
@@ -57,7 +57,7 @@
     "@types/cors": "^2.8.13",
     "@types/jest": "^29.5.8",
     "@types/mime": "^3.0.4",
-    "@types/node": "^22.9.3",
+    "@types/node": "^24.0.0",
     "@types/pg": "^8.6.5",
     "eslint": "^9.22.0",
     "jest": "^29.7.0",
