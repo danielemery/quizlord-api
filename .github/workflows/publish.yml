@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.1
 
       - name: Configure node
         uses: actions/setup-node@v4.4.0
@@ -141,7 +141,7 @@ jobs:
           prefix: 'v'
 
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v5.0.1
 
       - name: Download build artifacts with sourcemaps
         uses: actions/download-artifact@v6.0.0
