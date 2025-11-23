@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 
 import { QuizImageType } from '../quiz/quiz.dto';
@@ -12,12 +12,10 @@ export interface ExtractQuizQuestionsResult extends ExpectedAIExtractAnswersResu
 }
 
 export class GeminiService {
-  #ai: GoogleGenerativeAI;
-  #model: GenerativeModel;
+  #ai: GoogleGenAI;
 
   constructor(googleAIApiKey: string) {
-    this.#ai = new GoogleGenerativeAI(googleAIApiKey);
-    this.#model = this.#ai.getGenerativeModel({ model: MODEL_NAME });
+    this.#ai = new GoogleGenAI({ apiKey: googleAIApiKey });
   }
 
   async extractQuizQuestions(
@@ -35,9 +33,14 @@ export class GeminiService {
       }),
     );
 
-    const result = await this.#model.generateContent([prompt, ...quizImageParts]);
-    const response = await result.response;
-    const text = response.text();
+    const result = await this.#ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: [prompt, ...quizImageParts],
+    });
+    const text = result.text;
+    if (!text) {
+      throw new Error('No text response from model');
+    }
     console.log(`Raw response from model: ${text}`);
     const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(text));
     console.log('Successfully parsed response to JSON');
