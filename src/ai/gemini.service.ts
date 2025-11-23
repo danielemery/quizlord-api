@@ -5,7 +5,7 @@ import { QuizImageType } from '../quiz/quiz.dto';
 import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema';
 
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
-const MODEL_NAME = 'gemini-2.0-flash-lite';
+const MODEL_NAME = 'gemini-3-flash-preview';
 
 export interface ExtractQuizQuestionsResult extends ExpectedAIExtractAnswersResult {
   model: string;
