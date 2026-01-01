@@ -1,34 +1,35 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-	"name": "Node.js & TypeScript",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:4-24-bookworm",
-	"features": {
-		"ghcr.io/itsmechlark/features/doppler:2": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
-	},
+  "name": "Node.js & TypeScript",
+  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:4-24-bookworm",
+  "features": {
+    "ghcr.io/itsmechlark/features/doppler:2": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+  // Switch from legacy iptables to nftables backend. Required because the legacy iptables
+  // can't initialize the NAT table on some host kernels (e.g., GitHub Codespaces), causing
+  // Docker daemon to fail with "iptables: can't initialize iptables table 'nat'".
+  "postStartCommand": "sudo update-alternatives --set iptables /usr/sbin/iptables-nft 2>/dev/null; sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-nft 2>/dev/null || true",
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  // "features": {},
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
 
-	// Configure tool-specific properties.
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode",
-				"prisma.prisma"
-			]
-		}
-	}
+  // Use 'postCreateCommand' to run commands after the container is created.
+  // "postCreateCommand": "yarn install",
 
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+  // Configure tool-specific properties.
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "prisma.prisma"]
+    }
+  }
+
+  // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+  // "remoteUser": "root"
 }
