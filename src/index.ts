@@ -115,6 +115,18 @@ async function initialise() {
       res.set(QUIZLORD_VERSION_HEADER, config.QUIZLORD_VERSION);
       next();
     },
+    (req, res, next) => {
+      // Skip validation for CORS preflight requests
+      if (req.method === 'OPTIONS') {
+        next();
+        return;
+      }
+      if (!req.body || typeof req.body.query !== 'string') {
+        res.status(400).send('Bad Request: GraphQL query required');
+        return;
+      }
+      next();
+    },
     // expressMiddleware accepts the same arguments:
     // an Apollo Server instance and optional configuration options
     expressMiddleware(server, {
