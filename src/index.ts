@@ -88,6 +88,11 @@ async function initialise() {
 
   Sentry.setupExpressErrorHandler(app);
 
+  // Health check endpoint for uptime monitoring
+  app.get('/', (_req, res) => {
+    res.send('OK');
+  });
+
   app.use(
     '/',
     cors<cors.CorsRequest>({
