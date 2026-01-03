@@ -11,10 +11,11 @@ import express from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 
-import { activityQueries, activityChildren } from './activity/activity.gql';
+import { activityChildren, activityQueries } from './activity/activity.gql';
 import config from './config/config';
 import typeDefs from './gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
+import { sentryApolloPlugin } from './sentry-apollo-plugin';
 import { authenticationService, prismaService, queueService, userService } from './service.locator';
 import { statisticsQueries } from './statistics/statistics.gql';
 import { Role } from './user/user.dto';
@@ -74,19 +75,10 @@ async function initialise() {
     typeDefs,
     resolvers,
     csrfPrevention: true,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
-    formatError(formattedError, error) {
-      if (formattedError.extensions?.code === 'INTERNAL_SERVER_ERROR') {
-        console.error(error);
-        Sentry.captureException(error);
-      }
-      return formattedError;
-    },
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), sentryApolloPlugin],
   });
 
   await server.start();
-
-  Sentry.setupExpressErrorHandler(app);
 
   // Health check endpoint for uptime monitoring
   app.get('/', (_req, res) => {
@@ -154,11 +146,39 @@ async function initialise() {
     }),
   );
 
+  // Sentry error handler must be after all routes/middleware
+  Sentry.setupExpressErrorHandler(app);
+
   void queueService.subscribeToFileUploads();
   void queueService.subscribeToAiProcessing();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
 
   console.log(`🚀 Server ready at http://localhost:4000/`);
+
+  // Graceful shutdown: drain Sentry events before closing
+  const shutdown = async (signal: string) => {
+    console.log(`Received ${signal}, shutting down gracefully...`);
+    try {
+      await Sentry.close(2000);
+    } catch (e) {
+      console.error('Error closing Sentry:', e);
+    }
+
+    const serverClose = new Promise<'closed'>((resolve) => httpServer.close(() => resolve('closed')));
+    const timeout = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 10000));
+
+    const result = await Promise.race([serverClose, timeout]);
+    if (result === 'timeout') {
+      console.error('Forcing exit after timeout waiting for connections to close');
+      process.exit(1);
+    }
+
+    console.log('HTTP server closed');
+    process.exit(0);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 initialise()

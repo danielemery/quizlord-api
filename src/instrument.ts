@@ -6,7 +6,7 @@ import config from './config/config';
 console.log('Initialising Sentry instrumentation');
 Sentry.init({
   dsn: config.SENTRY_DSN,
-  integrations: [Sentry.prismaIntegration(), nodeProfilingIntegration()],
+  integrations: [Sentry.prismaIntegration(), Sentry.graphqlIntegration(), nodeProfilingIntegration()],
   tracesSampleRate: 1.0,
   profilesSampleRate: 1.0,
   environment: config.DOPPLER_CONFIG,
