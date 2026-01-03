@@ -93,6 +93,15 @@ async function initialise() {
     res.send('OK');
   });
 
+  // 404 for any other non-GraphQL routes (GraphQL uses POST to /, OPTIONS for CORS preflight)
+  app.use((req, res, next) => {
+    if (req.path !== '/' || (req.method !== 'POST' && req.method !== 'OPTIONS')) {
+      res.status(404).send('Not Found');
+      return;
+    }
+    next();
+  });
+
   app.use(
     '/',
     cors<cors.CorsRequest>({
