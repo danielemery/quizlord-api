@@ -20,6 +20,7 @@ import { authenticationService, prismaService, queueService, userService } from 
 import { statisticsQueries } from './statistics/statistics.gql.js';
 import { Role } from './user/user.dto.js';
 import { userMutations, userQueries } from './user/user.gql.js';
+import { loggingApolloPlugin } from './logging-apollo-plugin.js';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -76,7 +77,7 @@ async function initialise() {
     typeDefs,
     resolvers,
     csrfPrevention: true,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), sentryApolloPlugin],
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), sentryApolloPlugin, loggingApolloPlugin],
   });
 
   await server.start();
