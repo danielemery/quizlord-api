@@ -18,6 +18,7 @@ import typeDefs from './gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 import { sentryApolloPlugin } from './sentry-apollo-plugin';
 import { authenticationService, prismaService, queueService, userService } from './service.locator';
+import { logger } from './util/logger';
 import { statisticsQueries } from './statistics/statistics.gql';
 import { Role } from './user/user.dto';
 import { userQueries } from './user/user.gql';
@@ -154,15 +155,18 @@ async function initialise() {
   void queueService.subscribeToAiProcessing();
   await new Promise<void>((resolve) => httpServer.listen({ port: 4000 }, resolve));
 
-  console.log(`🚀 Server ready at http://localhost:4000/`);
+  logger.info('Server ready', { port: 4000 });
 
   // Graceful shutdown: drain Sentry events before closing
   const shutdown = async (signal: string) => {
-    console.log(`Received ${signal}, shutting down gracefully...`);
+    logger.info('Shutdown initiated', { signal });
     try {
       await Sentry.close(2000);
     } catch (e) {
-      console.error('Error closing Sentry:', e);
+      logger.error('Error closing Sentry', {
+        error: e instanceof Error ? e.message : String(e),
+        stack: e instanceof Error ? e.stack : undefined,
+      });
     }
 
     const serverClose = new Promise<'closed'>((resolve) => httpServer.close(() => resolve('closed')));
@@ -170,11 +174,11 @@ async function initialise() {
 
     const result = await Promise.race([serverClose, timeout]);
     if (result === 'timeout') {
-      console.error('Forcing exit after timeout waiting for connections to close');
+      logger.error('Forcing exit after timeout waiting for connections to close');
       process.exit(1);
     }
 
-    console.log('HTTP server closed');
+    logger.info('HTTP server closed');
     process.exit(0);
   };
 
@@ -184,10 +188,12 @@ async function initialise() {
 
 initialise()
   .then(() => {
-    console.log('Server initialised sucessfully.');
+    logger.info('Server initialised successfully');
   })
   .catch((err) => {
-    console.error('Server encountered error initialising and had to shut down');
-    console.error(err);
+    logger.error('Server encountered error initialising and had to shut down', {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     process.exit(1);
   });
