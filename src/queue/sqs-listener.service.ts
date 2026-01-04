@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node';
 
 import config from '../config/config.js';
 import { QuizService } from '../quiz/quiz.service.js';
+import { logger } from '../util/logger.js';
 
 /** The number of seconds for sqs to wait until a message is available. */
 const SQS_LONG_POLLING_TIMEOUT_SECONDS = 10;
@@ -68,7 +69,7 @@ export class SQSQueueListenerService {
       }
       iterationsSinceCheckin = (iterationsSinceCheckin + 1) % CHECKIN_EVERY_N_ITERATIONS;
       try {
-        console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
+        logger.info('Polling for file upload messages', { queue: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL });
         const result = await this.#client.send(
           new ReceiveMessageCommand({
             QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
@@ -94,8 +95,10 @@ export class SQSQueueListenerService {
         }
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
-        console.error(`Error in file upload polling loop, retrying in ${backoff}s`, err);
-        Sentry.captureException(err, { tags: { queue: 'file-upload' } });
+        logger.error(`Error in file upload polling loop, retrying in ${backoff}s`, {
+          exception: err,
+          sentryTags: { queue: 'file-upload' },
+        });
         if (activeCheckInId) {
           Sentry.captureCheckIn({ checkInId: activeCheckInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'error' });
           activeCheckInId = undefined;
@@ -103,7 +106,7 @@ export class SQSQueueListenerService {
         await sleep(backoff, this.#abortController.signal);
       }
     }
-    console.log('File upload polling loop stopped');
+    logger.info('File upload polling loop stopped');
   }
 
   async subscribeToAiProcessing() {
@@ -119,7 +122,7 @@ export class SQSQueueListenerService {
         monitorConfig,
       );
       try {
-        console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
+        logger.info('Polling for AI processing messages', { queue: config.AWS_AI_PROCESSING_SQS_QUEUE_URL });
         const result = await this.#client.send(
           new ReceiveMessageCommand({
             QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
@@ -140,13 +143,15 @@ export class SQSQueueListenerService {
         }
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
-        console.error(`Error in AI processing polling loop, retrying in ${backoff}s`, err);
-        Sentry.captureException(err, { tags: { queue: 'ai-processing' } });
+        logger.error(`Error in AI processing polling loop, retrying in ${backoff}s`, {
+          exception: err,
+          sentryTags: { queue: 'ai-processing' },
+        });
         Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'error' });
         await sleep(backoff, this.#abortController.signal);
       }
     }
-    console.log('AI processing polling loop stopped');
+    logger.info('AI processing polling loop stopped');
   }
 
   async processMessage(message: Message) {
@@ -159,10 +164,10 @@ export class SQSQueueListenerService {
             await Promise.all(messageData.Records.map((record) => this.processUploadedItem(record)));
           }
         } else {
-          console.warn(`Unexpected empty inner message body`, message);
+          logger.warn('Unexpected empty inner message body', { messageId: message.MessageId });
         }
       } else {
-        console.warn(`Unexpected empty message body`, message);
+        logger.warn('Unexpected empty message body', { messageId: message.MessageId });
       }
 
       await this.#client.send(
@@ -172,17 +177,19 @@ export class SQSQueueListenerService {
         }),
       );
     } catch (err) {
-      console.error('Error processing file upload message, leaving in queue for retry', err);
-      Sentry.captureException(err, { tags: { queue: 'file-upload' } });
+      logger.error('Error processing file upload message, leaving in queue for retry', {
+        exception: err,
+        sentryTags: { queue: 'file-upload' },
+      });
     }
   }
 
   async processUploadedItem(record: S3MessageContentRecord) {
-    console.log('Processing uploaded item');
-    if (record.eventName !== 'ObjectCreated:Put') {
-      console.warn(`Unexpected event name <${record.eventName}>`);
-    }
     const key = record.s3.object.key;
+    logger.info('Processing uploaded item', { key, eventName: record.eventName });
+    if (record.eventName !== 'ObjectCreated:Put') {
+      logger.warn('Unexpected event name', { eventName: record.eventName, key });
+    }
     await this.#quizService.markQuizImageReady(key);
   }
 
@@ -193,10 +200,10 @@ export class SQSQueueListenerService {
         if (messageBody.quizId) {
           await this.#quizService.aiProcessQuiz(messageBody.quizId);
         } else {
-          console.warn(`Unexpected message body`, message);
+          logger.warn('Unexpected AI processing message body', { messageId: message.MessageId });
         }
       } else {
-        console.warn(`Unexpected empty message body`, message);
+        logger.warn('Unexpected empty message body', { messageId: message.MessageId });
       }
 
       await this.#client.send(
@@ -206,8 +213,10 @@ export class SQSQueueListenerService {
         }),
       );
     } catch (err) {
-      console.error('Error processing AI message, leaving in queue for retry', err);
-      Sentry.captureException(err, { tags: { queue: 'ai-processing' } });
+      logger.error('Error processing AI message, leaving in queue for retry', {
+        exception: err,
+        sentryTags: { queue: 'ai-processing' },
+      });
     }
   }
 }
