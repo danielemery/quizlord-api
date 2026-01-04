@@ -13,6 +13,7 @@ import http from 'http';
 
 import { activityChildren, activityQueries } from './activity/activity.gql';
 import config from './config/config';
+import { loggingApolloPlugin } from './logging-apollo-plugin';
 import typeDefs from './gql';
 import { quizMutations, quizQueries } from './quiz/quiz.gql';
 import { sentryApolloPlugin } from './sentry-apollo-plugin';
@@ -75,7 +76,7 @@ async function initialise() {
     typeDefs,
     resolvers,
     csrfPrevention: true,
-    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), sentryApolloPlugin],
+    plugins: [ApolloServerPluginDrainHttpServer({ httpServer }), sentryApolloPlugin, loggingApolloPlugin],
   });
 
   await server.start();
