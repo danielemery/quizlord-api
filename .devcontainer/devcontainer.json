@@ -18,7 +18,11 @@
   // "features": {},
 
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
+  "forwardPorts": [4000, 15432],
+  "portsAttributes": {
+    "4000": { "label": "Quizlord API" },
+    "15432": { "label": "PostgreSQL" }
+  },
 
   // Use 'postCreateCommand' to run commands after the container is created.
   // "postCreateCommand": "yarn install",
