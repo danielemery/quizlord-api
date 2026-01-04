@@ -490,11 +490,7 @@ export class QuizService {
       try {
         extractionResult = await this.#geminiService.extractQuizQuestions(questionCount, imageMetadata);
       } catch (err) {
-        logger.error('Error extracting questions for quiz', {
-          quizId,
-          error: err instanceof Error ? err.message : String(err),
-          stack: err instanceof Error ? err.stack : undefined,
-        });
+        logger.error('Error extracting questions for quiz', { quizId, exception: err });
       }
 
       logger.info('AI extraction result', { quizId, hasResult: !!extractionResult });

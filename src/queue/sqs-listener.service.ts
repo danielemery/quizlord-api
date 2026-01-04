@@ -103,11 +103,7 @@ export class SQSQueueListenerService {
     try {
       await this.#quizService.markQuizImageReady(key);
     } catch (err) {
-      logger.error('Error marking quiz image ready', {
-        key,
-        error: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-      });
+      logger.error('Error marking quiz image ready', { key, exception: err });
     }
   }
 
@@ -124,11 +120,7 @@ export class SQSQueueListenerService {
             }),
           );
         } catch (err) {
-          logger.error('Error processing AI quiz', {
-            quizId: messageBody.quizId,
-            error: err instanceof Error ? err.message : String(err),
-            stack: err instanceof Error ? err.stack : undefined,
-          });
+          logger.error('Error processing AI quiz', { quizId: messageBody.quizId, exception: err });
         }
       } else {
         logger.warn('Unexpected AI processing message body', { messageId: message.MessageId });

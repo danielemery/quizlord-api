@@ -34,10 +34,7 @@ export class AuthenticationService {
   #getKey(header: JwtHeader, callback: SigningKeyCallback) {
     this.#client.getSigningKey(header.kid, function (err, key) {
       if (err) {
-        logger.error('Error loading jwt signing key', {
-          error: err instanceof Error ? err.message : String(err),
-          stack: err instanceof Error ? err.stack : undefined,
-        });
+        logger.error('Error loading jwt signing key', { exception: err });
         callback(err);
       } else {
         const signingKey = (key as RsaSigningKey).rsaPublicKey;

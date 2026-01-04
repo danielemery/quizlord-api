@@ -31,10 +31,7 @@ export class PrismaService {
       try {
         await this.#prisma.$queryRaw`SELECT 1`;
       } catch (err) {
-        logger.error('Failed to connect to database', {
-          error: err instanceof Error ? err.message : String(err),
-          stack: err instanceof Error ? err.stack : undefined,
-        });
+        logger.error('Failed to connect to database', { exception: err });
         process.exit(1);
       }
       logger.info('Connected to database successfully');

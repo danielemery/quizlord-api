@@ -163,10 +163,7 @@ async function initialise() {
     try {
       await Sentry.close(2000);
     } catch (e) {
-      logger.error('Error closing Sentry', {
-        error: e instanceof Error ? e.message : String(e),
-        stack: e instanceof Error ? e.stack : undefined,
-      });
+      logger.error('Error closing Sentry', { exception: e });
     }
 
     const serverClose = new Promise<'closed'>((resolve) => httpServer.close(() => resolve('closed')));
@@ -191,9 +188,6 @@ initialise()
     logger.info('Server initialised successfully');
   })
   .catch((err) => {
-    logger.error('Server encountered error initialising and had to shut down', {
-      error: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined,
-    });
+    logger.error('Server encountered error initialising and had to shut down', { exception: err });
     process.exit(1);
   });
