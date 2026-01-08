@@ -28,46 +28,71 @@ interface S3MessageContentRecord {
 export class SQSQueueListenerService {
   #client: SQSClient;
   #quizService: QuizService;
+  #abortController: AbortController;
 
   constructor(quizService: QuizService) {
     this.#client = new SQSClient({ region: config.AWS_REGION });
     this.#quizService = quizService;
+    this.#abortController = new AbortController();
+  }
+
+  /**
+   * Signals the polling loops to stop gracefully.
+   * Call this when the application is shutting down.
+   */
+  stop() {
+    console.log('Signaling SQS listeners to stop...');
+    this.#abortController.abort();
   }
 
   async subscribeToFileUploads() {
-    // todo exit this loop when app entering shutdown state.
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    const signal = this.#abortController.signal;
+    while (!signal.aborted) {
       console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
-      const result = await this.#client.send(
-        new ReceiveMessageCommand({
-          QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
-          WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
-        }),
-      );
-      if (result.Messages) {
-        await Promise.all(result.Messages.map((message) => this.processMessage(message)));
+      try {
+        const result = await this.#client.send(
+          new ReceiveMessageCommand({
+            QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+            WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
+          }),
+          { abortSignal: signal },
+        );
+        if (result.Messages) {
+          await Promise.all(result.Messages.map((message) => this.processMessage(message)));
+        }
+      } catch (err) {
+        if (!signal.aborted) {
+          throw err;
+        }
       }
-      await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS);
+      await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS, signal);
     }
+    console.log('File uploads listener stopped');
   }
 
   async subscribeToAiProcessing() {
-    // todo exit this loop when app entering shutdown state.
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    const signal = this.#abortController.signal;
+    while (!signal.aborted) {
       console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
-      const result = await this.#client.send(
-        new ReceiveMessageCommand({
-          QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
-          WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
-        }),
-      );
-      if (result.Messages) {
-        await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
+      try {
+        const result = await this.#client.send(
+          new ReceiveMessageCommand({
+            QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
+            WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
+          }),
+          { abortSignal: signal },
+        );
+        if (result.Messages) {
+          await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
+        }
+      } catch (err) {
+        if (!signal.aborted) {
+          throw err;
+        }
       }
-      await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS);
+      await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS, signal);
     }
+    console.log('AI processing listener stopped');
   }
 
   async processMessage(message: Message) {
@@ -128,8 +153,13 @@ export class SQSQueueListenerService {
   }
 }
 
-async function sleep(seconds: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, seconds * 1000);
+async function sleep(seconds: number, signal?: AbortSignal) {
+  if (seconds === 0) return;
+  return new Promise<void>((resolve) => {
+    const timeoutId = setTimeout(resolve, seconds * 1000);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timeoutId);
+      resolve();
+    });
   });
 }
