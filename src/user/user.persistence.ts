@@ -5,12 +5,11 @@ import { PrismaService } from '../database/prisma.service';
 import { UserSortOption } from '../user/user.dto';
 import { getPagedQuery, slicePagedResults } from '../util/paging-helpers';
 
+/** Minimal user fields needed for display */
+export type UserBasicInfo = Pick<User, 'id' | 'email' | 'name'>;
+
 export interface GetUsersWithRoleResult {
-  data: {
-    id: string;
-    email: string;
-    name: string | null;
-  }[];
+  data: UserBasicInfo[];
   hasMoreRows: boolean;
 }
 
@@ -111,12 +110,15 @@ export class UserPersistence {
       },
     };
 
+    const selectFields = { id: true, email: true, name: true } as const;
+
     let result;
     switch (sortedBy) {
       case 'EMAIL_ASC':
       default:
         result = await this.#prisma.client().user.findMany({
           ...pagedWhereQuery,
+          select: selectFields,
           orderBy: {
             email: 'asc',
           },
@@ -125,6 +127,7 @@ export class UserPersistence {
       case 'NAME_ASC':
         result = await this.#prisma.client().user.findMany({
           ...pagedWhereQuery,
+          select: selectFields,
           orderBy: {
             name: 'asc',
           },
@@ -164,7 +167,7 @@ export class UserPersistence {
      * We need to do something quite a bit more complex so we drop down to a raw query.
      */
     const result = (await this.#prisma.client().$queryRaw`
-  select id, email, name from 
+  select id, email, name from
     (
       select "user".*, count(my_completion.user_id) as completions from "user"
       inner join user_role on "user".id = user_role.user_id and user_role.role::text = ${role}
@@ -174,7 +177,7 @@ export class UserPersistence {
       group by "user".id
     ) as completions_with_current_user
   order by completions_with_current_user.completions desc;
-          `) as User[];
+          `) as UserBasicInfo[];
     return slicePagedResults(result, limit, afterId !== undefined);
   }
 
