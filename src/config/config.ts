@@ -4,12 +4,19 @@ interface QuizlordConfig {
   NODE_ENV: string;
   CLIENT_URL: string;
   DB_CONNECTION_STRING: string;
+  // Auth0 (to be removed after migration)
   AUTH0_AUDIENCE: string;
   AUTH0_DOMAIN: string;
   AUTH0_MANAGEMENT_CLIENT_ID: string;
   AUTH0_MANAGEMENT_CLIENT_SECRET: string;
   AUTH0_USER_ROLE_ID: string;
   AUTH0_ADMIN_ROLE_ID: string;
+  // better-auth (optional during migration)
+  API_BASE_URL?: string;
+  BETTER_AUTH_SECRET?: string;
+  GOOGLE_OAUTH_CLIENT_ID?: string;
+  GOOGLE_OAUTH_CLIENT_SECRET?: string;
+  // AWS
   AWS_REGION: string;
   AWS_BUCKET_NAME: string;
   AWS_FILE_UPLOADED_SQS_QUEUE_URL: string;
@@ -26,12 +33,19 @@ const schema = Joi.object<QuizlordConfig>()
     NODE_ENV: Joi.string().default('development'),
     CLIENT_URL: Joi.string().required(),
     DB_CONNECTION_STRING: Joi.string().uri().required(),
+    // Auth0 (to be removed after migration)
     AUTH0_DOMAIN: Joi.string().required(),
     AUTH0_AUDIENCE: Joi.string().uri().required(),
     AUTH0_MANAGEMENT_CLIENT_ID: Joi.string().required(),
     AUTH0_MANAGEMENT_CLIENT_SECRET: Joi.string().required(),
     AUTH0_USER_ROLE_ID: Joi.string().required(),
     AUTH0_ADMIN_ROLE_ID: Joi.string().required(),
+    // better-auth (optional during migration)
+    API_BASE_URL: Joi.string().uri().optional(),
+    BETTER_AUTH_SECRET: Joi.string().min(32).optional(),
+    GOOGLE_OAUTH_CLIENT_ID: Joi.string().optional(),
+    GOOGLE_OAUTH_CLIENT_SECRET: Joi.string().optional(),
+    // AWS
     AWS_REGION: Joi.string().required(),
     AWS_BUCKET_NAME: Joi.string().required(),
     AWS_FILE_UPLOADED_SQS_QUEUE_URL: Joi.string().required(),
