@@ -389,7 +389,7 @@ export class QuizService {
   #quizCompletionPersistenceToQuizCompletion(
     quizCompletion: Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
       completedBy: (QuizCompletionUserPersistenceModel & {
-        user: UserPersistenceModel | null;
+        user: Pick<UserPersistenceModel, 'id' | 'email' | 'name'> | null;
       })[];
     },
   ): QuizCompletion {
@@ -412,10 +412,10 @@ export class QuizService {
 
   #quizPersistenceWithMyCompletionsToQuiz(
     quiz: QuizPersistenceModel & {
-      uploadedByUser: UserPersistenceModel;
+      uploadedByUser: Pick<UserPersistenceModel, 'id' | 'email' | 'name'>;
       completions: (Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
         completedBy: (QuizCompletionUserPersistenceModel & {
-          user: UserPersistenceModel | null;
+          user: Pick<UserPersistenceModel, 'id' | 'email' | 'name'> | null;
         })[];
       })[];
     },
@@ -435,7 +435,7 @@ export class QuizService {
   #quizCompletionPersistenceWithQuestionResultsToQuizCompletion(
     quizCompletion: Omit<QuizCompletionPersistenceModel, 'id' | 'quizId'> & {
       completedBy: (QuizCompletionUserPersistenceModel & {
-        user: UserPersistenceModel | null;
+        user: Pick<UserPersistenceModel, 'id' | 'email' | 'name'> | null;
       })[];
       questionResults: Pick<QuizCompletionQuestionResultPersistenceModel, 'questionId' | 'score'>[];
     },

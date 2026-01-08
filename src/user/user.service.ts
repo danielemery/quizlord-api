@@ -1,10 +1,10 @@
-import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
+import { Role as RolePersistenceModel } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { RecentActivityItem } from '../activity/activity.service';
 import { Role, User, UserSortOption } from './user.dto';
 import { UserNotFoundError } from './user.errors';
-import { UserPersistence } from './user.persistence';
+import { UserBasicInfo, UserPersistence } from './user.persistence';
 
 export interface GetUsersResult {
   data: User[];
@@ -80,7 +80,7 @@ export class UserService {
     afterIdOrCurrentUserId?: string,
     maybeAfterId?: string,
   ): Promise<GetUsersResult> {
-    let data: UserPersistenceModel[];
+    let data: UserBasicInfo[];
     let hasMoreRows: boolean;
 
     if (sortedBy === 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC' && afterIdOrCurrentUserId) {
@@ -123,7 +123,7 @@ export class UserService {
     return this.#userPersistenceToUser(persistenceUser);
   }
 
-  #userPersistenceToUser(user: UserPersistenceModel): User {
+  #userPersistenceToUser(user: UserBasicInfo): User {
     return {
       id: user.id,
       email: user.email,
