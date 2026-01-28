@@ -1,6 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { types } from 'pg';
 
+import { logger } from '../util/logger';
+
 export interface PersistenceResult<T> {
   data: T[];
   hasMoreRows: boolean;
@@ -24,15 +26,15 @@ export class PrismaService {
 
   async connect() {
     if (!this.#prisma) {
-      console.log(`Connecting to database`);
+      logger.info('Connecting to database');
       this.#prisma = new PrismaClient();
       try {
         await this.#prisma.$queryRaw`SELECT 1`;
       } catch (err) {
-        console.error(err);
+        logger.error('Failed to connect to database', { exception: err });
         process.exit(1);
       }
-      console.log('Connected to database successfully');
+      logger.info('Connected to database successfully');
     }
   }
 }

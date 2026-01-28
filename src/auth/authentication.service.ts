@@ -1,6 +1,8 @@
 import jwt, { JwtHeader, SigningKeyCallback, VerifyOptions } from 'jsonwebtoken';
 import jwksClient, { RsaSigningKey } from 'jwks-rsa';
 
+import { logger } from '../util/logger';
+
 export class AuthenticationService {
   #client: jwksClient.JwksClient;
   #options: VerifyOptions;
@@ -32,7 +34,7 @@ export class AuthenticationService {
   #getKey(header: JwtHeader, callback: SigningKeyCallback) {
     this.#client.getSigningKey(header.kid, function (err, key) {
       if (err) {
-        console.error('Error loading jwt signing key');
+        logger.error('Error loading jwt signing key', { exception: err });
         callback(err);
       } else {
         const signingKey = (key as RsaSigningKey).rsaPublicKey;

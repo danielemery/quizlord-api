@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 
 import { QuizImageType } from '../quiz/quiz.dto';
+import { logger } from '../util/logger';
 import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema';
 
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
@@ -26,7 +27,11 @@ export class GeminiService {
       expectedQuestionCount,
       quizImageTypes: quizImages.map(({ type }) => type),
     });
-    console.log(`Calling generative model with prompt: ${prompt}`);
+    logger.info('Calling generative model', {
+      model: MODEL_NAME,
+      expectedQuestionCount,
+      imageCount: quizImages.length,
+    });
     const quizImageParts = await Promise.all(
       quizImages.map(async ({ quizImageUrl, mimeType }) => {
         return await this.#fileToGenerativePart(quizImageUrl, mimeType);
@@ -41,14 +46,16 @@ export class GeminiService {
     if (!text) {
       throw new Error('No text response from model');
     }
-    console.log(`Raw response from model: ${text}`);
+    logger.info('Received response from model', { model: MODEL_NAME, responseLength: text.length });
     const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(text));
-    console.log('Successfully parsed response to JSON');
     const validatedResult = expectedResultFormat.validate(jsonParsed);
     if (validatedResult.error) {
       throw new Error(validatedResult.error.message);
     }
-    console.log('Response conforms to expected schema');
+    logger.info('Successfully validated AI response', {
+      model: MODEL_NAME,
+      confidence: validatedResult.value.confidence,
+    });
     const sanitized = this.#sanitizeGeminiParsedResult(validatedResult.value);
     return {
       ...sanitized,

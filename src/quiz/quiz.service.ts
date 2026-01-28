@@ -15,6 +15,7 @@ import { ExtractQuizQuestionsResult, GeminiService } from '../ai/gemini.service'
 import { S3FileService } from '../file/s3.service';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
 import { UserService } from '../user/user.service';
+import { logger } from '../util/logger';
 import {
   Quiz,
   QuizCompletion,
@@ -489,12 +490,15 @@ export class QuizService {
       try {
         extractionResult = await this.#geminiService.extractQuizQuestions(questionCount, imageMetadata);
       } catch (err) {
-        console.error(`Error extracting questions for quiz ${quizId}`, err);
+        logger.error('Error extracting questions for quiz', { quizId, exception: err });
       }
 
-      console.log(`Final extraction result: ${JSON.stringify(extractionResult)}`);
+      logger.info('AI extraction result', { quizId, hasResult: !!extractionResult });
       if (extractionResult && extractionResult.questions) {
-        console.log(`Successfully extracted questions for quiz ${quizId}`);
+        logger.info('Successfully extracted questions for quiz', {
+          quizId,
+          questionCount: extractionResult.questions.length,
+        });
         await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
           quizId,
           extractionResult.questions.map(({ questionNumber, ...rest }) => ({

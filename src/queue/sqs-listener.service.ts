@@ -2,6 +2,7 @@ import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from 
 
 import config from '../config/config';
 import { QuizService } from '../quiz/quiz.service';
+import { logger } from '../util/logger';
 
 /** The number of seconds for sqs to wait until a message is available. */
 const SQS_LONG_POLLING_TIMEOUT_SECONDS = 10;
@@ -36,9 +37,9 @@ export class SQSQueueListenerService {
 
   async subscribeToFileUploads() {
     // todo exit this loop when app entering shutdown state.
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
-      console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
+      logger.info('Polling for file upload messages', { queue: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL });
       const result = await this.#client.send(
         new ReceiveMessageCommand({
           QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
@@ -54,9 +55,9 @@ export class SQSQueueListenerService {
 
   async subscribeToAiProcessing() {
     // todo exit this loop when app entering shutdown state.
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
-      console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
+      logger.info('Polling for AI processing messages', { queue: config.AWS_AI_PROCESSING_SQS_QUEUE_URL });
       const result = await this.#client.send(
         new ReceiveMessageCommand({
           QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
@@ -79,10 +80,10 @@ export class SQSQueueListenerService {
           await Promise.all(messageData.Records.map((record) => this.processUploadedItem(record)));
         }
       } else {
-        console.warn(`Unexpected empty inner message body`, message);
+        logger.warn('Unexpected empty inner message body', { messageId: message.MessageId });
       }
     } else {
-      console.warn(`Unexpected empty message body`, message);
+      logger.warn('Unexpected empty message body', { messageId: message.MessageId });
     }
 
     await this.#client.send(
@@ -94,15 +95,15 @@ export class SQSQueueListenerService {
   }
 
   async processUploadedItem(record: S3MessageContentRecord) {
-    console.log('Processing uploaded item');
-    if (record.eventName !== 'ObjectCreated:Put') {
-      console.warn(`Unexpected event name <${record.eventName}>`);
-    }
     const key = record.s3.object.key;
+    logger.info('Processing uploaded item', { key, eventName: record.eventName });
+    if (record.eventName !== 'ObjectCreated:Put') {
+      logger.warn('Unexpected event name', { eventName: record.eventName, key });
+    }
     try {
       await this.#quizService.markQuizImageReady(key);
     } catch (err) {
-      console.error(`Error marking quiz image ready at key: ${key}`, err);
+      logger.error('Error marking quiz image ready', { key, exception: err });
     }
   }
 
@@ -119,10 +120,10 @@ export class SQSQueueListenerService {
             }),
           );
         } catch (err) {
-          console.error(`Error processing quiz id: ${messageBody.quizId}`, err);
+          logger.error('Error processing AI quiz', { quizId: messageBody.quizId, exception: err });
         }
       } else {
-        console.warn(`Unexpected message body`, message);
+        logger.warn('Unexpected AI processing message body', { messageId: message.MessageId });
       }
     }
   }
