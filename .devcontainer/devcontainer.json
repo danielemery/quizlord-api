@@ -32,8 +32,15 @@
     "vscode": {
       "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "prisma.prisma"]
     }
-  }
+  },
 
   // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
   // "remoteUser": "root"
+
+  // Persist claude credentials between dev container rebuilds (and between different containers)
+  "mounts": ["source=claude-data,target=/home/node/.claude-shared,type=volume"],
+  // Refer to this gist as the post create command
+  "postCreateCommand": "curl -fsSL https://gist.githubusercontent.com/danielemery/377d2e7f547433133104b4598feef406/raw/post-create.sh | bash",
+  // Since the claude credentials volume is shared between multiple containers, we need to ensure each container is using the same user ID
+  "updateRemoteUserUID": true
 }
