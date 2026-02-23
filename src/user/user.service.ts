@@ -1,9 +1,9 @@
-import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
+import { Prisma, User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { RecentActivityItem } from '../activity/activity.service';
 import { ApproveUserResult, PendingUser, RejectedUser, RejectUserResult, Role, User, UserSortOption } from './user.dto';
-import { UserNotFoundError } from './user.errors';
+import { SelfRejectError, UserNotFoundError } from './user.errors';
 import { UserPersistence } from './user.persistence';
 
 export interface GetUsersResult {
@@ -157,12 +157,29 @@ export class UserService {
       throw new Error('At least one role must be provided');
     }
     const prismaRoles = roles.map((r) => RolePersistenceModel[r]);
-    await this.#persistence.approveUser(userId, prismaRoles);
+    try {
+      await this.#persistence.approveUser(userId, prismaRoles);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new UserNotFoundError(`No user found with id ${userId}`);
+      }
+      throw error;
+    }
     return { success: true };
   }
 
   async rejectUser(userId: string, rejectedByUserId: string): Promise<RejectUserResult> {
-    await this.#persistence.rejectUser(userId, rejectedByUserId);
+    if (userId === rejectedByUserId) {
+      throw new SelfRejectError('Cannot reject yourself');
+    }
+    try {
+      await this.#persistence.rejectUser(userId, rejectedByUserId);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new UserNotFoundError(`No user found with id ${userId}`);
+      }
+      throw error;
+    }
     return { success: true };
   }
 

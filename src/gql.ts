@@ -306,11 +306,11 @@ const typeDefs = gql`
     """
     Get users who have logged in but have not been assigned any roles and have not been rejected.
     """
-    pendingUsers: [PendingUser]!
+    pendingUsers: [PendingUser!]!
     """
     Get users who have been rejected by an admin.
     """
-    rejectedUsers: [RejectedUser]!
+    rejectedUsers: [RejectedUser!]!
   }
 
   type Mutation {

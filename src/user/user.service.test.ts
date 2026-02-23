@@ -1,6 +1,7 @@
+import { Prisma } from '@prisma/client';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
-import { UserNotFoundError } from './user.errors';
+import { SelfRejectError, UserNotFoundError } from './user.errors';
 import { UserPersistence } from './user.persistence';
 import { UserService } from './user.service';
 
@@ -207,6 +208,16 @@ describe('user', () => {
         expect(fakeUserPersistence.approveUser).not.toHaveBeenCalled();
       });
 
+      it('must throw UserNotFoundError when user does not exist', async () => {
+        fakeUserPersistence.approveUser.mockRejectedValueOnce(
+          new Prisma.PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '' }),
+        );
+
+        await expect(() => sut.approveUser('nonexistent', ['USER'])).rejects.toThrow(UserNotFoundError);
+
+        expect(fakeUserPersistence.approveUser).toHaveBeenCalledTimes(1);
+      });
+
       it('must call persistence and return success', async () => {
         fakeUserPersistence.approveUser.mockResolvedValueOnce({
           id: 'user-1',
@@ -224,6 +235,22 @@ describe('user', () => {
     });
 
     describe('rejectUser', () => {
+      it('must throw when rejecting yourself', async () => {
+        await expect(() => sut.rejectUser('admin-1', 'admin-1')).rejects.toThrow(SelfRejectError);
+
+        expect(fakeUserPersistence.rejectUser).not.toHaveBeenCalled();
+      });
+
+      it('must throw UserNotFoundError when user does not exist', async () => {
+        fakeUserPersistence.rejectUser.mockRejectedValueOnce(
+          new Prisma.PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '' }),
+        );
+
+        await expect(() => sut.rejectUser('nonexistent', 'admin-1')).rejects.toThrow(UserNotFoundError);
+
+        expect(fakeUserPersistence.rejectUser).toHaveBeenCalledTimes(1);
+      });
+
       it('must call persistence with correct args', async () => {
         fakeUserPersistence.rejectUser.mockResolvedValueOnce(undefined);
 
