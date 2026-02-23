@@ -14,3 +14,25 @@ export interface UserDetails {
 }
 
 export type UserSortOption = 'EMAIL_ASC' | 'NAME_ASC' | 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC';
+
+export interface PendingUser {
+  id: string;
+  email: string;
+  name?: string;
+}
+
+export interface RejectedUser {
+  id: string;
+  email: string;
+  name?: string;
+  rejectedAt: Date;
+  rejectedByUser: User;
+}
+
+export interface ApproveUserResult {
+  success: boolean;
+}
+
+export interface RejectUserResult {
+  success: boolean;
+}

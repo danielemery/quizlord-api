@@ -229,6 +229,61 @@ export class UserPersistence {
     }, {});
   }
 
+  async getPendingUsers() {
+    return this.#prisma.client().user.findMany({
+      where: {
+        roles: { none: {} },
+        rejectedAt: null,
+      },
+      orderBy: { email: 'asc' },
+    });
+  }
+
+  async getRejectedUsers() {
+    return this.#prisma.client().user.findMany({
+      where: {
+        rejectedAt: { not: null },
+      },
+      include: {
+        rejectedByUser: true,
+      },
+      orderBy: { rejectedAt: 'desc' },
+    });
+  }
+
+  async approveUser(userId: string, roles: Role[]) {
+    return this.#prisma.client().$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          rejectedAt: null,
+          rejectedByUserId: null,
+        },
+      });
+      await tx.userRole.deleteMany({ where: { userId } });
+      await tx.userRole.createMany({
+        data: roles.map((role) => ({ userId, role })),
+      });
+      return tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        include: { roles: true },
+      });
+    });
+  }
+
+  async rejectUser(userId: string, rejectedByUserId: string) {
+    return this.#prisma.client().$transaction(async (tx) => {
+      await tx.userRole.deleteMany({ where: { userId } });
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          rejectedAt: new Date(),
+          rejectedByUserId,
+        },
+      });
+    });
+  }
+
   async getUsersForQuizCompletions(quizCompletionActivityItems: RecentActivityItem[]): Promise<Record<string, User[]>> {
     const result = await this.#prisma.client().quizCompletion.findMany({
       where: {

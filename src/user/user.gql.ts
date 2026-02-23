@@ -1,7 +1,16 @@
 import { QuizlordContext } from '..';
 import { authorisationService, userService } from '../service.locator';
 import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
-import { User, UserDetails, UserSortOption } from './user.dto';
+import {
+  ApproveUserResult,
+  PendingUser,
+  RejectedUser,
+  RejectUserResult,
+  Role,
+  User,
+  UserDetails,
+  UserSortOption,
+} from './user.dto';
 import { GetUsersResult } from './user.service';
 
 async function users(
@@ -46,7 +55,50 @@ async function me(_: unknown, _params: Record<string, never>, context: QuizlordC
   };
 }
 
+async function pendingUsers(
+  _: unknown,
+  _params: Record<string, never>,
+  context: QuizlordContext,
+): Promise<PendingUser[]> {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  return userService.getPendingUsers();
+}
+
+async function rejectedUsers(
+  _: unknown,
+  _params: Record<string, never>,
+  context: QuizlordContext,
+): Promise<RejectedUser[]> {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  return userService.getRejectedUsers();
+}
+
+async function approveUser(
+  _: unknown,
+  { userId, roles }: { userId: string; roles: Role[] },
+  context: QuizlordContext,
+): Promise<ApproveUserResult> {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  return userService.approveUser(userId, roles);
+}
+
+async function rejectUser(
+  _: unknown,
+  { userId }: { userId: string },
+  context: QuizlordContext,
+): Promise<RejectUserResult> {
+  authorisationService.requireUserRole(context, 'ADMIN');
+  return userService.rejectUser(userId, context.userId);
+}
+
 export const userQueries = {
   users,
   me,
+  pendingUsers,
+  rejectedUsers,
+};
+
+export const userMutations = {
+  approveUser,
+  rejectUser,
 };
