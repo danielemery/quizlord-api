@@ -1,6 +1,7 @@
+import { Prisma } from '@prisma/client';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
-import { UserNotFoundError } from './user.errors';
+import { SelfRejectError, UserNotFoundError } from './user.errors';
 import { UserPersistence } from './user.persistence';
 import { UserService } from './user.service';
 
@@ -15,6 +16,10 @@ const fakeUserPersistence = {
   updateUserName: jest.fn(),
   getUsersForQuizCompletion: jest.fn(),
   getUserForQuizUpload: jest.fn(),
+  getPendingUsers: jest.fn(),
+  getRejectedUsers: jest.fn(),
+  approveUser: jest.fn(),
+  rejectUser: jest.fn(),
 };
 
 describe('user', () => {
@@ -128,6 +133,135 @@ describe('user', () => {
         });
       });
     });
+    describe('getPendingUsers', () => {
+      it('must return transformed pending users', async () => {
+        fakeUserPersistence.getPendingUsers.mockResolvedValueOnce([
+          { id: 'user-1', email: 'alice@quizlord.net', name: 'Alice' },
+          { id: 'user-2', email: 'bob@quizlord.net', name: null },
+        ]);
+
+        const actual = await sut.getPendingUsers();
+
+        expect(fakeUserPersistence.getPendingUsers).toHaveBeenCalledTimes(1);
+        expect(actual).toEqual([
+          { id: 'user-1', email: 'alice@quizlord.net', name: 'Alice' },
+          { id: 'user-2', email: 'bob@quizlord.net' },
+        ]);
+      });
+
+      it('must return empty array when no pending users', async () => {
+        fakeUserPersistence.getPendingUsers.mockResolvedValueOnce([]);
+
+        const actual = await sut.getPendingUsers();
+
+        expect(actual).toEqual([]);
+      });
+    });
+
+    describe('getRejectedUsers', () => {
+      it('must return transformed rejected users with rejector details', async () => {
+        const rejectedAt = new Date('2026-01-15');
+        fakeUserPersistence.getRejectedUsers.mockResolvedValueOnce([
+          {
+            id: 'user-1',
+            email: 'rejected@quizlord.net',
+            name: 'Rejected User',
+            rejectedAt,
+            rejectedByUser: { id: 'admin-1', email: 'admin@quizlord.net', name: 'Admin' },
+          },
+        ]);
+
+        const actual = await sut.getRejectedUsers();
+
+        expect(fakeUserPersistence.getRejectedUsers).toHaveBeenCalledTimes(1);
+        expect(actual).toEqual([
+          {
+            id: 'user-1',
+            email: 'rejected@quizlord.net',
+            name: 'Rejected User',
+            rejectedAt,
+            rejectedByUser: { id: 'admin-1', email: 'admin@quizlord.net', name: 'Admin' },
+          },
+        ]);
+      });
+
+      it('must throw if rejected user is missing rejectedByUser', async () => {
+        const rejectedAt = new Date('2026-01-15');
+        fakeUserPersistence.getRejectedUsers.mockResolvedValueOnce([
+          {
+            id: 'user-1',
+            email: 'rejected@quizlord.net',
+            name: null,
+            rejectedAt,
+            rejectedByUser: null,
+          },
+        ]);
+
+        await expect(() => sut.getRejectedUsers()).rejects.toThrow('Rejected user user-1 is missing rejectedByUser');
+      });
+    });
+
+    describe('approveUser', () => {
+      it('must throw when no roles provided', async () => {
+        await expect(() => sut.approveUser('user-1', [])).rejects.toThrow('At least one role must be provided');
+
+        expect(fakeUserPersistence.approveUser).not.toHaveBeenCalled();
+      });
+
+      it('must throw UserNotFoundError when user does not exist', async () => {
+        fakeUserPersistence.approveUser.mockRejectedValueOnce(
+          new Prisma.PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '' }),
+        );
+
+        await expect(() => sut.approveUser('nonexistent', ['USER'])).rejects.toThrow(UserNotFoundError);
+
+        expect(fakeUserPersistence.approveUser).toHaveBeenCalledTimes(1);
+      });
+
+      it('must call persistence and return success', async () => {
+        fakeUserPersistence.approveUser.mockResolvedValueOnce({
+          id: 'user-1',
+          email: 'user@quizlord.net',
+          name: 'User',
+          roles: [{ role: 'USER' }],
+        });
+
+        const actual = await sut.approveUser('user-1', ['USER']);
+
+        expect(fakeUserPersistence.approveUser).toHaveBeenCalledTimes(1);
+        expect(fakeUserPersistence.approveUser).toHaveBeenCalledWith('user-1', ['USER']);
+        expect(actual).toEqual({ success: true });
+      });
+    });
+
+    describe('rejectUser', () => {
+      it('must throw when rejecting yourself', async () => {
+        await expect(() => sut.rejectUser('admin-1', 'admin-1')).rejects.toThrow(SelfRejectError);
+
+        expect(fakeUserPersistence.rejectUser).not.toHaveBeenCalled();
+      });
+
+      it('must throw UserNotFoundError when user does not exist', async () => {
+        fakeUserPersistence.rejectUser.mockRejectedValueOnce(
+          new Prisma.PrismaClientKnownRequestError('Record not found', { code: 'P2025', clientVersion: '' }),
+        );
+
+        await expect(() => sut.rejectUser('nonexistent', 'admin-1')).rejects.toThrow(UserNotFoundError);
+
+        expect(fakeUserPersistence.rejectUser).toHaveBeenCalledTimes(1);
+      });
+
+      it('must call persistence with correct args', async () => {
+        fakeUserPersistence.rejectUser.mockResolvedValueOnce(undefined);
+
+        const actual = await sut.rejectUser('user-1', 'admin-1');
+
+        expect(fakeUserPersistence.rejectUser).toHaveBeenCalledTimes(1);
+        expect(fakeUserPersistence.rejectUser).toHaveBeenCalledWith('user-1', 'admin-1');
+        expect(actual).toEqual({ success: true });
+      });
+    });
+
     describe('getUsersForActivity', () => {
       it('must return empty list for unknown action type', async () => {
         const actual = await sut.getUsersForActivity({

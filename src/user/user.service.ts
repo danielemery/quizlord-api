@@ -1,9 +1,9 @@
-import { User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
+import { Prisma, User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { RecentActivityItem } from '../activity/activity.service';
-import { Role, User, UserSortOption } from './user.dto';
-import { UserNotFoundError } from './user.errors';
+import { ApproveUserResult, PendingUser, RejectedUser, RejectUserResult, Role, User, UserSortOption } from './user.dto';
+import { SelfRejectError, UserNotFoundError } from './user.errors';
 import { UserPersistence } from './user.persistence';
 
 export interface GetUsersResult {
@@ -80,7 +80,7 @@ export class UserService {
     afterIdOrCurrentUserId?: string,
     maybeAfterId?: string,
   ): Promise<GetUsersResult> {
-    let data: UserPersistenceModel[];
+    let data: Pick<UserPersistenceModel, 'id' | 'email' | 'name'>[];
     let hasMoreRows: boolean;
 
     if (sortedBy === 'NUMBER_OF_QUIZZES_COMPLETED_WITH_DESC' && afterIdOrCurrentUserId) {
@@ -123,7 +123,67 @@ export class UserService {
     return this.#userPersistenceToUser(persistenceUser);
   }
 
-  #userPersistenceToUser(user: UserPersistenceModel): User {
+  async getPendingUsers(): Promise<PendingUser[]> {
+    const users = await this.#persistence.getPendingUsers();
+    return users.map((user) => ({
+      id: user.id,
+      email: user.email,
+      name: user.name ?? undefined,
+    }));
+  }
+
+  async getRejectedUsers(): Promise<RejectedUser[]> {
+    const users = await this.#persistence.getRejectedUsers();
+    return users.map((user) => {
+      if (!user.rejectedByUser) {
+        throw new Error(`Rejected user ${user.id} is missing rejectedByUser`);
+      }
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name ?? undefined,
+        rejectedAt: user.rejectedAt!,
+        rejectedByUser: {
+          id: user.rejectedByUser.id,
+          email: user.rejectedByUser.email,
+          name: user.rejectedByUser.name ?? undefined,
+        },
+      };
+    });
+  }
+
+  async approveUser(userId: string, roles: Role[]): Promise<ApproveUserResult> {
+    if (roles.length === 0) {
+      throw new Error('At least one role must be provided');
+    }
+    const prismaRoles = roles.map((r) => RolePersistenceModel[r]);
+    try {
+      await this.#persistence.approveUser(userId, prismaRoles);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new UserNotFoundError(`No user found with id ${userId}`);
+      }
+      throw error;
+    }
+    return { success: true };
+  }
+
+  async rejectUser(userId: string, rejectedByUserId: string): Promise<RejectUserResult> {
+    if (userId === rejectedByUserId) {
+      throw new SelfRejectError('Cannot reject yourself');
+    }
+    try {
+      await this.#persistence.rejectUser(userId, rejectedByUserId);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        throw new UserNotFoundError(`No user found with id ${userId}`);
+      }
+      throw error;
+    }
+    return { success: true };
+  }
+
+  #userPersistenceToUser(user: Pick<UserPersistenceModel, 'id' | 'email' | 'name'>): User {
     return {
       id: user.id,
       email: user.email,

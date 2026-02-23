@@ -143,14 +143,18 @@ model QuizQuestion {
 }
 
 model User {
-  id    String  @id
-  email String
-  name  String?
+  id               String    @id
+  email            String
+  name             String?
+  rejectedAt       DateTime? @map("rejected_at")
+  rejectedByUserId String?   @map("rejected_by_user_id")
 
   roles           UserRole[]
   quizCompletions QuizCompletionUser[]
   quizNotes       QuizNote[]
   uploadedQuizzes Quiz[]
+  rejectedByUser  User?  @relation("RejectedByUser", fields: [rejectedByUserId], references: [id], onDelete: Restrict)
+  rejectedUsers   User[] @relation("RejectedByUser")
 
   @@map("user")
 }

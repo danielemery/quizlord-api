@@ -247,6 +247,28 @@ const typeDefs = gql`
     excludeIllegible: ExcludeIllegibleOptions
   }
 
+  type PendingUser {
+    id: String!
+    email: String!
+    name: String
+  }
+
+  type RejectedUser {
+    id: String!
+    email: String!
+    name: String
+    rejectedAt: Date!
+    rejectedByUser: User!
+  }
+
+  type ApproveUserResult {
+    success: Boolean!
+  }
+
+  type RejectUserResult {
+    success: Boolean!
+  }
+
   type Query {
     """
     Get a paged list of quizzes.
@@ -281,6 +303,14 @@ const typeDefs = gql`
     Get the most recent activities.
     """
     activityFeed: [RecentActivityItem]
+    """
+    Get users who have logged in but have not been assigned any roles and have not been rejected.
+    """
+    pendingUsers: [PendingUser!]!
+    """
+    Get users who have been rejected by an admin.
+    """
+    rejectedUsers: [RejectedUser!]!
   }
 
   type Mutation {
@@ -302,6 +332,8 @@ const typeDefs = gql`
     markQuizIllegible(quizId: String!): Boolean
     markInaccurateOCR(quizId: String!): Boolean
     aiProcessQuizImages(quizId: String!): Boolean
+    approveUser(userId: String!, roles: [UserRole!]!): ApproveUserResult
+    rejectUser(userId: String!): RejectUserResult
   }
 `;
 

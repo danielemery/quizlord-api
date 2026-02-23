@@ -19,7 +19,7 @@ import { sentryApolloPlugin } from './sentry-apollo-plugin';
 import { authenticationService, prismaService, queueService, userService } from './service.locator';
 import { statisticsQueries } from './statistics/statistics.gql';
 import { Role } from './user/user.dto';
-import { userQueries } from './user/user.gql';
+import { userMutations, userQueries } from './user/user.gql';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 
@@ -50,6 +50,7 @@ const resolvers = {
   },
   Mutation: {
     ...quizMutations,
+    ...userMutations,
   },
   RecentActivityItem: activityChildren,
 };
