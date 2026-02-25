@@ -159,6 +159,7 @@ async function initialise() {
   // Graceful shutdown: drain Sentry events before closing
   const shutdown = async (signal: string) => {
     console.log(`Received ${signal}, shutting down gracefully...`);
+    queueService.shutdown();
     try {
       await Sentry.close(2000);
     } catch (e) {
