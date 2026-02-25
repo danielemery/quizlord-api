@@ -75,7 +75,10 @@ export class SQSQueueListenerService {
         Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
         await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS, this.#abortController.signal);
       } catch (err) {
-        if (this.#abortController.signal.aborted) break;
+        if (this.#abortController.signal.aborted) {
+          Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
+          break;
+        }
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in file upload polling loop, retrying in ${backoff}s`, err);
@@ -115,7 +118,10 @@ export class SQSQueueListenerService {
         Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'ok' });
         await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS, this.#abortController.signal);
       } catch (err) {
-        if (this.#abortController.signal.aborted) break;
+        if (this.#abortController.signal.aborted) {
+          Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'ok' });
+          break;
+        }
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in AI processing polling loop, retrying in ${backoff}s`, err);
