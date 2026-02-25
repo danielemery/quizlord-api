@@ -54,11 +54,19 @@ export class SQSQueueListenerService {
       checkinMargin: 2,
       maxRuntime: 2,
     };
+    /** Check in every Nth iteration (~6 * 10s long-poll = ~60s). */
+    const CHECKIN_EVERY_N_ITERATIONS = 6;
+    let iterationsSinceCheckin = 0;
+    let activeCheckInId: string | undefined;
     while (!this.#abortController.signal.aborted) {
-      const checkInId = Sentry.captureCheckIn(
-        { monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'in_progress' },
-        monitorConfig,
-      );
+      const shouldCheckin = iterationsSinceCheckin === 0;
+      if (shouldCheckin) {
+        activeCheckInId = Sentry.captureCheckIn(
+          { monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'in_progress' },
+          monitorConfig,
+        );
+      }
+      iterationsSinceCheckin = (iterationsSinceCheckin + 1) % CHECKIN_EVERY_N_ITERATIONS;
       try {
         console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
         const result = await this.#client.send(
@@ -72,18 +80,26 @@ export class SQSQueueListenerService {
           await Promise.all(result.Messages.map((message) => this.processMessage(message)));
         }
         consecutiveErrors = 0;
-        Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
+        if (shouldCheckin && activeCheckInId) {
+          Sentry.captureCheckIn({ checkInId: activeCheckInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
+          activeCheckInId = undefined;
+        }
         await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS, this.#abortController.signal);
       } catch (err) {
         if (this.#abortController.signal.aborted) {
-          Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
+          if (activeCheckInId) {
+            Sentry.captureCheckIn({ checkInId: activeCheckInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
+          }
           break;
         }
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in file upload polling loop, retrying in ${backoff}s`, err);
         Sentry.captureException(err, { tags: { queue: 'file-upload' } });
-        Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'error' });
+        if (activeCheckInId) {
+          Sentry.captureCheckIn({ checkInId: activeCheckInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'error' });
+          activeCheckInId = undefined;
+        }
         await sleep(backoff, this.#abortController.signal);
       }
     }
