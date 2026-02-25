@@ -36,10 +36,15 @@ interface S3MessageContentRecord {
 export class SQSQueueListenerService {
   #client: SQSClient;
   #quizService: QuizService;
+  #abortController = new AbortController();
 
   constructor(quizService: QuizService) {
     this.#client = new SQSClient({ region: config.AWS_REGION });
     this.#quizService = quizService;
+  }
+
+  shutdown() {
+    this.#abortController.abort();
   }
 
   async subscribeToFileUploads() {
@@ -49,9 +54,7 @@ export class SQSQueueListenerService {
       checkinMargin: 2,
       maxRuntime: 2,
     };
-    // todo exit this loop when app entering shutdown state.
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    while (!this.#abortController.signal.aborted) {
       const checkInId = Sentry.captureCheckIn(
         { monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'in_progress' },
         monitorConfig,
@@ -63,22 +66,25 @@ export class SQSQueueListenerService {
             QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
             WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
           }),
+          { abortSignal: this.#abortController.signal },
         );
         if (result.Messages) {
           await Promise.all(result.Messages.map((message) => this.processMessage(message)));
         }
         consecutiveErrors = 0;
         Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
-        await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS);
+        await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS, this.#abortController.signal);
       } catch (err) {
+        if (this.#abortController.signal.aborted) break;
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in file upload polling loop, retrying in ${backoff}s`, err);
         Sentry.captureException(err, { tags: { queue: 'file-upload' } });
         Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'error' });
-        await sleep(backoff);
+        await sleep(backoff, this.#abortController.signal);
       }
     }
+    console.log('File upload polling loop stopped');
   }
 
   async subscribeToAiProcessing() {
@@ -88,9 +94,7 @@ export class SQSQueueListenerService {
       checkinMargin: 2,
       maxRuntime: 5,
     };
-    // todo exit this loop when app entering shutdown state.
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+    while (!this.#abortController.signal.aborted) {
       const checkInId = Sentry.captureCheckIn(
         { monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'in_progress' },
         monitorConfig,
@@ -102,22 +106,25 @@ export class SQSQueueListenerService {
             QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
             WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
           }),
+          { abortSignal: this.#abortController.signal },
         );
         if (result.Messages) {
           await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
         }
         consecutiveErrors = 0;
         Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'ok' });
-        await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS);
+        await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS, this.#abortController.signal);
       } catch (err) {
+        if (this.#abortController.signal.aborted) break;
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in AI processing polling loop, retrying in ${backoff}s`, err);
         Sentry.captureException(err, { tags: { queue: 'ai-processing' } });
         Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'error' });
-        await sleep(backoff);
+        await sleep(backoff, this.#abortController.signal);
       }
     }
+    console.log('AI processing polling loop stopped');
   }
 
   async processMessage(message: Message) {
@@ -180,9 +187,17 @@ export class SQSQueueListenerService {
   }
 }
 
-async function sleep(seconds: number) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, seconds * 1000);
+async function sleep(seconds: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, seconds * 1000);
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
   });
 }
 
