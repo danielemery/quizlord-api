@@ -1,4 +1,5 @@
 import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
+import * as Sentry from '@sentry/node';
 
 import config from '../config/config';
 import { QuizService } from '../quiz/quiz.service';
@@ -9,6 +10,10 @@ const SQS_LONG_POLLING_TIMEOUT_SECONDS = 10;
 const FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS = 0;
 /** The number of seconds to wait between polling for AI processing events. */
 const AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS = 60;
+/** Initial backoff sleep in seconds after a polling loop error. */
+const INITIAL_ERROR_SLEEP_SECONDS = 5;
+/** Maximum backoff sleep in seconds after repeated polling loop errors. */
+const MAX_ERROR_SLEEP_SECONDS = 60;
 
 interface S3MessageContent {
   Records?: S3MessageContentRecord[];
@@ -35,62 +40,87 @@ export class SQSQueueListenerService {
   }
 
   async subscribeToFileUploads() {
+    let consecutiveErrors = 0;
     // todo exit this loop when app entering shutdown state.
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
-      const result = await this.#client.send(
-        new ReceiveMessageCommand({
-          QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
-          WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
-        }),
-      );
-      if (result.Messages) {
-        await Promise.all(result.Messages.map((message) => this.processMessage(message)));
+      try {
+        console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
+        const result = await this.#client.send(
+          new ReceiveMessageCommand({
+            QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+            WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
+          }),
+        );
+        if (result.Messages) {
+          await Promise.all(result.Messages.map((message) => this.processMessage(message)));
+        }
+        consecutiveErrors = 0;
+        await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS);
+      } catch (err) {
+        consecutiveErrors++;
+        const backoff = errorBackoffSeconds(consecutiveErrors);
+        console.error(`Error in file upload polling loop, retrying in ${backoff}s`, err);
+        Sentry.captureException(err, { tags: { queue: 'file-upload' } });
+        await sleep(backoff);
       }
-      await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS);
     }
   }
 
   async subscribeToAiProcessing() {
+    let consecutiveErrors = 0;
     // todo exit this loop when app entering shutdown state.
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
-      const result = await this.#client.send(
-        new ReceiveMessageCommand({
-          QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
-          WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
-        }),
-      );
-      if (result.Messages) {
-        await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
+      try {
+        console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
+        const result = await this.#client.send(
+          new ReceiveMessageCommand({
+            QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
+            WaitTimeSeconds: SQS_LONG_POLLING_TIMEOUT_SECONDS,
+          }),
+        );
+        if (result.Messages) {
+          await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
+        }
+        consecutiveErrors = 0;
+        await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS);
+      } catch (err) {
+        consecutiveErrors++;
+        const backoff = errorBackoffSeconds(consecutiveErrors);
+        console.error(`Error in AI processing polling loop, retrying in ${backoff}s`, err);
+        Sentry.captureException(err, { tags: { queue: 'ai-processing' } });
+        await sleep(backoff);
       }
-      await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS);
     }
   }
 
   async processMessage(message: Message) {
-    if (message.Body) {
-      const messageBody = JSON.parse(message.Body);
-      if (messageBody.Message) {
-        const messageData: S3MessageContent = JSON.parse(messageBody.Message);
-        if (messageData.Records) {
-          await Promise.all(messageData.Records.map((record) => this.processUploadedItem(record)));
+    try {
+      if (message.Body) {
+        const messageBody = JSON.parse(message.Body);
+        if (messageBody.Message) {
+          const messageData: S3MessageContent = JSON.parse(messageBody.Message);
+          if (messageData.Records) {
+            await Promise.all(messageData.Records.map((record) => this.processUploadedItem(record)));
+          }
+        } else {
+          console.warn(`Unexpected empty inner message body`, message);
         }
       } else {
-        console.warn(`Unexpected empty inner message body`, message);
+        console.warn(`Unexpected empty message body`, message);
       }
-    } else {
-      console.warn(`Unexpected empty message body`, message);
-    }
 
-    await this.#client.send(
-      new DeleteMessageCommand({
-        QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
-        ReceiptHandle: message.ReceiptHandle,
-      }),
-    );
+      await this.#client.send(
+        new DeleteMessageCommand({
+          QueueUrl: config.AWS_FILE_UPLOADED_SQS_QUEUE_URL,
+          ReceiptHandle: message.ReceiptHandle,
+        }),
+      );
+    } catch (err) {
+      console.error('Error processing file upload message, leaving in queue for retry', err);
+      Sentry.captureException(err, { tags: { queue: 'file-upload' } });
+    }
   }
 
   async processUploadedItem(record: S3MessageContentRecord) {
@@ -99,18 +129,14 @@ export class SQSQueueListenerService {
       console.warn(`Unexpected event name <${record.eventName}>`);
     }
     const key = record.s3.object.key;
-    try {
-      await this.#quizService.markQuizImageReady(key);
-    } catch (err) {
-      console.error(`Error marking quiz image ready at key: ${key}`, err);
-    }
+    await this.#quizService.markQuizImageReady(key);
   }
 
   async processAiProcessingMessage(message: Message) {
-    if (message.Body) {
-      const messageBody = JSON.parse(message.Body);
-      if (messageBody.quizId) {
-        try {
+    try {
+      if (message.Body) {
+        const messageBody = JSON.parse(message.Body);
+        if (messageBody.quizId) {
           await this.#quizService.aiProcessQuiz(messageBody.quizId);
           await this.#client.send(
             new DeleteMessageCommand({
@@ -118,12 +144,13 @@ export class SQSQueueListenerService {
               ReceiptHandle: message.ReceiptHandle,
             }),
           );
-        } catch (err) {
-          console.error(`Error processing quiz id: ${messageBody.quizId}`, err);
+        } else {
+          console.warn(`Unexpected message body`, message);
         }
-      } else {
-        console.warn(`Unexpected message body`, message);
       }
+    } catch (err) {
+      console.error('Error processing AI message, leaving in queue for retry', err);
+      Sentry.captureException(err, { tags: { queue: 'ai-processing' } });
     }
   }
 }
@@ -132,4 +159,8 @@ async function sleep(seconds: number) {
   return new Promise((resolve) => {
     setTimeout(resolve, seconds * 1000);
   });
+}
+
+export function errorBackoffSeconds(consecutiveErrors: number) {
+  return Math.min(INITIAL_ERROR_SLEEP_SECONDS * 2 ** (consecutiveErrors - 1), MAX_ERROR_SLEEP_SECONDS);
 }
