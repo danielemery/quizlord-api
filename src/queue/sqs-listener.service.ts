@@ -170,16 +170,19 @@ export class SQSQueueListenerService {
         const messageBody = JSON.parse(message.Body);
         if (messageBody.quizId) {
           await this.#quizService.aiProcessQuiz(messageBody.quizId);
-          await this.#client.send(
-            new DeleteMessageCommand({
-              QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
-              ReceiptHandle: message.ReceiptHandle,
-            }),
-          );
         } else {
           console.warn(`Unexpected message body`, message);
         }
+      } else {
+        console.warn(`Unexpected empty message body`, message);
       }
+
+      await this.#client.send(
+        new DeleteMessageCommand({
+          QueueUrl: config.AWS_AI_PROCESSING_SQS_QUEUE_URL,
+          ReceiptHandle: message.ReceiptHandle,
+        }),
+      );
     } catch (err) {
       console.error('Error processing AI message, leaving in queue for retry', err);
       Sentry.captureException(err, { tags: { queue: 'ai-processing' } });

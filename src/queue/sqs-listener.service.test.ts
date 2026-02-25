@@ -147,5 +147,23 @@ describe('sqs-listener.service', () => {
 
       await expect(sut.processAiProcessingMessage(message)).resolves.not.toThrow();
     });
+
+    it('must delete the message when body is empty', async () => {
+      const message = { ReceiptHandle: 'test-receipt-handle' };
+      mockSend.mockResolvedValue({});
+
+      await sut.processAiProcessingMessage(message);
+
+      expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ _type: 'DeleteMessageCommand' }));
+    });
+
+    it('must delete the message when quizId is missing', async () => {
+      const message = makeMessage(JSON.stringify({ unexpected: 'data' }));
+      mockSend.mockResolvedValue({});
+
+      await sut.processAiProcessingMessage(message);
+
+      expect(mockSend).toHaveBeenCalledWith(expect.objectContaining({ _type: 'DeleteMessageCommand' }));
+    });
   });
 });
