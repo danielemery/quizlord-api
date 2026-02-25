@@ -15,6 +15,9 @@ const INITIAL_ERROR_SLEEP_SECONDS = 5;
 /** Maximum backoff sleep in seconds after repeated polling loop errors. */
 const MAX_ERROR_SLEEP_SECONDS = 60;
 
+const FILE_UPLOAD_MONITOR_SLUG = 'sqs-file-upload-poll';
+const AI_PROCESSING_MONITOR_SLUG = 'sqs-ai-processing-poll';
+
 interface S3MessageContent {
   Records?: S3MessageContentRecord[];
 }
@@ -41,9 +44,18 @@ export class SQSQueueListenerService {
 
   async subscribeToFileUploads() {
     let consecutiveErrors = 0;
+    const monitorConfig = {
+      schedule: { type: 'interval' as const, value: 1, unit: 'minute' as const },
+      checkinMargin: 2,
+      maxRuntime: 2,
+    };
     // todo exit this loop when app entering shutdown state.
     // eslint-disable-next-line no-constant-condition
     while (true) {
+      const checkInId = Sentry.captureCheckIn(
+        { monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'in_progress' },
+        monitorConfig,
+      );
       try {
         console.log(`Polling ${config.AWS_FILE_UPLOADED_SQS_QUEUE_URL} for messages`);
         const result = await this.#client.send(
@@ -56,12 +68,14 @@ export class SQSQueueListenerService {
           await Promise.all(result.Messages.map((message) => this.processMessage(message)));
         }
         consecutiveErrors = 0;
+        Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'ok' });
         await sleep(FILE_UPLOAD_POLLING_SLEEP_INTERVAL_SECONDS);
       } catch (err) {
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in file upload polling loop, retrying in ${backoff}s`, err);
         Sentry.captureException(err, { tags: { queue: 'file-upload' } });
+        Sentry.captureCheckIn({ checkInId, monitorSlug: FILE_UPLOAD_MONITOR_SLUG, status: 'error' });
         await sleep(backoff);
       }
     }
@@ -69,9 +83,18 @@ export class SQSQueueListenerService {
 
   async subscribeToAiProcessing() {
     let consecutiveErrors = 0;
+    const monitorConfig = {
+      schedule: { type: 'interval' as const, value: 2, unit: 'minute' as const },
+      checkinMargin: 2,
+      maxRuntime: 5,
+    };
     // todo exit this loop when app entering shutdown state.
     // eslint-disable-next-line no-constant-condition
     while (true) {
+      const checkInId = Sentry.captureCheckIn(
+        { monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'in_progress' },
+        monitorConfig,
+      );
       try {
         console.log(`Polling ${config.AWS_AI_PROCESSING_SQS_QUEUE_URL} for messages`);
         const result = await this.#client.send(
@@ -84,12 +107,14 @@ export class SQSQueueListenerService {
           await Promise.all(result.Messages.map((message) => this.processAiProcessingMessage(message)));
         }
         consecutiveErrors = 0;
+        Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'ok' });
         await sleep(AI_PROCESSING_POLLING_SLEEP_INTERVAL_SECONDS);
       } catch (err) {
         consecutiveErrors++;
         const backoff = errorBackoffSeconds(consecutiveErrors);
         console.error(`Error in AI processing polling loop, retrying in ${backoff}s`, err);
         Sentry.captureException(err, { tags: { queue: 'ai-processing' } });
+        Sentry.captureCheckIn({ checkInId, monitorSlug: AI_PROCESSING_MONITOR_SLUG, status: 'error' });
         await sleep(backoff);
       }
     }
