@@ -197,16 +197,17 @@ export class SQSQueueListenerService {
 }
 
 async function sleep(seconds: number, signal?: AbortSignal) {
+  if (signal?.aborted) return;
   return new Promise<void>((resolve) => {
-    const timer = setTimeout(resolve, seconds * 1000);
-    signal?.addEventListener(
-      'abort',
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-      { once: true },
-    );
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, seconds * 1000);
+    signal?.addEventListener('abort', onAbort, { once: true });
   });
 }
 
