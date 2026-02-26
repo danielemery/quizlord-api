@@ -5,14 +5,14 @@ import { IndividualUserStatisticsSortOption } from './statistics.dto';
 import { StatisticsService } from './statistics.service';
 
 const mockUserService = {
-  getUsers: jest.fn(),
+  getUsers: vi.fn(),
 };
 const mockQuizService = {
-  quizScorePercentagesForUser: jest.fn(),
+  quizScorePercentagesForUser: vi.fn(),
 };
 const mockCache = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
 };
 
 describe('statistics', () => {
@@ -23,7 +23,7 @@ describe('statistics', () => {
       mockCache as unknown as Cache,
     );
     beforeEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
     describe('getIndividualUserStatistics', () => {
       const fakeResultOne = {
@@ -39,7 +39,7 @@ describe('statistics', () => {
       it('must load from the cache if data present there and sort the contents by number of quizzes completed if no sort argument is passed', async () => {
         mockCache.getItem.mockResolvedValueOnce([fakeResultOne, fakeResultTwo]);
 
-        const mockSortIndividualUserStatistics = jest
+        const mockSortIndividualUserStatistics = vi
           .spyOn(sut, 'sortIndividualUserStatistics')
           .mockReturnValueOnce([fakeResultTwo, fakeResultOne]);
 
@@ -59,7 +59,7 @@ describe('statistics', () => {
       it('must sort by sortedBy argument if present', async () => {
         mockCache.getItem.mockResolvedValueOnce([fakeResultOne, fakeResultTwo]);
 
-        const mockSortIndividualUserStatistics = jest
+        const mockSortIndividualUserStatistics = vi
           .spyOn(sut, 'sortIndividualUserStatistics')
           .mockReturnValueOnce([fakeResultTwo, fakeResultOne]);
 
@@ -119,11 +119,11 @@ describe('statistics', () => {
             hasMoreRows: false,
           });
 
-        const mockGetStatisticsForUser = jest
+        const mockGetStatisticsForUser = vi
           .spyOn(sut, 'getStatisticsForUser')
           .mockResolvedValue({ totalQuizCompletions: 7, averageScorePercentage: 0.2 });
 
-        const mockSortIndividualUserStatistics = jest
+        const mockSortIndividualUserStatistics = vi
           .spyOn(sut, 'sortIndividualUserStatistics')
           .mockReturnValueOnce(expected);
 

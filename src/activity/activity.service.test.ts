@@ -3,8 +3,8 @@ import { UnhandledError } from '../util/common.errors';
 import { ActivityService } from './activity.service';
 
 const mockQuizService = {
-  getRecentQuizUploads: jest.fn(),
-  getRecentQuizCompletions: jest.fn(),
+  getRecentQuizUploads: vi.fn(),
+  getRecentQuizCompletions: vi.fn(),
 };
 
 const sut = new ActivityService(mockQuizService as unknown as QuizService);

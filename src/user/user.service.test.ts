@@ -5,28 +5,28 @@ import { SelfRejectError, UserNotFoundError } from './user.errors';
 import { UserPersistence } from './user.persistence';
 import { UserService } from './user.service';
 
-jest.mock('uuid');
+vi.mock('uuid');
 
 // We need to cast here to the specific overload on the uuidv4 we are using, otherwise typescript selects the wrong overload.
-const mockedUUIDv4 = jest.mocked(uuidv4 as (options?: Version4Options, buf?: undefined, offset?: number) => string);
+const mockedUUIDv4 = vi.mocked(uuidv4 as (options?: Version4Options, buf?: undefined, offset?: number) => string);
 const fakeUserPersistence = {
-  createNewUser: jest.fn(),
-  getUserByEmail: jest.fn(),
-  getUserById: jest.fn(),
-  updateUserName: jest.fn(),
-  getUsersForQuizCompletion: jest.fn(),
-  getUserForQuizUpload: jest.fn(),
-  getPendingUsers: jest.fn(),
-  getRejectedUsers: jest.fn(),
-  approveUser: jest.fn(),
-  rejectUser: jest.fn(),
+  createNewUser: vi.fn(),
+  getUserByEmail: vi.fn(),
+  getUserById: vi.fn(),
+  updateUserName: vi.fn(),
+  getUsersForQuizCompletion: vi.fn(),
+  getUserForQuizUpload: vi.fn(),
+  getPendingUsers: vi.fn(),
+  getRejectedUsers: vi.fn(),
+  approveUser: vi.fn(),
+  rejectUser: vi.fn(),
 };
 
 describe('user', () => {
   describe('user.service', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.restoreAllMocks();
+      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     const sut = new UserService(fakeUserPersistence as unknown as UserPersistence);
     describe('loadUserDetailsAndUpdateIfNecessary', () => {
