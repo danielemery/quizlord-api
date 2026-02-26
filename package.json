@@ -47,7 +47,7 @@
     "joi": "^17.6.0",
     "jsonwebtoken": "^9.0.0",
     "jwks-rsa": "^3.0.1",
-    "mime": "^3.0.0",
+    "mime": "^4.0.0",
     "pg": "^8.7.3",
     "uuid": "^11"
   },
@@ -55,7 +55,7 @@
     "@dtdot/eslint-config": "^2.0.0",
     "@tsconfig/node24": "^24.0.3",
     "@types/cors": "^2.8.13",
-    "@types/mime": "^3.0.4",
+    "@types/mime": "^4.0.0",
     "@types/node": "^24.10.4",
     "@types/pg": "^8.6.5",
     "@vitest/coverage-v8": "^4.0.18",
