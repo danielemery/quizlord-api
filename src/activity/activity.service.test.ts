@@ -1,6 +1,6 @@
-import { QuizService } from '../quiz/quiz.service';
-import { UnhandledError } from '../util/common.errors';
-import { ActivityService } from './activity.service';
+import { QuizService } from '../quiz/quiz.service.js';
+import { UnhandledError } from '../util/common.errors.js';
+import { ActivityService } from './activity.service.js';
 
 const mockQuizService = {
   getRecentQuizUploads: vi.fn(),

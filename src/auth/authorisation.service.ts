@@ -1,7 +1,7 @@
 import { Role } from '@prisma/client';
 
-import { QuizlordContext } from '..';
-import { UnauthorisedError } from './authorisation.errors';
+import { QuizlordContext } from '../index.js';
+import { UnauthorisedError } from './authorisation.errors.js';
 
 export class AuthorisationService {
   requireUserRole(context: QuizlordContext, role: Role) {

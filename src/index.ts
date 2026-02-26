@@ -1,5 +1,5 @@
 // sort-imports-ignore (Sentry instrumentation must be the first import)
-import './instrument';
+import './instrument.js';
 
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
@@ -11,15 +11,15 @@ import express from 'express';
 import { GraphQLScalarType, Kind } from 'graphql';
 import http from 'http';
 
-import { activityChildren, activityQueries } from './activity/activity.gql';
-import config from './config/config';
-import typeDefs from './gql';
-import { quizMutations, quizQueries } from './quiz/quiz.gql';
-import { sentryApolloPlugin } from './sentry-apollo-plugin';
-import { authenticationService, prismaService, queueService, userService } from './service.locator';
-import { statisticsQueries } from './statistics/statistics.gql';
-import { Role } from './user/user.dto';
-import { userMutations, userQueries } from './user/user.gql';
+import { activityChildren, activityQueries } from './activity/activity.gql.js';
+import config from './config/config.js';
+import typeDefs from './gql.js';
+import { quizMutations, quizQueries } from './quiz/quiz.gql.js';
+import { sentryApolloPlugin } from './sentry-apollo-plugin.js';
+import { authenticationService, prismaService, queueService, userService } from './service.locator.js';
+import { statisticsQueries } from './statistics/statistics.gql.js';
+import { Role } from './user/user.dto.js';
+import { userMutations, userQueries } from './user/user.gql.js';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 

@@ -1,13 +1,13 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
-import { GeminiService } from '../ai/gemini.service';
-import { S3FileService } from '../file/s3.service';
-import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
-import { UserService } from '../user/user.service';
-import { MustProvideAtLeastOneFileError } from './quiz.errors';
-import { QuizPersistence } from './quiz.persistence';
-import { QuizService } from './quiz.service';
+import { GeminiService } from '../ai/gemini.service.js';
+import { S3FileService } from '../file/s3.service.js';
+import { SQSQueuePublisherService } from '../queue/sqs-publisher.service.js';
+import { UserService } from '../user/user.service.js';
+import { MustProvideAtLeastOneFileError } from './quiz.errors.js';
+import { QuizPersistence } from './quiz.persistence.js';
+import { QuizService } from './quiz.service.js';
 
 vi.mock('uuid');
 

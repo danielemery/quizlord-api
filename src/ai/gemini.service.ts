@@ -1,8 +1,8 @@
 import { GoogleGenAI } from '@google/genai';
 import axios from 'axios';
 
-import { QuizImageType } from '../quiz/quiz.dto';
-import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema';
+import { QuizImageType } from '../quiz/quiz.dto.js';
+import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-results.schema.js';
 
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
 const MODEL_NAME = 'gemini-3-flash-preview';

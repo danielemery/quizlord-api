@@ -1,14 +1,14 @@
 {
   "name": "@quizlord/api",
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
-  "main": "index.js",
+  "type": "module",
   "engines": {
     "node": "24.13.1"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "start": "prisma generate && doppler run -- nodemon src/index.ts",
-    "debug": "prisma generate && doppler run -- nodemon --exec \"node --inspect --require ts-node/register src/index.ts\"",
+    "start": "prisma generate && doppler run -- nodemon --exec \"node --import tsx src/index.ts\"",
+    "debug": "prisma generate && doppler run -- nodemon --exec \"node --inspect --import tsx src/index.ts\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ci": "vitest run --coverage",
@@ -62,7 +62,7 @@
     "nodemon": "^3.0.1",
     "prettier": "^3.5.3",
     "prisma": "^6.5.0",
-    "ts-node": "^10.9.1",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

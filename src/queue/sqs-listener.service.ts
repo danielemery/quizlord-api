@@ -1,8 +1,8 @@
 import { SQSClient, ReceiveMessageCommand, Message, DeleteMessageCommand } from '@aws-sdk/client-sqs';
 import * as Sentry from '@sentry/node';
 
-import config from '../config/config';
-import { QuizService } from '../quiz/quiz.service';
+import config from '../config/config.js';
+import { QuizService } from '../quiz/quiz.service.js';
 
 /** The number of seconds for sqs to wait until a message is available. */
 const SQS_LONG_POLLING_TIMEOUT_SECONDS = 10;

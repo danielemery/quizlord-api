@@ -1,10 +1,18 @@
 import { Prisma, User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
-import { RecentActivityItem } from '../activity/activity.service';
-import { ApproveUserResult, PendingUser, RejectedUser, RejectUserResult, Role, User, UserSortOption } from './user.dto';
-import { SelfRejectError, UserNotFoundError } from './user.errors';
-import { UserPersistence } from './user.persistence';
+import { RecentActivityItem } from '../activity/activity.service.js';
+import {
+  ApproveUserResult,
+  PendingUser,
+  RejectedUser,
+  RejectUserResult,
+  Role,
+  User,
+  UserSortOption,
+} from './user.dto.js';
+import { SelfRejectError, UserNotFoundError } from './user.errors.js';
+import { UserPersistence } from './user.persistence.js';
 
 export interface GetUsersResult {
   data: User[];

@@ -1,6 +1,6 @@
 import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 
-import config from '../config/config';
+import config from '../config/config.js';
 
 export class SQSQueuePublisherService {
   #client: SQSClient;

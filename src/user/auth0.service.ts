@@ -1,7 +1,7 @@
 // import axios from 'axios';
 // import { QuizlordContext } from '..';
-// import config from '../config';
-// import { MemoryCache } from './cache';
+// import config from '../config.js';
+// import { MemoryCache } from './cache.js';
 
 // const userResolverCache = new MemoryCache();
 // function mockResult() {

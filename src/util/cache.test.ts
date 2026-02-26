@@ -1,4 +1,4 @@
-import { MemoryCache } from './cache';
+import { MemoryCache } from './cache.js';
 
 describe('util', () => {
   beforeEach(() => {

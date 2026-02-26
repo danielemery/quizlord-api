@@ -1,8 +1,8 @@
-import { QuizService } from '../quiz/quiz.service';
-import { UserService } from '../user/user.service';
-import { Cache } from '../util/cache';
-import { IndividualUserStatisticsSortOption } from './statistics.dto';
-import { StatisticsService } from './statistics.service';
+import { QuizService } from '../quiz/quiz.service.js';
+import { UserService } from '../user/user.service.js';
+import { Cache } from '../util/cache.js';
+import { IndividualUserStatisticsSortOption } from './statistics.dto.js';
+import { StatisticsService } from './statistics.service.js';
 
 const mockUserService = {
   getUsers: vi.fn(),

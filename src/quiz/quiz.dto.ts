@@ -1,4 +1,4 @@
-import { User } from '../user/user.dto';
+import { User } from '../user/user.dto.js';
 
 export interface QuizCompletion {
   completedAt: Date;

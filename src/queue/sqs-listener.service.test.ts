@@ -1,4 +1,4 @@
-import { SQSQueueListenerService, errorBackoffSeconds } from './sqs-listener.service';
+import { SQSQueueListenerService, errorBackoffSeconds } from './sqs-listener.service.js';
 
 const mockSend = vi.fn();
 vi.mock('@aws-sdk/client-sqs', () => ({
@@ -15,7 +15,7 @@ vi.mock('@sentry/node', () => ({
   captureException: vi.fn(),
 }));
 
-vi.mock('../config/config', () => ({
+vi.mock('../config/config.js', () => ({
   default: {
     AWS_REGION: 'us-east-1',
     AWS_FILE_UPLOADED_SQS_QUEUE_URL: 'https://sqs.test/file-uploads',
