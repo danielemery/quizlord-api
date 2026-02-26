@@ -105,3 +105,6 @@ dist
 
 # Exclude local claude settings file
 .claude/settings.local.json
+
+# Temporary files
+.tmp/
