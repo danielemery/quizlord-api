@@ -1,18 +1,18 @@
-import { ActivityService } from './activity/activity.service';
-import { GeminiService } from './ai/gemini.service';
-import { AuthenticationService } from './auth/authentication.service';
-import { AuthorisationService } from './auth/authorisation.service';
-import config from './config/config';
-import { PrismaService } from './database/prisma.service';
-import { S3FileService } from './file/s3.service';
-import { SQSQueueListenerService as SQSListenerService } from './queue/sqs-listener.service';
-import { SQSQueuePublisherService } from './queue/sqs-publisher.service';
-import { QuizPersistence } from './quiz/quiz.persistence';
-import { QuizService } from './quiz/quiz.service';
-import { StatisticsService } from './statistics/statistics.service';
-import { UserPersistence } from './user/user.persistence';
-import { UserService } from './user/user.service';
-import { MemoryCache } from './util/cache';
+import { ActivityService } from './activity/activity.service.js';
+import { GeminiService } from './ai/gemini.service.js';
+import { AuthenticationService } from './auth/authentication.service.js';
+import { AuthorisationService } from './auth/authorisation.service.js';
+import config from './config/config.js';
+import { PrismaService } from './database/prisma.service.js';
+import { S3FileService } from './file/s3.service.js';
+import { SQSQueueListenerService as SQSListenerService } from './queue/sqs-listener.service.js';
+import { SQSQueuePublisherService } from './queue/sqs-publisher.service.js';
+import { QuizPersistence } from './quiz/quiz.persistence.js';
+import { QuizService } from './quiz/quiz.service.js';
+import { StatisticsService } from './statistics/statistics.service.js';
+import { UserPersistence } from './user/user.persistence.js';
+import { UserService } from './user/user.service.js';
+import { MemoryCache } from './util/cache.js';
 
 const memoryCache = new MemoryCache();
 

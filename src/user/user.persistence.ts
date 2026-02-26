@@ -1,9 +1,9 @@
 import { Role, User } from '@prisma/client';
 
-import { RecentActivityItem } from '../activity/activity.service';
-import { PrismaService } from '../database/prisma.service';
-import { UserSortOption } from '../user/user.dto';
-import { getPagedQuery, slicePagedResults } from '../util/paging-helpers';
+import { RecentActivityItem } from '../activity/activity.service.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { UserSortOption } from '../user/user.dto.js';
+import { getPagedQuery, slicePagedResults } from '../util/paging-helpers.js';
 
 export interface GetUsersWithRoleResult {
   data: {

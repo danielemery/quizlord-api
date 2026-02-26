@@ -1,5 +1,5 @@
-import { QuizService } from '../quiz/quiz.service';
-import { UnhandledError } from '../util/common.errors';
+import { QuizService } from '../quiz/quiz.service.js';
+import { UnhandledError } from '../util/common.errors.js';
 
 // TODO later generate this from the gql schema.
 export interface RecentActivityItem {

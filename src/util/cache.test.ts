@@ -1,8 +1,8 @@
-import { MemoryCache } from './cache';
+import { MemoryCache } from './cache.js';
 
 describe('util', () => {
   beforeEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
   describe('cache', () => {
     it('must return undefined if the key does not exist', async () => {
@@ -19,14 +19,14 @@ describe('util', () => {
       expect(actual).toBe('value');
     });
     it('must return undefined if the key has expired', async () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date('2020-01-01'));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2020-01-01'));
       const sut = new MemoryCache();
 
       await sut.setItem('key', 'value', 1000);
       expect(await sut.getItem('key')).toBe('value');
 
-      jest.advanceTimersByTime(1001);
+      vi.advanceTimersByTime(1001);
       expect(await sut.getItem('key')).toBeUndefined();
     });
     it('must return undefined if the key has been expired manually', async () => {

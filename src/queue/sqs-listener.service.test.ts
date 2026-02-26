@@ -1,17 +1,21 @@
-import { SQSQueueListenerService, errorBackoffSeconds } from './sqs-listener.service';
+import { SQSQueueListenerService, errorBackoffSeconds } from './sqs-listener.service.js';
 
-const mockSend = jest.fn();
-jest.mock('@aws-sdk/client-sqs', () => ({
-  SQSClient: jest.fn(() => ({ send: mockSend })),
-  ReceiveMessageCommand: jest.fn(),
-  DeleteMessageCommand: jest.fn((...args: unknown[]) => ({ _type: 'DeleteMessageCommand', args })),
+const mockSend = vi.fn();
+vi.mock('@aws-sdk/client-sqs', () => ({
+  SQSClient: vi.fn(function () {
+    return { send: mockSend };
+  }),
+  ReceiveMessageCommand: vi.fn(),
+  DeleteMessageCommand: vi.fn(function (...args: unknown[]) {
+    return { _type: 'DeleteMessageCommand', args };
+  }),
 }));
 
-jest.mock('@sentry/node', () => ({
-  captureException: jest.fn(),
+vi.mock('@sentry/node', () => ({
+  captureException: vi.fn(),
 }));
 
-jest.mock('../config/config', () => ({
+vi.mock('../config/config.js', () => ({
   default: {
     AWS_REGION: 'us-east-1',
     AWS_FILE_UPLOADED_SQS_QUEUE_URL: 'https://sqs.test/file-uploads',
@@ -20,15 +24,15 @@ jest.mock('../config/config', () => ({
 }));
 
 const mockQuizService = {
-  markQuizImageReady: jest.fn(),
-  aiProcessQuiz: jest.fn(),
+  markQuizImageReady: vi.fn(),
+  aiProcessQuiz: vi.fn(),
 };
 
 describe('sqs-listener.service', () => {
   let sut: SQSQueueListenerService;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     sut = new SQSQueueListenerService(mockQuizService as never);
   });
 

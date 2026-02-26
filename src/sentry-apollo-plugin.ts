@@ -1,7 +1,7 @@
 import type { ApolloServerPlugin } from '@apollo/server';
 import * as Sentry from '@sentry/node';
 
-import type { QuizlordContext } from './index';
+import type { QuizlordContext } from './index.js';
 
 export const sentryApolloPlugin: ApolloServerPlugin<QuizlordContext> = {
   async requestDidStart({ request }) {

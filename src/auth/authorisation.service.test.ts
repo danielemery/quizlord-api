@@ -1,6 +1,6 @@
-import { QuizlordContext } from '..';
-import { UnauthorisedError } from './authorisation.errors';
-import { AuthorisationService } from './authorisation.service';
+import { QuizlordContext } from '../index.js';
+import { UnauthorisedError } from './authorisation.errors.js';
+import { AuthorisationService } from './authorisation.service.js';
 
 describe('authorisation', () => {
   describe('authorisation.service', () => {

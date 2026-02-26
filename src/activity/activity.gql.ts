@@ -1,8 +1,8 @@
 import DataLoader from 'dataloader';
 
-import { QuizlordContext } from '..';
-import { authorisationService, activityService, userService } from '../service.locator';
-import { RecentActivityItem } from './activity.service';
+import { QuizlordContext } from '../index.js';
+import { authorisationService, activityService, userService } from '../service.locator.js';
+import { RecentActivityItem } from './activity.service.js';
 
 async function activityFeed(_: unknown, _params: Record<string, never>, context: QuizlordContext) {
   authorisationService.requireUserRole(context, 'USER');

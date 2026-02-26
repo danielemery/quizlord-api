@@ -1,6 +1,6 @@
-import { QuizlordContext } from '..';
-import { authorisationService, statisticsService } from '../service.locator';
-import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto';
+import { QuizlordContext } from '../index.js';
+import { authorisationService, statisticsService } from '../service.locator.js';
+import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto.js';
 
 async function individualUserStatistics(
   _p: unknown,

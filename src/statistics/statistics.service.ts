@@ -1,7 +1,7 @@
-import { QuizService } from '../quiz/quiz.service';
-import { GetUsersResult, UserService } from '../user/user.service';
-import { Cache } from '../util/cache';
-import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto';
+import { QuizService } from '../quiz/quiz.service.js';
+import { GetUsersResult, UserService } from '../user/user.service.js';
+import { Cache } from '../util/cache.js';
+import { IndividualUserStatistic, IndividualUserStatisticsSortOption } from './statistics.dto.js';
 
 const INDIVIDUAL_STATISTICS_CACHE_KEY = 'individual-user-statistics';
 const INDIVIDUAL_STATISTICS_CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000; // 24 hours

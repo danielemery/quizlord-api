@@ -1,6 +1,6 @@
-import { QuizlordContext } from '..';
-import { authorisationService, quizService } from '../service.locator';
-import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers';
+import { QuizlordContext } from '../index.js';
+import { authorisationService, quizService } from '../service.locator.js';
+import { base64Decode, base64Encode, PagedResult } from '../util/paging-helpers.js';
 import {
   CreateQuizResult,
   Quiz,
@@ -10,7 +10,7 @@ import {
   QuizFilters,
   QuizImageType,
   QuizType,
-} from './quiz.dto';
+} from './quiz.dto.js';
 
 async function quizzes(
   _: unknown,

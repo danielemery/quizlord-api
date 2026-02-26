@@ -1,32 +1,32 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
-import { GeminiService } from '../ai/gemini.service';
-import { S3FileService } from '../file/s3.service';
-import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
-import { UserService } from '../user/user.service';
-import { MustProvideAtLeastOneFileError } from './quiz.errors';
-import { QuizPersistence } from './quiz.persistence';
-import { QuizService } from './quiz.service';
+import { GeminiService } from '../ai/gemini.service.js';
+import { S3FileService } from '../file/s3.service.js';
+import { SQSQueuePublisherService } from '../queue/sqs-publisher.service.js';
+import { UserService } from '../user/user.service.js';
+import { MustProvideAtLeastOneFileError } from './quiz.errors.js';
+import { QuizPersistence } from './quiz.persistence.js';
+import { QuizService } from './quiz.service.js';
 
-jest.mock('uuid');
+vi.mock('uuid');
 
 // We need to cast here to the specific overload on the uuidv4 we are using, otherwise typescript selects the wrong overload.
-const mockedUUIDv4 = jest.mocked(uuidv4 as (options?: Version4Options, buf?: undefined, offset?: number) => string);
+const mockedUUIDv4 = vi.mocked(uuidv4 as (options?: Version4Options, buf?: undefined, offset?: number) => string);
 const mockPersistence = {
-  createQuizWithImages: jest.fn(),
-  getCompletionScoreWithQuizTypesForUser: jest.fn(),
-  getQuizzesWithUserResults: jest.fn(),
-  getQuizByIdWithResults: jest.fn(),
-  getRecentQuizCompletions: jest.fn(),
-  getRecentQuizUploads: jest.fn(),
+  createQuizWithImages: vi.fn(),
+  getCompletionScoreWithQuizTypesForUser: vi.fn(),
+  getQuizzesWithUserResults: vi.fn(),
+  getQuizByIdWithResults: vi.fn(),
+  getRecentQuizCompletions: vi.fn(),
+  getRecentQuizUploads: vi.fn(),
 };
 const mockFileService = {
-  createKey: jest.fn(),
-  generateSignedUploadUrl: jest.fn(),
+  createKey: vi.fn(),
+  generateSignedUploadUrl: vi.fn(),
 };
 const mockUserService = {
-  getUser: jest.fn(),
+  getUser: vi.fn(),
 };
 const mockGeminiService = {};
 const mockSQSQueuePublisherService = {};
@@ -42,11 +42,11 @@ const sut = new QuizService(
 describe('quiz', () => {
   describe('quiz.service', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.restoreAllMocks();
+      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
     describe('getQuizzesWithUserResults', () => {
       it('must call getQuizzesWithUserResults on persistence with correct arguments and transform the result', async () => {
@@ -257,8 +257,8 @@ describe('quiz', () => {
       });
       it('must create quiz with upload link for each image', async () => {
         const fakeNow = new Date('2023-02-12');
-        jest.useFakeTimers();
-        jest.setSystemTime(fakeNow);
+        vi.useFakeTimers();
+        vi.setSystemTime(fakeNow);
 
         mockedUUIDv4.mockReturnValueOnce('fake-quiz-id');
         mockUserService.getUser.mockResolvedValueOnce({

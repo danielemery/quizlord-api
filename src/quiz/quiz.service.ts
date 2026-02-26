@@ -11,10 +11,10 @@ import {
 import mime from 'mime';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ExtractQuizQuestionsResult, GeminiService } from '../ai/gemini.service';
-import { S3FileService } from '../file/s3.service';
-import { SQSQueuePublisherService } from '../queue/sqs-publisher.service';
-import { UserService } from '../user/user.service';
+import { ExtractQuizQuestionsResult, GeminiService } from '../ai/gemini.service.js';
+import { S3FileService } from '../file/s3.service.js';
+import { SQSQueuePublisherService } from '../queue/sqs-publisher.service.js';
+import { UserService } from '../user/user.service.js';
 import {
   Quiz,
   QuizCompletion,
@@ -22,9 +22,9 @@ import {
   QuizCompletionWithQuestionResults,
   QuizFilters,
   QuizImage,
-} from './quiz.dto';
-import { MustProvideAtLeastOneFileError } from './quiz.errors';
-import { QuizPersistence } from './quiz.persistence';
+} from './quiz.dto.js';
+import { MustProvideAtLeastOneFileError } from './quiz.errors.js';
+import { QuizPersistence } from './quiz.persistence.js';
 
 const MAXIMUM_QUIZ_PAGE_SIZE = 100;
 

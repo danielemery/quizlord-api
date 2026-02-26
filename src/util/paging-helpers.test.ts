@@ -1,4 +1,4 @@
-import { slicePagedResults, getPagedQuery } from './paging-helpers';
+import { slicePagedResults, getPagedQuery } from './paging-helpers.js';
 
 describe('util', () => {
   describe('paging-helpers', () => {
