@@ -46,7 +46,7 @@
     "graphql-tag": "^2.12.6",
     "joi": "^17.6.0",
     "jsonwebtoken": "^9.0.0",
-    "jwks-rsa": "^3.0.1",
+    "jwks-rsa": "^4.0.0",
     "mime": "^3.0.0",
     "pg": "^8.7.3",
     "uuid": "^11"
