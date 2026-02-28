@@ -3,7 +3,7 @@
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "type": "module",
   "engines": {
-    "node": "24.13.1"
+    "node": "24.14.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
