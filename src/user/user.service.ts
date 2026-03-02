@@ -1,7 +1,7 @@
-import { Prisma, User as UserPersistenceModel, Role as RolePersistenceModel } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { RecentActivityItem } from '../activity/activity.service.js';
+import { Prisma, User as UserPersistenceModel, Role as RolePersistenceModel } from '../generated/prisma/client.js';
 import {
   ApproveUserResult,
   PendingUser,

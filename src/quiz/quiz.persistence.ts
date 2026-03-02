@@ -1,7 +1,7 @@
-import { Quiz, QuizAIProcessingState, QuizImage, QuizNoteType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../database/prisma.service.js';
+import { Quiz, QuizAIProcessingState, QuizImage, QuizNoteType } from '../generated/prisma/client.js';
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers.js';
 import { QuizCompletionQuestionResult, QuizFilters, QuizQuestion } from './quiz.dto.js';
 

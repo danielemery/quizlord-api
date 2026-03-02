@@ -1,8 +1,8 @@
-import { Decimal } from '@prisma/client/runtime/library';
 import { v4 as uuidv4, Version4Options } from 'uuid';
 
 import { GeminiService } from '../ai/gemini.service.js';
 import { S3FileService } from '../file/s3.service.js';
+import { Prisma } from '../generated/prisma/client.js';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service.js';
 import { UserService } from '../user/user.service.js';
 import { MustProvideAtLeastOneFileError } from './quiz.errors.js';
@@ -80,7 +80,7 @@ describe('quiz', () => {
                     },
                   },
                 ],
-                score: new Decimal(10),
+                score: new Prisma.Decimal(10),
               },
             ],
             uploadedByUser: {
@@ -154,14 +154,14 @@ describe('quiz', () => {
               quiz: {
                 type: 'SHARK',
               },
-              score: new Decimal(10),
+              score: new Prisma.Decimal(10),
             },
             {
               id: '2',
               quiz: {
                 type: 'BRAINWAVES',
               },
-              score: new Decimal(12.5),
+              score: new Prisma.Decimal(12.5),
             },
           ],
           hasMoreRows: false,
@@ -189,14 +189,14 @@ describe('quiz', () => {
               quiz: {
                 type: 'SHARK',
               },
-              score: new Decimal(10),
+              score: new Prisma.Decimal(10),
             },
             {
               id: '2',
               quiz: {
                 type: 'BRAINWAVES',
               },
-              score: new Decimal(12.5),
+              score: new Prisma.Decimal(12.5),
             },
           ],
           hasMoreRows: true,
@@ -433,7 +433,7 @@ describe('quiz', () => {
           {
             id: 'fake-completion-id',
             completedAt: new Date('2023-01-01'),
-            score: new Decimal(12),
+            score: new Prisma.Decimal(12),
             completedBy: [
               {
                 user: {

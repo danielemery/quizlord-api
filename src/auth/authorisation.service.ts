@@ -1,5 +1,4 @@
-import { Role } from '@prisma/client';
-
+import { Role } from '../generated/prisma/client.js';
 import { QuizlordContext } from '../index.js';
 import { UnauthorisedError } from './authorisation.errors.js';
 

@@ -1,3 +1,8 @@
+import mime from 'mime';
+import { v4 as uuidv4 } from 'uuid';
+
+import { ExtractQuizQuestionsResult, GeminiService } from '../ai/gemini.service.js';
+import { S3FileService } from '../file/s3.service.js';
 import {
   QuizCompletion as QuizCompletionPersistenceModel,
   QuizCompletionQuestionResult as QuizCompletionQuestionResultPersistenceModel,
@@ -7,12 +12,7 @@ import {
   Quiz as QuizPersistenceModel,
   QuizType,
   User as UserPersistenceModel,
-} from '@prisma/client';
-import mime from 'mime';
-import { v4 as uuidv4 } from 'uuid';
-
-import { ExtractQuizQuestionsResult, GeminiService } from '../ai/gemini.service.js';
-import { S3FileService } from '../file/s3.service.js';
+} from '../generated/prisma/client.js';
 import { SQSQueuePublisherService } from '../queue/sqs-publisher.service.js';
 import { UserService } from '../user/user.service.js';
 import { logger } from '../util/logger.js';
@@ -103,7 +103,7 @@ export class QuizService {
         email: uploadedByUser.email,
         name: uploadedByUser.name ?? undefined,
       },
-      aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? aiProcessingCertaintyPercent.toNumber() : undefined,
+      aiProcessingCertaintyPercent: aiProcessingCertaintyPercent ? Number(aiProcessingCertaintyPercent) : undefined,
       aiProcessingModel: aiProcessingModel ?? undefined,
       reportedInaccurateOCR: notes.some((note) => note.noteType === 'INACCURATE_OCR'),
       questions: questions?.map((question) => ({
@@ -329,7 +329,7 @@ export class QuizService {
     return {
       stats: data.map((completion) => {
         const maxScore = this.getMaxScoreForQuizType(completion.quiz.type);
-        return completion.score.toNumber() / maxScore;
+        return Number(completion.score) / maxScore;
       }),
       cursor: hasMoreRows ? data[data.length - 1]?.id : undefined,
     };
@@ -348,7 +348,7 @@ export class QuizService {
       quizType: completion.quiz.type,
       quizDate: completion.quiz.date,
       completionDate: completion.completedAt,
-      score: completion.score.toNumber(),
+      score: Number(completion.score),
     }));
   }
 
@@ -407,7 +407,7 @@ export class QuizService {
           name: user.user.name ?? undefined,
         };
       }),
-      score: score.toNumber(),
+      score: Number(score),
     };
   }
 
@@ -454,7 +454,7 @@ export class QuizService {
           name: user.user.name ?? undefined,
         };
       }),
-      score: score.toNumber(),
+      score: Number(score),
       questionResults,
     };
   }
