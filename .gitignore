@@ -108,3 +108,6 @@ dist
 
 # Temporary files
 .tmp/
+
+# Generated Prisma client
+src/generated/

@@ -1,6 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { types } from 'pg';
 
+import { PrismaClient } from '../generated/prisma/client.js';
 import { logger } from '../util/logger.js';
 
 export interface PersistenceResult<T> {
@@ -27,7 +28,8 @@ export class PrismaService {
   async connect() {
     if (!this.#prisma) {
       logger.info('Connecting to database');
-      this.#prisma = new PrismaClient();
+      const adapter = new PrismaPg({ connectionString: process.env.DB_CONNECTION_STRING });
+      this.#prisma = new PrismaClient({ adapter });
       try {
         await this.#prisma.$queryRaw`SELECT 1`;
       } catch (err) {
