@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/node';
+
 import { SQSQueueListenerService, errorBackoffSeconds } from './sqs-listener.service.js';
 
 const mockSend = vi.fn();
@@ -13,6 +15,7 @@ vi.mock('@aws-sdk/client-sqs', () => ({
 
 vi.mock('@sentry/node', () => ({
   captureException: vi.fn(),
+  captureMessage: vi.fn(),
 }));
 
 vi.mock('../config/config.js', () => ({
@@ -83,11 +86,16 @@ describe('sqs-listener.service', () => {
         }),
       };
       const message = makeMessage(JSON.stringify(s3Event));
-      mockQuizService.markQuizImageReady.mockRejectedValue(new Error('processing failed'));
+      const error = new Error('processing failed');
+      mockQuizService.markQuizImageReady.mockRejectedValue(error);
 
       await sut.processMessage(message);
 
       expect(mockSend).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({ tags: { queue: 'file-upload' } }),
+      );
     });
 
     it('must not delete the message when JSON.parse fails on malformed body', async () => {
@@ -96,6 +104,10 @@ describe('sqs-listener.service', () => {
       await sut.processMessage(message);
 
       expect(mockSend).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(SyntaxError),
+        expect.objectContaining({ tags: { queue: 'file-upload' } }),
+      );
     });
 
     it('must not throw when processing fails', async () => {
@@ -130,11 +142,16 @@ describe('sqs-listener.service', () => {
 
     it('must not delete the message when processing fails', async () => {
       const message = makeMessage(JSON.stringify({ quizId: 'quiz-123' }));
-      mockQuizService.aiProcessQuiz.mockRejectedValue(new Error('ai failed'));
+      const error = new Error('ai failed');
+      mockQuizService.aiProcessQuiz.mockRejectedValue(error);
 
       await sut.processAiProcessingMessage(message);
 
       expect(mockSend).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        error,
+        expect.objectContaining({ tags: { queue: 'ai-processing' } }),
+      );
     });
 
     it('must not delete the message when JSON.parse fails on malformed body', async () => {
@@ -143,6 +160,10 @@ describe('sqs-listener.service', () => {
       await sut.processAiProcessingMessage(message);
 
       expect(mockSend).not.toHaveBeenCalled();
+      expect(Sentry.captureException).toHaveBeenCalledWith(
+        expect.any(SyntaxError),
+        expect.objectContaining({ tags: { queue: 'ai-processing' } }),
+      );
     });
 
     it('must not throw when processing fails', async () => {

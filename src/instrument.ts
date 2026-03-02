@@ -2,8 +2,9 @@ import * as Sentry from '@sentry/node';
 import { nodeProfilingIntegration } from '@sentry/profiling-node';
 
 import config from './config/config.js';
+import { logger } from './util/logger.js';
 
-console.log('Initialising Sentry instrumentation');
+logger.info('Initialising Sentry instrumentation');
 Sentry.init({
   dsn: config.SENTRY_DSN,
   integrations: [Sentry.prismaIntegration(), Sentry.graphqlIntegration(), nodeProfilingIntegration()],
