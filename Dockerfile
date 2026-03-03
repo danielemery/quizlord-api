@@ -10,6 +10,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY ./dist/ ./
 COPY ./prisma ./prisma
+COPY ./prisma.config.ts ./prisma.config.ts
 
 RUN npm ci --omit=dev
 
