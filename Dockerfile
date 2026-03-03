@@ -14,4 +14,4 @@ COPY ./prisma.config.ts ./prisma.config.ts
 
 RUN npm ci --omit=dev
 
-CMD [ "node", "index.js" ]
+CMD [ "node", "--import", "./instrument.js", "index.js" ]

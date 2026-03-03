@@ -1,6 +1,3 @@
-// sort-imports-ignore (Sentry instrumentation must be the first import)
-import './instrument.js';
-
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
@@ -13,15 +10,15 @@ import http from 'http';
 
 import { activityChildren, activityQueries } from './activity/activity.gql.js';
 import config from './config/config.js';
-import { loggingApolloPlugin } from './logging-apollo-plugin.js';
 import typeDefs from './gql.js';
+import { loggingApolloPlugin } from './logging-apollo-plugin.js';
 import { quizMutations, quizQueries } from './quiz/quiz.gql.js';
 import { sentryApolloPlugin } from './sentry-apollo-plugin.js';
 import { authenticationService, prismaService, queueService, userService } from './service.locator.js';
-import { logger } from './util/logger.js';
 import { statisticsQueries } from './statistics/statistics.gql.js';
 import { Role } from './user/user.dto.js';
 import { userMutations, userQueries } from './user/user.gql.js';
+import { logger } from './util/logger.js';
 
 const QUIZLORD_VERSION_HEADER = 'X-Quizlord-Api-Version';
 

@@ -7,8 +7,8 @@
   },
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",
-    "start": "prisma generate && doppler run -- nodemon --exec \"node --import tsx src/index.ts\"",
-    "debug": "prisma generate && doppler run -- nodemon --exec \"node --inspect --import tsx src/index.ts\"",
+    "start": "prisma generate && doppler run -- nodemon --exec \"node --import tsx --import ./src/instrument.ts src/index.ts\"",
+    "debug": "prisma generate && doppler run -- nodemon --exec \"node --inspect --import tsx --import ./src/instrument.ts src/index.ts\"",
     "test": "prisma generate && vitest run",
     "test:watch": "prisma generate && vitest",
     "test:ci": "prisma generate && vitest run --coverage",
