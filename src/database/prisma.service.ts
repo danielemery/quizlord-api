@@ -32,9 +32,7 @@ export class PrismaService {
       if (!connectionString) {
         throw new Error('DB_CONNECTION_STRING must be set');
       }
-      const sslmode = new URL(connectionString).searchParams.get('sslmode');
-      const ssl = sslmode?.toLowerCase() === 'require' ? true : undefined;
-      const adapter = new PrismaPg({ connectionString, ssl });
+      const adapter = new PrismaPg({ connectionString });
       this.#prisma = new PrismaClient({ adapter });
       try {
         await this.#prisma.$queryRaw`SELECT 1`;
