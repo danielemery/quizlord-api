@@ -45,6 +45,7 @@ jobs:
           path: |
             dist
             prisma
+            prisma.config.ts
             Dockerfile
             .dockerignore
             package*.json
