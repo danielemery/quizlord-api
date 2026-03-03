@@ -28,7 +28,9 @@ export class PrismaService {
   async connect() {
     if (!this.#prisma) {
       logger.info('Connecting to database');
-      const adapter = new PrismaPg({ connectionString: process.env.DB_CONNECTION_STRING });
+      const connectionString = process.env.DB_CONNECTION_STRING;
+      const ssl = connectionString?.includes('sslmode=require') ? true : undefined;
+      const adapter = new PrismaPg({ connectionString, ssl });
       this.#prisma = new PrismaClient({ adapter });
       try {
         await this.#prisma.$queryRaw`SELECT 1`;
