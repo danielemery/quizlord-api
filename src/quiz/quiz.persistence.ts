@@ -5,6 +5,11 @@ import { Quiz, QuizAIProcessingState, QuizImage, QuizNoteType } from '../generat
 import { slicePagedResults, getPagedQuery } from '../util/paging-helpers.js';
 import { QuizCompletionQuestionResult, QuizFilters, QuizQuestion } from './quiz.dto.js';
 
+/** Max time (ms) to wait for a connection from the pool before starting the transaction. */
+const TRANSACTION_MAX_WAIT_MS = 30_000;
+/** Max time (ms) the transaction is allowed to run once started. */
+const TRANSACTION_TIMEOUT_MS = 15_000;
+
 export class QuizPersistence {
   #prisma: PrismaService;
   constructor(prisma: PrismaService) {
@@ -388,63 +393,68 @@ export class QuizPersistence {
     model: string | null,
     confidence?: number,
   ) {
-    return this.#prisma.client().$transaction(async (prisma) => {
-      // Remove any existing inaccurate OCR notes (since we are replacing the questions)
-      await prisma.quizNote.deleteMany({
-        where: {
-          quizId,
-          noteType: 'INACCURATE_OCR',
-        },
-      });
+    return this.#prisma.client().$transaction(
+      async (prisma) => {
+        // Remove any existing inaccurate OCR notes (since we are replacing the questions)
+        await prisma.quizNote.deleteMany({
+          where: {
+            quizId,
+            noteType: 'INACCURATE_OCR',
+          },
+        });
 
-      // First check if there are existing questions for the quiz (if there are we want to update them)
-      // We do this instead of deleting and re-creating them to avoid losing any existing scores or relationships
-      const existingQuestions = await prisma.quizQuestion.findMany({
-        where: {
-          quizId,
-        },
-      });
-      if (existingQuestions.length > 0) {
-        // Update existing questions
-        for (const question of questions) {
-          await prisma.quizQuestion.update({
-            where: {
-              quizId_questionNum: {
-                quizId,
-                questionNum: question.questionNum,
+        // First check if there are existing questions for the quiz (if there are we want to update them)
+        // We do this instead of deleting and re-creating them to avoid losing any existing scores or relationships
+        const existingQuestions = await prisma.quizQuestion.findMany({
+          where: {
+            quizId,
+          },
+        });
+        if (existingQuestions.length > 0) {
+          // Update existing questions
+          for (const question of questions) {
+            await prisma.quizQuestion.update({
+              where: {
+                quizId_questionNum: {
+                  quizId,
+                  questionNum: question.questionNum,
+                },
               },
-            },
-            data: {
-              question: question.question ?? null,
-              answer: question.answer ?? null,
-            },
+              data: {
+                question: question.question ?? null,
+                answer: question.answer ?? null,
+              },
+            });
+          }
+        } else {
+          // If there are no existing questions, we just insert the new ones
+          await prisma.quizQuestion.createMany({
+            data: questions.map((question) => ({
+              id: uuidv4(),
+              quizId,
+              questionNum: question.questionNum,
+              question: question.question,
+              answer: question.answer,
+            })),
           });
         }
-      } else {
-        // If there are no existing questions, we just insert the new ones
-        await prisma.quizQuestion.createMany({
-          data: questions.map((question) => ({
-            id: uuidv4(),
-            quizId,
-            questionNum: question.questionNum,
-            question: question.question,
-            answer: question.answer,
-          })),
-        });
-      }
 
-      // Update quiz state
-      await prisma.quiz.update({
-        data: {
-          aiProcessingState: result,
-          aiProcessingCertaintyPercent: confidence,
-          aiProcessingModel: model,
-        },
-        where: {
-          id: quizId,
-        },
-      });
-    });
+        // Update quiz state
+        await prisma.quiz.update({
+          data: {
+            aiProcessingState: result,
+            aiProcessingCertaintyPercent: confidence,
+            aiProcessingModel: model,
+          },
+          where: {
+            id: quizId,
+          },
+        });
+      },
+      // Increased maxWait since this runs after a slow external API call and the
+      // default 2s can be exceeded under connection pool contention.
+      { maxWait: TRANSACTION_MAX_WAIT_MS, timeout: TRANSACTION_TIMEOUT_MS },
+    );
   }
 
   async markQuizAIExtractionQueued(quizId: string) {
