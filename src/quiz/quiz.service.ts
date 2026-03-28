@@ -495,7 +495,7 @@ export class QuizService {
         }
 
         logger.info('AI extraction result', { quizId, hasResult: !!extractionResult });
-        if (extractionResult && extractionResult.questions) {
+        if (extractionResult && extractionResult.questions && extractionResult.questions.length === questionCount) {
           logger.info('Successfully extracted questions for quiz', {
             quizId,
             questionCount: extractionResult.questions.length,
@@ -526,7 +526,11 @@ export class QuizService {
       }
     } catch (err) {
       logger.error('Unexpected error during AI processing, marking quiz as errored', { quizId, exception: err });
-      await this.#persistence.markQuizAIExtractionErrored(quizId);
+      try {
+        await this.#persistence.markQuizAIExtractionErrored(quizId);
+      } catch (markingErr) {
+        logger.error('Failed to mark quiz as errored', { quizId, exception: markingErr });
+      }
       throw err;
     }
   }

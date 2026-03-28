@@ -462,6 +462,8 @@ export class QuizPersistence {
     return this.#prisma.client().quiz.update({
       data: {
         aiProcessingState: 'ERRORED',
+        aiProcessingCertaintyPercent: null,
+        aiProcessingModel: null,
       },
       where: {
         id: quizId,
