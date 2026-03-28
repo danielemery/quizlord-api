@@ -20,15 +20,20 @@ const mockPersistence = {
   getQuizByIdWithResults: vi.fn(),
   getRecentQuizCompletions: vi.fn(),
   getRecentQuizUploads: vi.fn(),
+  upsertQuizQuestionsAfterAIExtraction: vi.fn(),
+  markQuizAIExtractionErrored: vi.fn(),
 };
 const mockFileService = {
   createKey: vi.fn(),
   generateSignedUploadUrl: vi.fn(),
+  keyToUrl: vi.fn(),
 };
 const mockUserService = {
   getUser: vi.fn(),
 };
-const mockGeminiService = {};
+const mockGeminiService = {
+  extractQuizQuestions: vi.fn(),
+};
 const mockSQSQueuePublisherService = {};
 
 const sut = new QuizService(
@@ -465,6 +470,71 @@ describe('quiz', () => {
             quizType: 'SHARK',
           },
         ]);
+      });
+    });
+    describe('aiProcessQuiz', () => {
+      const fakeQuiz = {
+        id: 'fake-quiz-id',
+        type: 'SHARK',
+        images: [{ imageKey: 'quiz/questions.jpg', type: 'QUESTION' }],
+      };
+      const allQuestions = Array.from({ length: 20 }, (_, i) => ({
+        questionNumber: i + 1,
+        question: `Q${i + 1}`,
+        answer: `A${i + 1}`,
+      }));
+
+      it('must mark the quiz as errored if the persistence transaction fails', async () => {
+        mockPersistence.getQuizByIdWithResults.mockResolvedValueOnce(fakeQuiz);
+        mockFileService.keyToUrl.mockReturnValue('https://cdn.example.com/quiz/questions.jpg');
+        mockGeminiService.extractQuizQuestions.mockResolvedValueOnce({
+          questions: allQuestions,
+          model: 'gemini-pro',
+          confidence: 0.95,
+        });
+        const transactionError = new Error('Transaction API error: Unable to start a transaction in the given time.');
+        mockPersistence.upsertQuizQuestionsAfterAIExtraction.mockRejectedValueOnce(transactionError);
+        mockPersistence.markQuizAIExtractionErrored.mockResolvedValueOnce(undefined);
+
+        await expect(sut.aiProcessQuiz('fake-quiz-id')).rejects.toThrow(transactionError);
+
+        expect(mockPersistence.markQuizAIExtractionErrored).toHaveBeenCalledTimes(1);
+        expect(mockPersistence.markQuizAIExtractionErrored).toHaveBeenCalledWith('fake-quiz-id');
+      });
+
+      it('must rethrow the original error even if marking as errored fails', async () => {
+        mockPersistence.getQuizByIdWithResults.mockResolvedValueOnce(fakeQuiz);
+        mockFileService.keyToUrl.mockReturnValue('https://cdn.example.com/quiz/questions.jpg');
+        mockGeminiService.extractQuizQuestions.mockResolvedValueOnce({
+          questions: allQuestions,
+          model: 'gemini-pro',
+          confidence: 0.95,
+        });
+        const originalError = new Error('Transaction API error: Unable to start a transaction in the given time.');
+        mockPersistence.upsertQuizQuestionsAfterAIExtraction.mockRejectedValueOnce(originalError);
+        mockPersistence.markQuizAIExtractionErrored.mockRejectedValueOnce(new Error('DB connection lost'));
+
+        await expect(sut.aiProcessQuiz('fake-quiz-id')).rejects.toThrow(originalError);
+      });
+
+      it('must mark as errored when extraction returns fewer questions than expected', async () => {
+        mockPersistence.getQuizByIdWithResults.mockResolvedValueOnce(fakeQuiz);
+        mockFileService.keyToUrl.mockReturnValue('https://cdn.example.com/quiz/questions.jpg');
+        mockGeminiService.extractQuizQuestions.mockResolvedValueOnce({
+          questions: [{ questionNumber: 1, question: 'Q1', answer: 'A1' }],
+          model: 'gemini-pro',
+          confidence: 0.5,
+        });
+        mockPersistence.upsertQuizQuestionsAfterAIExtraction.mockResolvedValueOnce(undefined);
+
+        await sut.aiProcessQuiz('fake-quiz-id');
+
+        expect(mockPersistence.upsertQuizQuestionsAfterAIExtraction).toHaveBeenCalledWith(
+          'fake-quiz-id',
+          expect.any(Array),
+          'ERRORED',
+          'gemini-pro',
+        );
       });
     });
     describe('getRecentQuizUploads', () => {

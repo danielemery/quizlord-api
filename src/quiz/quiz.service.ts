@@ -478,50 +478,60 @@ export class QuizService {
   }
 
   async aiProcessQuiz(quizId: string) {
-    const quiz = await this.#persistence.getQuizByIdWithResults({ id: quizId });
-    const imageMetadata = quiz.images.map((image) => ({
-      quizImageUrl: this.#fileService.keyToUrl(image.imageKey),
-      mimeType: mime.getType(image.imageKey),
-      type: image.type,
-    }));
-    if (this.#imageMetadataIsValid(imageMetadata)) {
-      const questionCount = this.getMaxScoreForQuizType(quiz.type);
-      let extractionResult: ExtractQuizQuestionsResult | undefined;
-      try {
-        extractionResult = await this.#geminiService.extractQuizQuestions(questionCount, imageMetadata);
-      } catch (err) {
-        logger.error('Error extracting questions for quiz', { quizId, exception: err });
-      }
+    try {
+      const quiz = await this.#persistence.getQuizByIdWithResults({ id: quizId });
+      const imageMetadata = quiz.images.map((image) => ({
+        quizImageUrl: this.#fileService.keyToUrl(image.imageKey),
+        mimeType: mime.getType(image.imageKey),
+        type: image.type,
+      }));
+      if (this.#imageMetadataIsValid(imageMetadata)) {
+        const questionCount = this.getMaxScoreForQuizType(quiz.type);
+        let extractionResult: ExtractQuizQuestionsResult | undefined;
+        try {
+          extractionResult = await this.#geminiService.extractQuizQuestions(questionCount, imageMetadata);
+        } catch (err) {
+          logger.error('Error extracting questions for quiz', { quizId, exception: err });
+        }
 
-      logger.info('AI extraction result', { quizId, hasResult: !!extractionResult });
-      if (extractionResult && extractionResult.questions) {
-        logger.info('Successfully extracted questions for quiz', {
-          quizId,
-          questionCount: extractionResult.questions.length,
-        });
-        await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
-          quizId,
-          extractionResult.questions.map(({ questionNumber, ...rest }) => ({
-            ...rest,
-            questionNum: questionNumber,
-          })),
-          'COMPLETED',
-          extractionResult.model,
-          extractionResult.confidence,
-        );
-      } else {
-        await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
-          quizId,
-          [
-            // Generate empty questions for the quiz
-            ...Array.from({ length: questionCount }, (_, i) => ({
-              questionNum: i + 1,
+        logger.info('AI extraction result', { quizId, hasResult: !!extractionResult });
+        if (extractionResult && extractionResult.questions && extractionResult.questions.length === questionCount) {
+          logger.info('Successfully extracted questions for quiz', {
+            quizId,
+            questionCount: extractionResult.questions.length,
+          });
+          await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
+            quizId,
+            extractionResult.questions.map(({ questionNumber, ...rest }) => ({
+              ...rest,
+              questionNum: questionNumber,
             })),
-          ],
-          'ERRORED',
-          extractionResult?.model ?? null,
-        );
+            'COMPLETED',
+            extractionResult.model,
+            extractionResult.confidence,
+          );
+        } else {
+          await this.#persistence.upsertQuizQuestionsAfterAIExtraction(
+            quizId,
+            [
+              // Generate empty questions for the quiz
+              ...Array.from({ length: questionCount }, (_, i) => ({
+                questionNum: i + 1,
+              })),
+            ],
+            'ERRORED',
+            extractionResult?.model ?? null,
+          );
+        }
       }
+    } catch (err) {
+      logger.error('Unexpected error during AI processing, marking quiz as errored', { quizId, exception: err });
+      try {
+        await this.#persistence.markQuizAIExtractionErrored(quizId);
+      } catch (markingErr) {
+        logger.error('Failed to mark quiz as errored', { quizId, exception: markingErr });
+      }
+      throw err;
     }
   }
 
