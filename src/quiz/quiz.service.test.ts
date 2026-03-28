@@ -20,15 +20,20 @@ const mockPersistence = {
   getQuizByIdWithResults: vi.fn(),
   getRecentQuizCompletions: vi.fn(),
   getRecentQuizUploads: vi.fn(),
+  upsertQuizQuestionsAfterAIExtraction: vi.fn(),
+  markQuizAIExtractionErrored: vi.fn(),
 };
 const mockFileService = {
   createKey: vi.fn(),
   generateSignedUploadUrl: vi.fn(),
+  keyToUrl: vi.fn(),
 };
 const mockUserService = {
   getUser: vi.fn(),
 };
-const mockGeminiService = {};
+const mockGeminiService = {
+  extractQuizQuestions: vi.fn(),
+};
 const mockSQSQueuePublisherService = {};
 
 const sut = new QuizService(
@@ -465,6 +470,29 @@ describe('quiz', () => {
             quizType: 'SHARK',
           },
         ]);
+      });
+    });
+    describe('aiProcessQuiz', () => {
+      it('must mark the quiz as errored if the persistence transaction fails', async () => {
+        mockPersistence.getQuizByIdWithResults.mockResolvedValueOnce({
+          id: 'fake-quiz-id',
+          type: 'SHARK',
+          images: [{ imageKey: 'quiz/questions.jpg', type: 'QUESTION' }],
+        });
+        mockFileService.keyToUrl.mockReturnValue('https://cdn.example.com/quiz/questions.jpg');
+        mockGeminiService.extractQuizQuestions.mockResolvedValueOnce({
+          questions: [{ questionNumber: 1, question: 'Q1', answer: 'A1' }],
+          model: 'gemini-pro',
+          confidence: 0.95,
+        });
+        const transactionError = new Error('Transaction API error: Unable to start a transaction in the given time.');
+        mockPersistence.upsertQuizQuestionsAfterAIExtraction.mockRejectedValueOnce(transactionError);
+        mockPersistence.markQuizAIExtractionErrored.mockResolvedValueOnce(undefined);
+
+        await expect(sut.aiProcessQuiz('fake-quiz-id')).rejects.toThrow(transactionError);
+
+        expect(mockPersistence.markQuizAIExtractionErrored).toHaveBeenCalledTimes(1);
+        expect(mockPersistence.markQuizAIExtractionErrored).toHaveBeenCalledWith('fake-quiz-id');
       });
     });
     describe('getRecentQuizUploads', () => {

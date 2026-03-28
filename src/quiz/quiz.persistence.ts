@@ -457,4 +457,15 @@ export class QuizPersistence {
       },
     });
   }
+
+  async markQuizAIExtractionErrored(quizId: string) {
+    return this.#prisma.client().quiz.update({
+      data: {
+        aiProcessingState: 'ERRORED',
+      },
+      where: {
+        id: quizId,
+      },
+    });
+  }
 }
