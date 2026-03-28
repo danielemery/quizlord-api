@@ -33,7 +33,13 @@ export class PrismaService {
         throw new Error('DB_CONNECTION_STRING must be set');
       }
       const adapter = new PrismaPg({ connectionString });
-      this.#prisma = new PrismaClient({ adapter });
+      this.#prisma = new PrismaClient({
+        adapter,
+        transactionOptions: {
+          maxWait: 30_000,
+          timeout: 15_000,
+        },
+      });
       try {
         await this.#prisma.$queryRaw`SELECT 1`;
       } catch (err) {
