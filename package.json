@@ -3,7 +3,7 @@
   "description": "Graphql api for sharing newspaper quizzes between friends, including results and statistics",
   "type": "module",
   "engines": {
-    "node": "24.14.0"
+    "node": "24.14.1"
   },
   "scripts": {
     "build": "prisma generate && tsc -p tsconfig.build.json",
