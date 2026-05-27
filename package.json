@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/danielemery/quizlord-api#readme",
   "dependencies": {
-    "@apollo/server": "^4.7.1",
+    "@apollo/server": "^5.5.1",
     "@aws-sdk/client-s3": "^3.658.1",
     "@aws-sdk/client-sqs": "^3.658.1",
     "@aws-sdk/s3-request-presigner": "^3.118.0",
@@ -50,7 +50,7 @@
     "jwks-rsa": "^3.0.1",
     "mime": "^3.0.0",
     "pg": "^8.7.3",
-    "uuid": "^13.0.0"
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@dtdot/eslint-config": "^2.0.0",
