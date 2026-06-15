@@ -1,0 +1,14 @@
+{
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:3": {
+      "version": "3.0.1",
+      "resolved": "ghcr.io/devcontainers/features/docker-in-docker@sha256:ca2508495b01ba29eba93e8153772a2daa65eaa86471cc6863fe2a3d21933df9",
+      "integrity": "sha256:ca2508495b01ba29eba93e8153772a2daa65eaa86471cc6863fe2a3d21933df9"
+    },
+    "ghcr.io/itsmechlark/features/doppler:2": {
+      "version": "2.6.0",
+      "resolved": "ghcr.io/itsmechlark/features/doppler@sha256:6ebeec781000839e1b02255feeb5f7c3bbfad2e1c8b081edfbb5f17166546d0d",
+      "integrity": "sha256:6ebeec781000839e1b02255feeb5f7c3bbfad2e1c8b081edfbb5f17166546d0d"
+    }
+  }
+}
