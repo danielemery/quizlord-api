@@ -1,0 +1,13 @@
+# Renovate owns version updates for this repo; Dependabot is kept only for security updates.
+# `open-pull-requests-limit: 0` disables Dependabot version-update PRs (so it does not duplicate
+# Renovate) while security-update PRs continue to be raised and pick up the `semver:patch` label
+# required by the validate-pr label gate.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    labels:
+      - "semver:patch"

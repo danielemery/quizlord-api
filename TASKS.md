@@ -84,7 +84,7 @@ artifact:
 
 ### Phase A — PR-gating workflows
 
-- [ ] **A1. Add `validate-pr.yml`** (semver label gate). Replaces the build/test responsibilities of
+- [x] **A1. Add `validate-pr.yml`** (semver label gate). Replaces the build/test responsibilities of
       the current `validate-pr.yaml` (those move to A2/A3).
   ```yml
   name: Validate PR
@@ -100,18 +100,18 @@ artifact:
           with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
   ```
-- [ ] **A2. Add `ci.yml`** — move the lint + unit tests + Codecov job out of the old `validate-pr.yaml`,
+- [x] **A2. Add `ci.yml`** — move the lint + unit tests + Codecov job out of the old `validate-pr.yaml`,
       triggered on `pull_request` (keep `NODE_VERSION: 24.16.0`, `actions/setup-node`, `npm ci`,
       `npm run lint`, `npm run test:ci`, `codecov/codecov-action`).
-- [ ] **A3. Add `docker-build.yml`** — `pull_request`, `docker/build-push-action` with `push: false`,
+- [x] **A3. Add `docker-build.yml`** — `pull_request`, `docker/build-push-action` with `push: false`,
       `context: .` (build the node app first if the Dockerfile needs `dist/`, mirroring the
       candidate build). Surfaces Dockerfile breakage at PR time.
-- [ ] **A4. Delete the old `validate-pr.yaml`** once A1–A3 cover its responsibilities.
-- [ ] **A5. Decide `main.yml`'s fate.** The recommended pipeline says PR-time CI is sufficient and no
+- [x] **A4. Delete the old `validate-pr.yaml`** once A1–A3 cover its responsibilities.
+- [x] **A5. Decide `main.yml`'s fate.** The recommended pipeline says PR-time CI is sufficient and no
       `push: main` trigger is needed for releases. But `main.yml` exists for the **Codecov badge /
       base coverage**, which is independent of releasing. **Recommend: keep `main.yml` as-is.**
       (Optional: drop it if PR coverage + branch protection is enough for you.)
-- [ ] **A6. Auto-label Renovate PRs.** Add `"labels": ["semver:patch"]` to `renovate.json` so every
+- [x] **A6. Auto-label Renovate PRs.** Add `"labels": ["semver:patch"]` to `renovate.json` so every
       Renovate PR carries exactly one semver label (which is what `validate-semver-label` requires).
       Patch is the right default — the app's semver tracks the app's API, not the dependency's; a
       human relabels the rare dep bump that actually changes app behaviour.
@@ -122,7 +122,7 @@ artifact:
     "labels": ["semver:patch"]
   }
   ```
-- [ ] **A7. Auto-label Dependabot security PRs.** The repo also gets Dependabot **security-update**
+- [x] **A7. Auto-label Dependabot security PRs.** The repo also gets Dependabot **security-update**
       PRs (no `dependabot.yml` today). Add one so those PRs carry `semver:patch`. Use
       **`open-pull-requests-limit: 0`** so Dependabot does **not** start opening version-update PRs
       (Renovate owns those) — security updates still run and honour the `labels`.
