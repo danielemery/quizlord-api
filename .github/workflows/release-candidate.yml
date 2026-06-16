@@ -1,0 +1,209 @@
+# Cuts and deploys a release candidate whenever a labelled PR is merged to main. The semver label on
+# the PR drives the version bump; every merge builds & pushes the `vX.Y.Z-rc.N` artifacts (docker,
+# helm, sentry stg) and only then tags the prerelease ("tag last" — the tag never points at a commit
+# whose artifacts failed to publish). Promotion to stable is the separate manual release-stable.yml.
+name: Release Candidate
+
+on:
+  pull_request:
+    types: [closed]
+    branches: ['main']
+
+# Least privilege: the default for every job is read-only; the publish/release jobs below request
+# the write scopes they need individually (see each job's `permissions:`).
+permissions:
+  contents: read
+
+# Share one serialized lane with release-stable.yml: both mutate repository tags/releases (rc tag
+# creation here, rc cleanup during stable promotion there), so they must not run concurrently.
+# queue: max keeps every merge's run pending instead of dropping intermediate runs in a burst, so
+# every merge still cuts and deploys its own rc (the default `single` would discard all but the last).
+concurrency:
+  group: release
+  queue: max
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  NODE_VERSION: 24.16.0
+
+jobs:
+  version:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.calc.outputs.version }}
+      tag: ${{ steps.calc.outputs.tag }}
+      base-version: ${{ steps.calc.outputs.base-version }}
+    steps:
+      - name: Calculate prerelease version
+        id: calc
+        uses: danielemery/github-release-actions/calculate-prerelease-version@v0.5.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease-identifier: rc
+
+  build:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Configure node
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: build-artifacts
+          # No .dockerignore: it only ignores node_modules, which is never in this artifact, and
+          # upload-artifact@v7 drops dotfiles by default anyway. The Dockerfile uses explicit COPYs.
+          path: |
+            dist
+            prisma
+            prisma.config.ts
+            Dockerfile
+            package*.json
+
+      - name: Upload helm chart
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: helm-chart
+          path: helm
+
+  docker-publish:
+    needs:
+      - version
+      - build
+    runs-on: ubuntu-latest
+    # `packages: write` alone is not enough to push to GHCR. In the registry settings
+    # https://github.com/users/danielemery/packages/container/quizlord-api/settings you must also add
+    # this repo's Actions with write access under "Manage Actions access".
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: build-artifacts
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.version }}
+          build-args: |
+            IMAGE_VERSION=${{ needs.version.outputs.base-version }}
+
+  helm-publish:
+    needs:
+      - version
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download chart definition
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: helm-chart
+          path: helm
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.2
+        with:
+          aws-access-key-id: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.HELM_DEPLOY_SECRET }}
+          aws-region: ${{ vars.HELM_DEPLOY_REGION }}
+
+      - name: Publish chart
+        uses: danielemery/helm-release-action@f19adb815088a067bb839b224decb0611072652d
+        with:
+          repo: s3://helm.demery.net/
+          chart: ./helm
+          version: ${{ needs.version.outputs.version }}
+          appVersion: ${{ needs.version.outputs.version }}
+
+  sentry:
+    needs:
+      - version
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Download build artifacts with sourcemaps
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: build-artifacts
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v3.6.1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        with:
+          # Key the release on the FULL rc version (not base-version): the staging runtime sets
+          # QUIZLORD_VERSION to the full rc (C2), and sourcemaps resolve only on an exact release-name
+          # match (the bundle carries no debug IDs). Promotion re-uploads these maps under the stable
+          # version so prod resolves too — see release-stable.yml.
+          release: ${{ needs.version.outputs.version }}
+          environment: stg
+          sourcemaps: ./dist
+          url_prefix: '/app'
+
+  create-prerelease:
+    needs:
+      - version
+      - build
+      - docker-publish
+      - helm-publish
+      - sentry
+    runs-on: ubuntu-latest
+    # Write is required to create the release/tag and to upload the sourcemaps asset.
+    permissions:
+      contents: write
+    steps:
+      - name: Create prerelease
+        uses: danielemery/github-release-actions/create-prerelease@v0.5.1
+        with:
+          release-version: ${{ needs.version.outputs.tag }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Persist the built sourcemaps as an asset on the rc release so stable promotion can re-upload
+      # them under the stable version without rebuilding (release-stable.yml downloads this by tag).
+      - name: Download build artifacts
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: build-artifacts
+          path: build-artifacts
+
+      - name: Attach sourcemaps to the prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass expansions through env rather than interpolating ${{ }} into the shell (consistent
+          # with release-stable.yml). These are action-generated, not user input, so it's defence in
+          # depth rather than a live injection risk.
+          TAG: ${{ needs.version.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          tar -czf sourcemaps.tar.gz -C build-artifacts dist
+          gh release upload "$TAG" sourcemaps.tar.gz --repo "$REPO" --clobber

@@ -143,31 +143,37 @@ artifact:
 
 ### Phase B — Release-candidate workflow (on merge → staging)
 
-- [ ] **B1. Add `release-candidate.yml`**, `on: pull_request: [closed]` → `main`,
+- [x] **B1. Add `release-candidate.yml`**, `on: pull_request: [closed]` → `main`,
       `if: github.event.pull_request.merged == true`, `concurrency: { group: "main" }`,
       `permissions: { contents: write, packages: write }`.
-- [ ] **B2. `version` job** — run `calculate-prerelease-version@v0.5.1` with
+- [x] **B2. `version` job** — run `calculate-prerelease-version@v0.5.1` with
       `prerelease-identifier: rc`; expose `version`, `tag`, `base-version` as job outputs for
       downstream jobs.
-- [ ] **B3. `build` job** — `npm ci` + `npm run build`; upload `build-artifacts` (`dist`, `prisma`,
+- [x] **B3. `build` job** — `npm ci` + `npm run build`; upload `build-artifacts` (`dist`, `prisma`,
       `prisma.config.ts`, `Dockerfile`, `.dockerignore`, `package*.json`) and `helm-chart` (mirror
       current `publish.yml` build job).
-- [ ] **B4. `docker-publish` job** (`needs: [version, build]`) — GHCR login, `docker/build-push-action`
+- [x] **B4. `docker-publish` job** (`needs: [version, build]`) — GHCR login, `docker/build-push-action`
       `push: true`, `tags: ghcr.io/${{ github.repository }}:${{ needs.version.outputs.version }}`,
       `build-args: IMAGE_VERSION=${{ needs.version.outputs.base-version }}` (see C1 for why
       base-version).
-- [ ] **B5. `helm-publish` job** (`needs: [version, build]`) — AWS creds + `helm-release-action`
+- [x] **B5. `helm-publish` job** (`needs: [version, build]`) — AWS creds + `helm-release-action`
       (keep current SHA pin) with `version`/`appVersion` = `needs.version.outputs.version` (full
       prerelease).
-- [ ] **B6. `sentry` job** (`needs: [version, build]`) — `getsentry/action-release` with
-      `release: ${{ needs.version.outputs.base-version }}` (the `release` input, **not** the
-      deprecated `version`), `environment: stg`, `sourcemaps: ./dist`, `url_prefix: '/app'`.
-- [ ] **B7. `create-prerelease` job** (`needs: [docker-publish, helm-publish, sentry]` — **tag last**)
-      — `create-prerelease@v0.5.1` with `release-version: ${{ needs.version.outputs.tag }}`.
+- [x] **B6. `sentry` job** (`needs: [version, build]`) — `getsentry/action-release` with
+      `release: ${{ needs.version.outputs.version }}` (the **full rc**, via the `release` input, **not**
+      the deprecated `version` input), `environment: stg`, `sourcemaps: ./dist`, `url_prefix: '/app'`.
+      Full rc (not base-version) so the staging runtime's `QUIZLORD_VERSION` (C2) matches by
+      release name — see §3 for why release-name matching forces this.
+- [x] **B7. `create-prerelease` job** (`needs: [version, build, docker-publish, helm-publish, sentry]`
+      — **tag last**) — `create-prerelease@v0.5.1` with `release-version: ${{ needs.version.outputs.tag }}`.
+- [x] **B8. Persist sourcemaps for promotion.** In the `create-prerelease` job (after the release
+      exists), download `build-artifacts`, `tar` up `dist`, and `gh release upload` it as a
+      `sourcemaps.tar.gz` asset on the rc release. `release-stable` re-uploads these under the stable
+      release (D5) so prod resolves sourcemaps too.
 
 ### Phase C — App self-reported version (Dockerfile + runtime)
 
-- [ ] **C1. Bake `base-version` as the image default.** Build the image with
+- [x] **C1. Bake `base-version` as the image default.** Build the image with
       `IMAGE_VERSION=<base-version>` (B4) so `QUIZLORD_VERSION` defaults to a clean `X.Y.Z`
       (self-hosters on `:latest` get a clean version with zero config). Dockerfile already wires
       `ARG IMAGE_VERSION` → `ENV QUIZLORD_VERSION`; `src/config/config.ts` reads
@@ -209,10 +215,10 @@ artifact:
 
 ### Phase E — Remove the old tag-push pipeline
 
-- [ ] **E1. Delete `publish.yml`** (replaced by `release-candidate.yml` + `release-stable.yml`).
-- [ ] **E2. Remove `nowsprinting/check-version-format-action`** usage (versions now come from
+- [x] **E1. Delete `publish.yml`** (replaced by `release-candidate.yml` + `release-stable.yml`).
+- [x] **E2. Remove `nowsprinting/check-version-format-action`** usage (versions now come from
       `calculate-prerelease-version` / `perform-pre-release` outputs).
-- [ ] **E3. Confirm no remaining `push: tags` triggers** and no manual-tag instructions linger.
+- [x] **E3. Confirm no remaining `push: tags` triggers** and no manual-tag instructions linger.
 
 ### Phase F — Repo settings & labels (cannot be done from code — needs GitHub admin)
 
