@@ -186,13 +186,13 @@ artifact:
 
 ### Phase D — Release-stable workflow (manual promotion)
 
-- [ ] **D1. Add `release-stable.yml`**, `on: workflow_dispatch` with input
+- [x] **D1. Add `release-stable.yml`**, `on: workflow_dispatch` with input
       `prerelease_version` (e.g. `v1.2.3-rc.2`), `concurrency: { group: "prod-deployment" }`,
       `permissions: { contents: write, packages: write }`.
-- [ ] **D2. `pre_release` job** — `perform-pre-release@v0.5.1` with
+- [x] **D2. `pre_release` job** — `perform-pre-release@v0.5.1` with
       `release-version: ${{ inputs.prerelease_version }}`, `promote-to-stable: 'true'`. Capture
       outputs `release-id`, `release-version` (bare stable, e.g. `1.2.3`), `release-tag`.
-- [ ] **D3. `retag-image` job** (`needs: pre_release`) — GHCR login, then **retag, do not rebuild**:
+- [x] **D3. `retag-image` job** (`needs: pre_release`) — GHCR login, then **retag, do not rebuild**:
   ```sh
   RC="${RC_TAG#v}"
   docker buildx imagetools create \
@@ -201,15 +201,17 @@ artifact:
     "ghcr.io/${{ github.repository }}:${RC}"
   # RC_TAG = inputs.prerelease_version ; STABLE = pre_release.outputs.release-version
   ```
-- [ ] **D4. `helm-stable` job** (`needs: pre_release`) — `actions/checkout` pinned to the rc ref
+- [x] **D4. `helm-stable` job** (`needs: pre_release`) — `actions/checkout` pinned to the rc ref
       (`with: { ref: ${{ inputs.prerelease_version }} }`) so the chart is packaged from the exact
       promoted commit, AWS creds, `helm-release-action` with `version`/`appVersion` = stable
       (`pre_release.outputs.release-version`). Hermetic re-package (see §3).
-- [ ] **D5. `sentry-stable` job** (`needs: pre_release`) — `getsentry/action-release` with
-      `release` = stable `base-version`, `environment: prod`, **no `sourcemaps`** (confirmed
-      supported — the release + sourcemaps already exist from the candidate; this only adds the
-      `prod` deploy). Promote the **latest** rc so those sourcemaps are current (see §5.1).
-- [ ] **D6. `post_release` job** (`needs: [retag-image, helm-stable, sentry-stable]`) —
+- [x] **D5. `sentry-stable` job** (`needs: pre_release`) — `gh release download` the rc's
+      `sourcemaps.tar.gz` asset (B8) by `inputs.prerelease_version`, `tar -xzf` it, then
+      `getsentry/action-release` with `release` = stable (`pre_release.outputs.release-version`),
+      `environment: prod`, `sourcemaps: ./dist`, `url_prefix: '/app'`, `set_commits: skip` (no
+      checkout in this job). Re-uploading the rc's own maps under the stable release means promoting
+      any rc is correct — this removes the old "must promote the latest rc for sourcemaps" rule.
+- [x] **D6. `post_release` job** (`needs: [retag-image, helm-stable, sentry-stable]`) —
       `perform-post-release@v0.5.1` with `release-id: ${{ needs.pre_release.outputs.release-id }}`.
       Publishes the stable release and cleans up the intermediate `-rc.N` releases/tags.
 
