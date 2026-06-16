@@ -1,0 +1,181 @@
+# Manually promotes a chosen release candidate to stable. This never rebuilds the app: the docker
+# image is retagged from the already-built prerelease, and the helm chart is re-packaged from the
+# exact rc commit. Sentry re-uploads the rc's persisted sourcemaps under the stable release name
+# (prod reports the bare stable version, which differs from the rc string the maps were first
+# uploaded under) and adds a `prod` deploy. perform-post-release publishes the stable GitHub release
+# and cleans up the `-rc.N` intermediates. Always promote the LATEST rc of a base-version so the
+# `:latest` docker tag doesn't regress (see CONTRIBUTING.md "Operator rules").
+name: Release Stable
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease_version:
+        description: 'Prerelease tag to promote (e.g. v1.2.3-rc.2)'
+        required: true
+        type: string
+
+# Least privilege: the default for every job is read-only; the jobs that mutate releases or the
+# container registry request the write scopes they need individually (see each job's `permissions:`).
+permissions:
+  contents: read
+
+# Share the serialized `release` lane with release-candidate.yml so promotion (which cleans up the
+# rc releases/tags) never interleaves with rc tag creation. queue: max so a promotion isn't dropped
+# if it's dispatched while rc runs are queued.
+concurrency:
+  group: release
+  queue: max
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  pre_release:
+    runs-on: ubuntu-latest
+    # Write is required to create the draft stable release.
+    permissions:
+      contents: write
+    outputs:
+      release-id: ${{ steps.pre.outputs.release-id }}
+      release-version: ${{ steps.pre.outputs.release-version }}
+      release-tag: ${{ steps.pre.outputs.release-tag }}
+    steps:
+      - name: Perform pre-release
+        id: pre
+        uses: danielemery/github-release-actions/perform-pre-release@v0.5.1
+        with:
+          release-version: ${{ inputs.prerelease_version }}
+          promote-to-stable: 'true'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  retag-image:
+    needs: pre_release
+    runs-on: ubuntu-latest
+    # `packages: write` alone is not enough to push to GHCR. In the registry settings
+    # https://github.com/users/danielemery/packages/container/quizlord-api/settings you must also add
+    # this repo's Actions with write access under "Manage Actions access".
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Only the immutable stable version tag here; the mutable `latest` is moved later by
+      # retag-latest, once helm + sentry have also succeeded (so a failure can't strand `latest`).
+      - name: Retag prerelease image as stable
+        env:
+          RC_TAG: ${{ inputs.prerelease_version }}
+          STABLE: ${{ needs.pre_release.outputs.release-version }}
+        run: |
+          RC="${RC_TAG#v}"
+          docker buildx imagetools create \
+            --tag "${REGISTRY}/${IMAGE_NAME}:${STABLE}" \
+            "${REGISTRY}/${IMAGE_NAME}:${RC}"
+
+  helm-stable:
+    needs: pre_release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout prerelease commit
+        uses: actions/checkout@v6.0.2
+        with:
+          ref: ${{ inputs.prerelease_version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.1.2
+        with:
+          aws-access-key-id: ${{ secrets.HELM_DEPLOY_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.HELM_DEPLOY_SECRET }}
+          aws-region: ${{ vars.HELM_DEPLOY_REGION }}
+
+      - name: Publish chart
+        uses: danielemery/helm-release-action@f19adb815088a067bb839b224decb0611072652d
+        with:
+          repo: s3://helm.demery.net/
+          chart: ./helm
+          version: ${{ needs.pre_release.outputs.release-version }}
+          appVersion: ${{ needs.pre_release.outputs.release-version }}
+
+  sentry-stable:
+    needs: pre_release
+    runs-on: ubuntu-latest
+    steps:
+      # The staging Sentry release is keyed on the full rc version, but prod reports the bare stable
+      # QUIZLORD_VERSION (the image bakes base-version, C1). Sourcemaps resolve only on an exact
+      # release-name match, so re-upload the rc's persisted sourcemaps under the stable release.
+      - name: Download rc sourcemaps
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass the manual input through an env var rather than interpolating ${{ }} straight into
+          # the shell, so a malformed/hostile dispatch value can't inject into the command.
+          RC_TAG: ${{ inputs.prerelease_version }}
+        run: |
+          gh release download "$RC_TAG" \
+            --repo "${{ github.repository }}" --pattern 'sourcemaps.tar.gz'
+          tar -xzf sourcemaps.tar.gz
+
+      - name: Create stable Sentry release and prod deploy
+        uses: getsentry/action-release@v3.6.1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        with:
+          release: ${{ needs.pre_release.outputs.release-version }}
+          environment: prod
+          sourcemaps: ./dist
+          url_prefix: '/app'
+          # No checkout in this job, so don't let the action auto-associate commits from a git repo
+          # that isn't here (the rc release already has commits associated).
+          set_commits: skip
+
+  # Move the mutable `latest` tag only after every release artifact has published, so a failure in
+  # helm-stable or sentry-stable can't leave `latest` pointing at an incompletely released version.
+  retag-latest:
+    needs:
+      - pre_release
+      - retag-image
+      - helm-stable
+      - sentry-stable
+    runs-on: ubuntu-latest
+    # See retag-image: packages: write plus "Manage Actions access" on the GHCR package.
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to the Container registry
+        uses: docker/login-action@v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Point latest at the stable image
+        env:
+          STABLE: ${{ needs.pre_release.outputs.release-version }}
+        run: |
+          docker buildx imagetools create \
+            --tag "${REGISTRY}/${IMAGE_NAME}:latest" \
+            "${REGISTRY}/${IMAGE_NAME}:${STABLE}"
+
+  post_release:
+    needs:
+      - pre_release
+      - retag-latest
+    runs-on: ubuntu-latest
+    # Write is required to publish the final release and delete the intermediate -rc.N releases/tags.
+    permissions:
+      contents: write
+    steps:
+      - name: Perform post-release
+        uses: danielemery/github-release-actions/perform-post-release@v0.5.1
+        with:
+          release-id: ${{ needs.pre_release.outputs.release-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

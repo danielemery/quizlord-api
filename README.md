@@ -11,6 +11,23 @@ Follows the [GraphQL Cursor Connections Specification](https://relay.dev/graphql
 The api is packaged in docker and deployed with github actions to the [github registry](https://github.com/danielemery/quizlord-api/pkgs/container/quizlord-api).
 A helm template is also deployed with a github action to https://helm.demery.net.
 
+Releases are **semver, label-driven** (via [`danielemery/github-release-actions`](https://github.com/danielemery/github-release-actions)).
+There is no manual tag-pushing — the version is derived from PR labels:
+
+1. **Label the PR.** Every PR must carry exactly one `semver:major`, `semver:minor`, or `semver:patch`
+   label (enforced by the `Validate PR` check; Renovate/Dependabot PRs self-label `semver:patch`).
+   The label decides the bump.
+2. **Merge to `main` → staging.** Merging cuts the next release candidate (e.g. `v1.2.3-rc.0`),
+   builds and pushes the docker image, helm chart and Sentry release, and deploys it to **staging**.
+   Every merge produces a new `-rc.N`.
+3. **Promote to stable (manual).** Run the **Release Stable** workflow (`workflow_dispatch`) with the
+   `-rc.N` tag to promote. This **retags the already-built image** (no rebuild) to the stable version
+   plus `:latest`, republishes helm at the stable version, adds a `prod` Sentry deploy, and publishes
+   the GitHub release (cleaning up the intermediate `-rc.N` releases).
+
+> Hosted/pinned infrastructure must deploy an exact `vX.Y.Z` and **not** rely on `:latest` — see
+> [`CONTRIBUTING.md`](./CONTRIBUTING.md) for the operator rules.
+
 See [quizlord-stack](https://github.com/danielemery/quizlord-stack) for further details about deployment and for the terraform module.
 
 # Local Development

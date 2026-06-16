@@ -1,0 +1,16 @@
+# Gates every pull request on carrying exactly one `semver:major|minor|patch` label. The label
+# drives the version bump calculated when the PR is merged (see release-candidate.yml).
+name: Validate PR
+
+on:
+  pull_request:
+    types: [opened, reopened, labeled, unlabeled, synchronize]
+
+jobs:
+  validate-semver-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate semver label
+        uses: danielemery/github-release-actions/validate-semver-label@v0.5.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
