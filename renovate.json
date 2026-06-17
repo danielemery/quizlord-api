@@ -7,11 +7,12 @@
   "labels": ["semver:patch"],
   "packageRules": [
     {
-      "description": "Auto-merge patch and minor updates after a 7-day soak; major updates stay manual. platformAutomerge uses GitHub's native auto-merge, so each PR merges only once the required branch-protection checks pass and only Renovate's own PRs are affected.",
+      "description": "Auto-merge patch and minor updates after a 7-day soak; major updates stay manual. platformAutomerge uses GitHub's native auto-merge, so each PR merges only once the required branch-protection checks pass and only Renovate's own PRs are affected. automergeStrategy is pinned to 'merge' because the main ruleset only permits merge commits; GitHub rejects arming auto-merge if Renovate requests a disallowed strategy.",
       "matchUpdateTypes": ["patch", "minor"],
       "minimumReleaseAge": "7 days",
       "automerge": true,
-      "platformAutomerge": true
+      "platformAutomerge": true,
+      "automergeStrategy": "merge"
     }
   ]
 }
