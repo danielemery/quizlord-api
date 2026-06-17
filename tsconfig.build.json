@@ -1,4 +1,9 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // TypeScript 6 (TS5011) requires rootDir to be set explicitly rather than inferring it from the
+    // common source directory. All build inputs live under src/ once tests and root configs are excluded.
+    "rootDir": "src"
+  },
   "exclude": ["src/**/*.test.ts", "src/vitest.d.ts", "vitest.config.ts", "prisma.config.ts"]
 }
