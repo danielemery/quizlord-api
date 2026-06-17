@@ -18,6 +18,34 @@ Every PR must carry **exactly one** semver label:
 The `Validate PR` check fails until exactly one is present. Renovate and Dependabot PRs auto-label
 `semver:patch`; relabel the rare dependency bump that actually changes the app's API.
 
+### Auto-merging dependency updates
+
+Renovate **patch** and **minor** PRs auto-merge themselves once all required checks pass, using
+GitHub's native auto-merge (`platformAutomerge` in `renovate.json`). To avoid shipping a hastily
+yanked release, a PR is held until the dependency is at least **7 days old** (`minimumReleaseAge`)
+before it becomes eligible. **Major** updates never auto-merge — they wait for a human.
+
+Only Renovate's own PRs auto-merge: the `automerge` rule lives in `renovate.json`, and GitHub's
+repo-level "Allow auto-merge" toggle only enables the feature without merging anything on its own.
+Branch protection on `main` requires the `test`, `docker-build`, and `validate-semver-label` checks,
+which gate every merge (auto or manual). An auto-merged PR fires `release-candidate.yml` exactly
+like a manual merge, so routine dependency bumps cut an `-rc.N` and deploy to staging automatically;
+promotion to stable stays manual.
+
+#### When an auto-merge regresses staging
+
+Because rc's only reach **staging** automatically, a bad bump is caught before prod. Two ways out:
+
+- **Fix forward** (preferred when a fix is quick): open a normal PR that adapts the code to the new
+  dependency, or bumps to a patched release. Label it `semver:patch` like any PR; merging it cuts a
+  fresh rc that supersedes the bad one.
+- **Revert**: revert the merge commit via a PR (also `semver:patch`-labelled — the revert merge cuts
+  its own recovery rc to staging). **A bare revert is not durable on its own:** the dependency is now
+  "outdated" again and past its 7-day soak, so Renovate will re-raise and re-auto-merge the exact same
+  version. To make the revert stick, also block the bad version in `renovate.json` until upstream ships
+  a fix — e.g. an `allowedVersions` constraint, or `"enabled": false` for that package — then remove
+  the block once resolved. See the [Renovate package rules docs](https://docs.renovatebot.com/configuration-options/#packagerules).
+
 ### Cutting a release candidate
 
 Merging a labelled PR to `main` automatically:
