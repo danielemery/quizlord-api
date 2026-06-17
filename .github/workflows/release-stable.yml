@@ -122,7 +122,7 @@ jobs:
           tar -xzf sourcemaps.tar.gz
 
       - name: Create stable Sentry release and prod deploy
-        uses: getsentry/action-release@v3.6.1
+        uses: getsentry/action-release@v3.7
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
