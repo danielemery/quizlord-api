@@ -165,11 +165,12 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
         with:
-          # Key the release on the FULL rc version (not base-version): the staging runtime sets
-          # QUIZLORD_VERSION to the full rc (C2), and sourcemaps resolve only on an exact release-name
-          # match (the bundle carries no debug IDs). Promotion re-uploads these maps under the stable
-          # version so prod resolves too — see release-stable.yml.
-          release: ${{ needs.version.outputs.version }}
+          # Key the release on the full v-prefixed rc tag. The helm chart sets QUIZLORD_VERSION from
+          # api.version, so the staging deploy (pinned to this rc tag) reports the exact same string at
+          # runtime — and sourcemaps resolve only on an exact release-name match (the bundle carries no
+          # debug IDs). Promotion re-uploads these maps under the stable tag so prod resolves too — see
+          # release-stable.yml.
+          release: ${{ needs.version.outputs.tag }}
           environment: stg
           sourcemaps: ./dist
           url_prefix: '/app'

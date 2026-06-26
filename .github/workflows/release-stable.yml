@@ -106,9 +106,10 @@ jobs:
     needs: pre_release
     runs-on: ubuntu-latest
     steps:
-      # The staging Sentry release is keyed on the full rc version, but prod reports the bare stable
-      # QUIZLORD_VERSION (the image bakes base-version, C1). Sourcemaps resolve only on an exact
-      # release-name match, so re-upload the rc's persisted sourcemaps under the stable release.
+      # The rc Sentry release is keyed on the rc tag, but prod runs the promoted image with
+      # QUIZLORD_VERSION set from api.version (the stable vX.Y.Z tag), which differs from that rc tag.
+      # Sourcemaps resolve only on an exact release-name match, so re-upload the rc's persisted
+      # sourcemaps under the stable release tag.
       - name: Download rc sourcemaps
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -127,7 +128,7 @@ jobs:
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
         with:
-          release: ${{ needs.pre_release.outputs.release-version }}
+          release: ${{ needs.pre_release.outputs.release-tag }}
           environment: prod
           sourcemaps: ./dist
           url_prefix: '/app'
