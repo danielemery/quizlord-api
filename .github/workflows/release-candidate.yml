@@ -109,7 +109,11 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.version }}
+          # Tag with the v-prefixed `tag` (e.g. v1.3.0-rc.0), not bare `version`: the helm chart and
+          # operators pin `api.version` to a vX.Y.Z string (CONTRIBUTING "Operator rules"), so the
+          # published image tag must carry the v. (The bare `version`/`base-version` are still used
+          # for the runtime/Sentry version below.)
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.version.outputs.tag }}
           build-args: |
             IMAGE_VERSION=${{ needs.version.outputs.base-version }}
 
