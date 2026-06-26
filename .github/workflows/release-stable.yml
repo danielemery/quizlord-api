@@ -72,12 +72,11 @@ jobs:
       - name: Retag prerelease image as stable
         env:
           RC_TAG: ${{ inputs.prerelease_version }}
-          STABLE: ${{ needs.pre_release.outputs.release-version }}
+          STABLE_TAG: ${{ needs.pre_release.outputs.release-tag }}
         run: |
-          RC="${RC_TAG#v}"
           docker buildx imagetools create \
-            --tag "${REGISTRY}/${IMAGE_NAME}:${STABLE}" \
-            "${REGISTRY}/${IMAGE_NAME}:${RC}"
+            --tag "${REGISTRY}/${IMAGE_NAME}:${STABLE_TAG}" \
+            "${REGISTRY}/${IMAGE_NAME}:${RC_TAG}"
 
   helm-stable:
     needs: pre_release
@@ -159,11 +158,11 @@ jobs:
 
       - name: Point latest at the stable image
         env:
-          STABLE: ${{ needs.pre_release.outputs.release-version }}
+          STABLE_TAG: ${{ needs.pre_release.outputs.release-tag }}
         run: |
           docker buildx imagetools create \
             --tag "${REGISTRY}/${IMAGE_NAME}:latest" \
-            "${REGISTRY}/${IMAGE_NAME}:${STABLE}"
+            "${REGISTRY}/${IMAGE_NAME}:${STABLE_TAG}"
 
   post_release:
     needs:
