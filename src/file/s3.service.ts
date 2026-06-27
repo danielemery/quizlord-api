@@ -1,7 +1,5 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { S3RequestPresigner } from '@aws-sdk/s3-request-presigner';
-import { createRequest } from '@aws-sdk/util-create-request';
-import { formatUrl } from '@aws-sdk/util-format-url';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export class S3FileService {
   #s3Client: S3Client;
@@ -15,22 +13,14 @@ export class S3FileService {
   }
 
   async generateSignedUploadUrl(key: string): Promise<string> {
-    const request = await createRequest(
+    return getSignedUrl(
       this.#s3Client,
       new PutObjectCommand({
         Key: key,
         Bucket: this.#bucketName,
       }),
+      { expiresIn: 3600 },
     );
-
-    const signer = new S3RequestPresigner({
-      ...this.#s3Client.config,
-    });
-
-    const url = await signer.presign(request, {
-      expiresIn: 3600,
-    });
-    return formatUrl(url);
   }
 
   keyToUrl(key: string): string {
