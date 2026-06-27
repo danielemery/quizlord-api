@@ -7,7 +7,7 @@ export class S3FileService {
   #bucketName: string;
 
   constructor(region: string, bucketName: string, fileAccessBaseUrl: string) {
-    this.#s3Client = new S3Client({ region: region });
+    this.#s3Client = new S3Client({ region: region, requestChecksumCalculation: 'WHEN_REQUIRED' });
     this.#fileAccessBaseUrl = fileAccessBaseUrl;
     this.#bucketName = bucketName;
   }
