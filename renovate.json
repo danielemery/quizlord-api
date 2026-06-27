@@ -13,6 +13,21 @@
       "automerge": true,
       "platformAutomerge": true,
       "automergeStrategy": "merge"
+    },
+    {
+      "description": "Group all Node.js version bumps into a single PR so .nvmrc, the Dockerfile base image, engines.node, @types/node, @tsconfig/nodeXX, and the NODE_VERSION env var in GitHub Actions workflows (via customManagers below) stay in sync. The 'node' dep name covers the nvm, dockerfile, npm (engines), and custom regex managers.",
+      "matchPackageNames": ["node", "@types/node", "/^@tsconfig/node/"],
+      "groupName": "node"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Treat the NODE_VERSION env var in GitHub Actions workflows as a node dependency so Renovate can bump it alongside .nvmrc, Dockerfile, and engines.node.",
+      "fileMatch": ["^\\.github/workflows/[^/]+\\.ya?ml$"],
+      "matchStrings": ["NODE_VERSION:\\s*['\"]?(?<currentValue>\\d+\\.\\d+\\.\\d+)['\"]?"],
+      "depNameTemplate": "node",
+      "datasourceTemplate": "node-version"
     }
   ]
 }
