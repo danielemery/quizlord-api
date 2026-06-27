@@ -1,9 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    ":prConcurrentLimitNone"
-  ],
+  "extends": ["config:recommended", ":prConcurrentLimitNone"],
   "labels": ["semver:patch"],
   "packageRules": [
     {
@@ -24,8 +21,10 @@
     {
       "customType": "regex",
       "description": "Treat the NODE_VERSION env var in GitHub Actions workflows as a node dependency so Renovate can bump it alongside .nvmrc, Dockerfile, and engines.node.",
-      "fileMatch": ["^\\.github/workflows/[^/]+\\.ya?ml$"],
-      "matchStrings": ["NODE_VERSION:\\s*['\"]?(?<currentValue>\\d+\\.\\d+\\.\\d+)['\"]?"],
+      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.ya?ml$/"],
+      "matchStrings": [
+        "NODE_VERSION:\\s*['\"]?(?<currentValue>\\d+\\.\\d+\\.\\d+)['\"]?"
+      ],
       "depNameTemplate": "node",
       "datasourceTemplate": "node-version"
     }
