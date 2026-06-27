@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: 24.16.0
+  NODE_VERSION: 24.17.0
 
 jobs:
   docker-build:
