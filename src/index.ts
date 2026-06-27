@@ -1,6 +1,6 @@
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { expressMiddleware } from '@as-integrations/express5';
 import * as Sentry from '@sentry/node';
 import bodyParser from 'body-parser';
 import cors from 'cors';
