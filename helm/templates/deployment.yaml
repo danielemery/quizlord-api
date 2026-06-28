@@ -21,9 +21,12 @@ spec:
           image: {{ .Values.api.registry }}:{{ .Values.api.version }}
           imagePullPolicy: Always
           resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 50m
-              memory: 200Mi
+              cpu: 500m
+              memory: 512Mi
           ports:
             - name: http-web
               containerPort: 80
