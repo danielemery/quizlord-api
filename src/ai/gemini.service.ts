@@ -1,5 +1,11 @@
-import { GoogleGenAI } from '@google/genai';
+import { createPartFromUri, type File as GenAIFile, FileState, GoogleGenAI } from '@google/genai';
 import axios from 'axios';
+import { randomUUID } from 'node:crypto';
+import { createWriteStream } from 'node:fs';
+import { unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pipeline } from 'node:stream/promises';
 
 import { QuizImageType } from '../quiz/quiz.dto.js';
 import { logger } from '../util/logger.js';
@@ -7,6 +13,12 @@ import { ExpectedAIExtractAnswersResult, expectedResultFormat } from './ai-resul
 
 export type PromptType = 'SEPARATE_QUESTION_AND_ANSWER' | 'COMBINED_QUESTION_AND_ANSWER';
 const MODEL_NAME = 'gemini-3-flash-preview';
+/** How long to wait between polls while an uploaded file is still processing. */
+const FILE_ACTIVE_POLL_INTERVAL_MS = 1000;
+/** Maximum number of polls before giving up on a file becoming active. */
+const FILE_ACTIVE_MAX_ATTEMPTS = 30;
+/** Hard ceiling on a single image download so a stalled host cannot hang processing indefinitely. */
+const IMAGE_DOWNLOAD_TIMEOUT_MS = 30_000;
 
 export interface ExtractQuizQuestionsResult extends ExpectedAIExtractAnswersResult {
   model: string;
@@ -32,35 +44,42 @@ export class GeminiService {
       expectedQuestionCount,
       imageCount: quizImages.length,
     });
-    const quizImageParts = await Promise.all(
-      quizImages.map(async ({ quizImageUrl, mimeType }) => {
-        return await this.#fileToGenerativePart(quizImageUrl, mimeType);
-      }),
-    );
+    // Upload images sequentially rather than concurrently so that only a single image is ever held
+    // in flight at a time. Each image is streamed from storage straight to a temp file and uploaded
+    // by reference, keeping the full image (and its base64 expansion) out of the process heap.
+    const uploadedFiles: GenAIFile[] = [];
+    try {
+      for (const { quizImageUrl, mimeType } of quizImages) {
+        uploadedFiles.push(await this.#uploadImageFromUrl(quizImageUrl, mimeType));
+      }
+      const imageParts = uploadedFiles.map((file) => createPartFromUri(file.uri!, file.mimeType!));
 
-    const result = await this.#ai.models.generateContent({
-      model: MODEL_NAME,
-      contents: [prompt, ...quizImageParts],
-    });
-    const text = result.text;
-    if (!text) {
-      throw new Error('No text response from model');
+      const result = await this.#ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: [prompt, ...imageParts],
+      });
+      const text = result.text;
+      if (!text) {
+        throw new Error('No text response from model');
+      }
+      logger.info('Received response from model', { model: MODEL_NAME, responseLength: text.length });
+      const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(text));
+      const validatedResult = expectedResultFormat.validate(jsonParsed);
+      if (validatedResult.error) {
+        throw new Error(validatedResult.error.message);
+      }
+      logger.info('Successfully validated AI response', {
+        model: MODEL_NAME,
+        confidence: validatedResult.value.confidence,
+      });
+      const sanitized = this.#sanitizeGeminiParsedResult(validatedResult.value);
+      return {
+        ...sanitized,
+        model: MODEL_NAME,
+      };
+    } finally {
+      await Promise.all(uploadedFiles.map((file) => this.#safeDeleteUploadedFile(file.name)));
     }
-    logger.info('Received response from model', { model: MODEL_NAME, responseLength: text.length });
-    const jsonParsed = JSON.parse(this.#sanitizeGeminiResponse(text));
-    const validatedResult = expectedResultFormat.validate(jsonParsed);
-    if (validatedResult.error) {
-      throw new Error(validatedResult.error.message);
-    }
-    logger.info('Successfully validated AI response', {
-      model: MODEL_NAME,
-      confidence: validatedResult.value.confidence,
-    });
-    const sanitized = this.#sanitizeGeminiParsedResult(validatedResult.value);
-    return {
-      ...sanitized,
-      model: MODEL_NAME,
-    };
   }
 
   #sanitizeGeminiParsedResult(result: ExpectedAIExtractAnswersResult): ExpectedAIExtractAnswersResult {
@@ -79,15 +98,72 @@ export class GeminiService {
     return response.replaceAll('```json', '').replaceAll('```', '');
   }
 
-  async #fileToGenerativePart(fileUrl: string, mimeType: string) {
-    const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
-    const buffer = Buffer.from(response.data);
-    return {
-      inlineData: {
-        data: buffer.toString('base64'),
-        mimeType,
-      },
-    };
+  /**
+   * Streams the image at the given url to a temporary file and uploads it to the Gemini Files API,
+   * returning the uploaded file once it has become active. The temporary file is always removed,
+   * and the image is never fully materialised in the process heap.
+   */
+  async #uploadImageFromUrl(fileUrl: string, mimeType: string): Promise<GenAIFile> {
+    const tempPath = join(tmpdir(), `quizlord-ai-${randomUUID()}`);
+    try {
+      const response = await axios.get(fileUrl, {
+        responseType: 'stream',
+        signal: AbortSignal.timeout(IMAGE_DOWNLOAD_TIMEOUT_MS),
+      });
+      await pipeline(response.data, createWriteStream(tempPath));
+      const uploaded = await this.#ai.files.upload({ file: tempPath, config: { mimeType } });
+      try {
+        return await this.#waitForFileActive(uploaded);
+      } catch (err) {
+        // Activation failed, timed out, or polling errored: delete the now-orphaned remote file
+        // before rethrowing, since it never makes it into the caller's cleanup list.
+        await this.#safeDeleteUploadedFile(uploaded.name);
+        throw err;
+      }
+    } finally {
+      await this.#safeUnlink(tempPath);
+    }
+  }
+
+  /** Polls the Files API until the uploaded file becomes active, throwing if it fails or times out. */
+  async #waitForFileActive(file: GenAIFile): Promise<GenAIFile> {
+    let current = file;
+    // Evaluate state at the top of every iteration, including after the final refresh, so a file
+    // that only becomes active (or fails) on the last allowed poll is still handled correctly.
+    for (let attempt = 0; ; attempt++) {
+      if (current.state === FileState.ACTIVE) {
+        return current;
+      }
+      if (current.state === FileState.FAILED) {
+        throw new Error(`Uploaded file ${current.name} failed processing`);
+      }
+      if (attempt >= FILE_ACTIVE_MAX_ATTEMPTS) {
+        throw new Error(`Timed out waiting for uploaded file ${file.name} to become active`);
+      }
+      await sleep(FILE_ACTIVE_POLL_INTERVAL_MS);
+      current = await this.#ai.files.get({ name: current.name! });
+    }
+  }
+
+  /** Best-effort removal of an uploaded file; failures are logged but never thrown. */
+  async #safeDeleteUploadedFile(name: string | undefined) {
+    if (!name) {
+      return;
+    }
+    try {
+      await this.#ai.files.delete({ name });
+    } catch (err) {
+      logger.warn('Failed to delete uploaded file from Gemini', { name, exception: err });
+    }
+  }
+
+  /** Best-effort removal of a temp file; failures are logged but never thrown. */
+  async #safeUnlink(tempPath: string) {
+    try {
+      await unlink(tempPath);
+    } catch (err) {
+      logger.warn('Failed to delete temporary image file', { tempPath, exception: err });
+    }
   }
 
   #generatePrompt({
@@ -131,4 +207,8 @@ export class GeminiService {
     }
     throw new Error('Unsupported quiz image type combinations, cannot process');
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
