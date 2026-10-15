@@ -62,7 +62,7 @@ jobs:
         run: npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: build-artifacts
           # No .dockerignore: it only ignores node_modules, which is never in this artifact, and
@@ -75,7 +75,7 @@ jobs:
             package*.json
 
       - name: Upload helm chart
-        uses: actions/upload-artifact@v7.0.1
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: helm-chart
           path: helm
