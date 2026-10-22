@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout prerelease commit
-        uses: actions/checkout@v6.1.0
+        uses: actions/checkout@v7.0.1
         with:
           ref: ${{ inputs.prerelease_version }}
 
